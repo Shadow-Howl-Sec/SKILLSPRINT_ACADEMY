@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses & Roadmaps - SkillSprint Academy</title>
+    <link rel="icon" href="/static/img/skill_logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .course-hero {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: var(--white);
+            padding: 120px 0 80px 0;
+            position: relative;
+        }
+        
+        .roadmap-container {
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: var(--shadow-medium);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .roadmap-header {
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            color: var(--white);
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .roadmap-steps {
+            padding: 2rem;
+        }
+        
+        .roadmap-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .roadmap-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 25px;
+            top: 50px;
+            bottom: -2rem;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent-color), var(--primary-color));
+        }
+        
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-right: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .step-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .step-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .topic-tag {
+            background: var(--light-gray);
+            color: var(--text-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+        }
+        
+        .course-card {
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: var(--shadow-light);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            height: 100%;
+            border: 1px solid var(--border-color);
+        }
+        
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-large);
+        }
+        
+        .course-header {
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            color: var(--white);
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .course-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem auto;
+        }
+        
+        .course-icon i {
+            font-size: 2.5rem;
+            color: var(--white);
+        }
+        
+        .course-body {
+            padding: 2rem;
+        }
+        
+        .course-features {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+        
+        .course-features li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .course-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .course-features li i {
+            color: var(--success-color);
+            margin-right: 0.75rem;
+        }
+        
+        .course-stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .course-cta {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .difficulty-beginner {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .difficulty-intermediate {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .difficulty-advanced {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1.5rem;
+            border: 2px solid var(--border-color);
+            background: var(--white);
+            color: var(--text-primary);
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: var(--accent-color);
+            color: var(--white);
+            border-color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/static/img/skill_logo.png" alt="SkillSprint Academy" width="45" class="me-3">
+                <div>
+                    <span class="brand-title">SkillSprint Academy</span>
+                    <div class="brand-subtitle">Excellence in Education</div>
+                </div>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/courses">Courses</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link btn btn-primary px-4 ms-2" href="{{ url_for('auth.register') }}">Register Now</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Course Hero Section -->
+    <section class="course-hero">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="hero-title">Comprehensive Course Roadmaps</h1>
+                    <p class="hero-subtitle">Master in-demand skills with our structured learning paths designed by industry experts. Choose your path and accelerate your career growth.</p>
+                    <div class="hero-buttons">
+                        <a href="#courses" class="btn btn-light btn-lg me-3">Explore Courses</a>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light btn-lg">Get Started</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Course Filter Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All Courses</button>
+                <button class="filter-btn" data-filter="development">Development</button>
+                <button class="filter-btn" data-filter="data">Data Science</button>
+                <button class="filter-btn" data-filter="security">Cybersecurity</button>
+                <button class="filter-btn" data-filter="ai">AI & ML</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Courses Section -->
+    <section id="courses" class="py-5">
+        <div class="container">
+            <div class="row">
+                <!-- Web Development Course -->
+                <div class="col-lg-6 col-xl-4 mb-4" data-category="development">
+                    <div class="course-card">
+                        <div class="course-header">
+                            <div class="course-icon">
+                                <i class="bi bi-code-slash"></i>
+                            </div>
+                            <h4>Full Stack Web Development</h4>
+                            <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
+                        </div>
+                        <div class="course-body">
+                            <p>Master modern web development with hands-on projects. Learn frontend, backend, and database technologies.</p>
+                            
+                            <div class="course-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">12</div>
+                                    <div class="stat-label">Weeks</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">24</div>
+                                    <div class="stat-label">Projects</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">95%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <ul class="course-features">
+                                <li><i class="bi bi-check-circle-fill"></i> HTML5, CSS3, JavaScript ES6+</li>
+                                <li><i class="bi bi-check-circle-fill"></i> React.js & Node.js</li>
+                                <li><i class="bi bi-check-circle-fill"></i> MongoDB & SQL Databases</li>
+                                <li><i class="bi bi-check-circle-fill"></i> AWS Deployment</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Industry Projects</li>
+                            </ul>
+                            
+                            <div class="course-cta">
+                                <a href="#web-dev-roadmap" class="btn btn-primary">View Roadmap</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Development Course -->
+                <div class="col-lg-6 col-xl-4 mb-4" data-category="development">
+                    <div class="course-card">
+                        <div class="course-header">
+                            <div class="course-icon">
+                                <i class="bi bi-phone"></i>
+                            </div>
+                            <h4>Mobile App Development</h4>
+                            <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
+                        </div>
+                        <div class="course-body">
+                            <p>Build native and cross-platform mobile applications for iOS and Android platforms.</p>
+                            
+                            <div class="course-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">16</div>
+                                    <div class="stat-label">Weeks</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">18</div>
+                                    <div class="stat-label">Projects</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">92%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <ul class="course-features">
+                                <li><i class="bi bi-check-circle-fill"></i> React Native & Flutter</li>
+                                <li><i class="bi bi-check-circle-fill"></i> iOS & Android Development</li>
+                                <li><i class="bi bi-check-circle-fill"></i> App Store Publishing</li>
+                                <li><i class="bi bi-check-circle-fill"></i> UI/UX Design Principles</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Backend Integration</li>
+                            </ul>
+                            
+                            <div class="course-cta">
+                                <a href="#mobile-dev-roadmap" class="btn btn-primary">View Roadmap</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Science Course -->
+                <div class="col-lg-6 col-xl-4 mb-4" data-category="data">
+                    <div class="course-card">
+                        <div class="course-header">
+                            <div class="course-icon">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <h4>Data Science & Analytics</h4>
+                            <span class="difficulty-badge difficulty-advanced">Advanced</span>
+                        </div>
+                        <div class="course-body">
+                            <p>Master data analysis, machine learning, and statistical modeling for business insights.</p>
+                            
+                            <div class="course-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">20</div>
+                                    <div class="stat-label">Weeks</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">30</div>
+                                    <div class="stat-label">Projects</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">88%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <ul class="course-features">
+                                <li><i class="bi bi-check-circle-fill"></i> Python & R Programming</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Machine Learning Algorithms</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Data Visualization</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Big Data Technologies</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Real-world Case Studies</li>
+                            </ul>
+                            
+                            <div class="course-cta">
+                                <a href="#data-science-roadmap" class="btn btn-primary">View Roadmap</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cybersecurity Course -->
+                <div class="col-lg-6 col-xl-4 mb-4" data-category="security">
+                    <div class="course-card">
+                        <div class="course-header">
+                            <div class="course-icon">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <h4>Cybersecurity & Ethical Hacking</h4>
+                            <span class="difficulty-badge difficulty-advanced">Advanced</span>
+                        </div>
+                        <div class="course-body">
+                            <p>Learn to protect digital assets and understand security vulnerabilities through ethical hacking.</p>
+                            
+                            <div class="course-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">18</div>
+                                    <div class="stat-label">Weeks</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">25</div>
+                                    <div class="stat-label">Projects</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">90%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <ul class="course-features">
+                                <li><i class="bi bi-check-circle-fill"></i> Network Security</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Penetration Testing</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Cryptography</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Incident Response</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Security Certifications</li>
+                            </ul>
+                            
+                            <div class="course-cta">
+                                <a href="#cybersecurity-roadmap" class="btn btn-primary">View Roadmap</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI & ML Course -->
+                <div class="col-lg-6 col-xl-4 mb-4" data-category="ai">
+                    <div class="course-card">
+                        <div class="course-header">
+                            <div class="course-icon">
+                                <i class="bi bi-cpu"></i>
+                            </div>
+                            <h4>Artificial Intelligence & ML</h4>
+                            <span class="difficulty-badge difficulty-advanced">Advanced</span>
+                        </div>
+                        <div class="course-body">
+                            <p>Master AI algorithms, deep learning, and neural networks for cutting-edge applications.</p>
+                            
+                            <div class="course-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">24</div>
+                                    <div class="stat-label">Weeks</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">35</div>
+                                    <div class="stat-label">Projects</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">85%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <ul class="course-features">
+                                <li><i class="bi bi-check-circle-fill"></i> Deep Learning & Neural Networks</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Computer Vision</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Natural Language Processing</li>
+                                <li><i class="bi bi-check-circle-fill"></i> TensorFlow & PyTorch</li>
+                                <li><i class="bi bi-check-circle-fill"></i> AI Ethics & Governance</li>
+                            </ul>
+                            
+                            <div class="course-cta">
+                                <a href="#ai-ml-roadmap" class="btn btn-primary">View Roadmap</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DevOps Course -->
+                <div class="col-lg-6 col-xl-4 mb-4" data-category="development">
+                    <div class="course-card">
+                        <div class="course-header">
+                            <div class="course-icon">
+                                <i class="bi bi-gear"></i>
+                            </div>
+                            <h4>DevOps & Cloud Engineering</h4>
+                            <span class="difficulty-badge difficulty-intermediate">Intermediate</span>
+                        </div>
+                        <div class="course-body">
+                            <p>Learn CI/CD, containerization, and cloud infrastructure management.</p>
+                            
+                            <div class="course-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">14</div>
+                                    <div class="stat-label">Weeks</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">20</div>
+                                    <div class="stat-label">Projects</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">94%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                            
+                            <ul class="course-features">
+                                <li><i class="bi bi-check-circle-fill"></i> Docker & Kubernetes</li>
+                                <li><i class="bi bi-check-circle-fill"></i> AWS & Azure Cloud</li>
+                                <li><i class="bi bi-check-circle-fill"></i> CI/CD Pipelines</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Infrastructure as Code</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Monitoring & Logging</li>
+                            </ul>
+                            
+                            <div class="course-cta">
+                                <a href="#devops-roadmap" class="btn btn-primary">View Roadmap</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Roadmaps Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center mb-5">
+                    <h2 class="section-title">Detailed Learning Roadmaps</h2>
+                    <p class="section-subtitle">Follow our structured learning paths designed by industry experts to master your chosen field.</p>
+                </div>
+            </div>
+
+            <!-- Web Development Roadmap -->
+            <div id="web-dev-roadmap" class="roadmap-container">
+                <div class="roadmap-header">
+                    <h3><i class="bi bi-code-slash me-2"></i>Full Stack Web Development Roadmap</h3>
+                    <p>Master modern web technologies from frontend to backend</p>
+                </div>
+                <div class="roadmap-steps">
+                    <div class="roadmap-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Frontend Fundamentals</h4>
+                            <p class="step-description">Learn the core technologies of web development</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">HTML5</span>
+                                <span class="topic-tag">CSS3</span>
+                                <span class="topic-tag">JavaScript ES6+</span>
+                                <span class="topic-tag">Responsive Design</span>
+                                <span class="topic-tag">Bootstrap</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="roadmap-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Frontend Frameworks</h4>
+                            <p class="step-description">Build dynamic user interfaces with modern frameworks</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">React.js</span>
+                                <span class="topic-tag">State Management</span>
+                                <span class="topic-tag">Hooks & Context</span>
+                                <span class="topic-tag">Redux</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="roadmap-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Backend Development</h4>
+                            <p class="step-description">Create robust server-side applications</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">Node.js</span>
+                                <span class="topic-tag">Express.js</span>
+                                <span class="topic-tag">REST APIs</span>
+                                <span class="topic-tag">Authentication</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="roadmap-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Database Management</h4>
+                            <p class="step-description">Work with both SQL and NoSQL databases</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">MongoDB</span>
+                                <span class="topic-tag">MySQL</span>
+                                <span class="topic-tag">PostgreSQL</span>
+                                <span class="topic-tag">ORM (Mongoose)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="roadmap-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4 class="step-title">DevOps & Deployment</h4>
+                            <p class="step-description">Deploy and maintain production applications</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">Git & GitHub</span>
+                                <span class="topic-tag">AWS Deployment</span>
+                                <span class="topic-tag">Docker</span>
+                                <span class="topic-tag">CI/CD</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Science Roadmap -->
+            <div id="data-science-roadmap" class="roadmap-container">
+                <div class="roadmap-header">
+                    <h3><i class="bi bi-graph-up me-2"></i>Data Science & Analytics Roadmap</h3>
+                    <p>Transform data into actionable business insights</p>
+                </div>
+                <div class="roadmap-steps">
+                    <div class="roadmap-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Programming Fundamentals</h4>
+                            <p class="step-description">Master Python and R for data analysis</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">Python</span>
+                                <span class="topic-tag">R Programming</span>
+                                <span class="topic-tag">Jupyter Notebooks</span>
+                                <span class="topic-tag">Data Structures</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="roadmap-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Data Manipulation</h4>
+                            <p class="step-description">Clean, transform, and prepare data for analysis</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">Pandas</span>
+                                <span class="topic-tag">NumPy</span>
+                                <span class="topic-tag">Data Cleaning</span>
+                                <span class="topic-tag">ETL Processes</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="roadmap-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Statistical Analysis</h4>
+                            <p class="step-description">Apply statistical methods to understand data patterns</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">Descriptive Statistics</span>
+                                <span class="topic-tag">Inferential Statistics</span>
+                                <span class="topic-tag">Hypothesis Testing</span>
+                                <span class="topic-tag">A/B Testing</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="roadmap-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Machine Learning</h4>
+                            <p class="step-description">Build predictive models and algorithms</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">Scikit-learn</span>
+                                <span class="topic-tag">Supervised Learning</span>
+                                <span class="topic-tag">Unsupervised Learning</span>
+                                <span class="topic-tag">Model Evaluation</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="roadmap-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4 class="step-title">Data Visualization</h4>
+                            <p class="step-description">Create compelling visualizations and dashboards</p>
+                            <div class="step-topics">
+                                <span class="topic-tag">Matplotlib</span>
+                                <span class="topic-tag">Seaborn</span>
+                                <span class="topic-tag">Plotly</span>
+                                <span class="topic-tag">Tableau</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2 class="cta-title">Ready to Start Your Learning Journey?</h2>
+                    <p class="cta-subtitle">Choose your course and begin transforming your career today.</p>
+                    <a href="/register" class="btn btn-primary btn-lg">Enroll Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer py-5">
+        <div class="container">
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-4 mb-4">
+                    <div class="footer-brand d-flex align-items-center mb-3">
+                        <img src="/static/img/skill_logo.png" alt="SkillSprint Academy" width="50" class="me-3">
+                        <div>
+                            <h5 class="mb-1">SkillSprint Academy</h5>
+                            <p class="mb-0 small">Empowering professionals with industry-leading training and development programs.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6><i class="bi bi-grid-1x2"></i> Programs</h6>
+                    <ul class="footer-links">
+                        <li><a href="#courses">Web Development</a></li>
+                        <li><a href="#courses">Mobile Development</a></li>
+                        <li><a href="#courses">Data Science</a></li>
+                        <li><a href="#courses">Cybersecurity</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6><i class="bi bi-building"></i> Company</h6>
+                    <ul class="footer-links">
+                        <li><a href="/about">About Us</a></li>
+                        <li><a href="#team">Our Team</a></li>
+                        <li><a href="#careers">Careers</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6><i class="bi bi-question-circle"></i> Support</h6>
+                    <ul class="footer-links">
+                        <li><a href="#help">Help Center</a></li>
+                        <li><a href="/privacy">Privacy Policy</a></li>
+                        <li><a href="/terms">Terms of Service</a></li>
+                        <li><a href="#faq">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6><i class="bi bi-envelope"></i> Contact</h6>
+                    <ul class="footer-links">
+                        <li>Email: <a href="mailto:skillsprint_support@gmail.com">skillsprint_support@gmail.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="footer-divider">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 small">&copy; 2024 SkillSprint Academy. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 small">
+                        <span class="made-in-india">
+                            Made with <i class="bi bi-heart-fill"></i> in India
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Course filtering functionality
+        $(document).ready(function() {
+            $('.filter-btn').click(function() {
+                $('.filter-btn').removeClass('active');
+                $(this).addClass('active');
+                
+                const filter = $(this).data('filter');
+                
+                if (filter === 'all') {
+                    $('[data-category]').show();
+                } else {
+                    $('[data-category]').hide();
+                    $('[data-category="' + filter + '"]').show();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

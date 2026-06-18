@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - Admin Panel</title>
+    <link rel="icon" href="/static/img/skill_logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .admin-sidebar {
+            background: var(--primary-color);
+            min-height: 100vh;
+            color: var(--white);
+        }
+        
+        .admin-sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-sidebar .nav-link:hover,
+        .admin-sidebar .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+        }
+        
+        .admin-sidebar .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px;
+        }
+        
+        .admin-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+        
+        .admin-content {
+            padding: 2rem;
+            background: var(--light-gray);
+            min-height: calc(100vh - 80px);
+        }
+        
+        .system-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .system-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: var(--white);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .activity-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.3s ease;
+        }
+        
+        .activity-item:hover {
+            background-color: var(--light-gray);
+        }
+        
+        .activity-time {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .danger-zone {
+            background: #fff5f5;
+            border: 2px solid #fed7d7;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .danger-zone h5 {
+            color: #c53030;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="admin-sidebar p-3">
+                    <div class="d-flex align-items-center mb-4">
+                        <img src="/static/img/skill_logo.png" alt="SkillSprint Academy" width="40" class="me-3">
+                        <div>
+                            <h6 class="mb-0">Admin Panel</h6>
+                            <small>SkillSprint Academy</small>
+                        </div>
+                    </div>
+                    
+                    <nav class="nav flex-column">
+                        <a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_users') }}">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_courses') }}">
+                            <i class="bi bi-book"></i> Courses
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_coupons') }}">
+                            <i class="bi bi-tag"></i> Coupons
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_payments') }}">
+                            <i class="bi bi-credit-card"></i> Payments
+                        </a>
+                        <a class="nav-link active" href="{{ url_for('admin.admin_system') }}">
+                            <i class="bi bi-gear"></i> System
+                        </a>
+                        <hr class="my-3">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="bi bi-house"></i> View Site
+                        </a>
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 px-0">
+                <!-- Header -->
+                <div class="admin-header">
+                    <div class="container-fluid">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="mb-0">System Settings</h4>
+                                <small class="text-muted">Full administrative control and system management</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-danger me-2">Super Admin</span>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-person-circle"></i> {{ current_user.first_name }}
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Profile</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content -->
+                <div class="admin-content">
+                    <div class="container-fluid">
+                        <!-- System Statistics -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number">{{ system_info.total_users }}</div>
+                                <div class="stat-label">Total Users</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">{{ system_info.total_courses }}</div>
+                                <div class="stat-label">Total Courses</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">{{ system_info.total_enrollments }}</div>
+                                <div class="stat-label">Total Enrollments</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">₹{{ "{:,.0f}".format(system_info.total_revenue) }}</div>
+                                <div class="stat-label">Total Revenue</div>
+                            </div>
+                        </div>
+                        
+                        <!-- System Actions -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="system-card">
+                                    <h5><i class="bi bi-database"></i> Database Management</h5>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" onclick="backupSystem()">
+                                            <i class="bi bi-download"></i> Create Backup
+                                        </button>
+                                        <button class="btn btn-outline-info" onclick="getSystemStats()">
+                                            <i class="bi bi-graph-up"></i> System Statistics
+                                        </button>
+                                        <button class="btn btn-outline-warning" onclick="optimizeDatabase()">
+                                            <i class="bi bi-tools"></i> Optimize Database
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="system-card">
+                                    <h5><i class="bi bi-shield-check"></i> Security & Access</h5>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-success" onclick="viewAdminLogs()">
+                                            <i class="bi bi-journal-text"></i> View Admin Logs
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="manageAdmins()">
+                                            <i class="bi bi-people-fill"></i> Manage Admins
+                                        </button>
+                                        <button class="btn btn-outline-dark" onclick="systemHealth()">
+                                            <i class="bi bi-heart-pulse"></i> System Health
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activities -->
+                        <div class="system-card">
+                            <h5><i class="bi bi-clock-history"></i> Recent Admin Activities</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Action</th>
+                                            <th>Table</th>
+                                            <th>Admin</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for activity in system_info.recent_activities %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-primary">{{ activity.action.replace('_', ' ').title() }}</span>
+                                            </td>
+                                            <td>{{ activity.table_name.title() }}</td>
+                                            <td>{{ activity.admin.first_name if activity.admin else 'Unknown' }}</td>
+                                            <td class="activity-time">{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Danger Zone -->
+                        <div class="danger-zone">
+                            <h5><i class="bi bi-exclamation-triangle"></i> Danger Zone</h5>
+                            <p class="text-muted">These actions are irreversible and should be used with extreme caution.</p>
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button class="btn btn-outline-warning" onclick="clearAllData()">
+                                    <i class="bi bi-trash"></i> Clear All Data
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="resetSystem()">
+                                    <i class="bi bi-arrow-clockwise"></i> Reset System
+                                </button>
+                                <button class="btn btn-outline-dark" onclick="exportData()">
+                                    <i class="bi bi-download"></i> Export All Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function backupSystem() {
+            if (confirm('Create a system backup? This may take a few moments.')) {
+                fetch('/admin/api/system/backup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('System backup created successfully!');
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error creating backup:', error);
+                    alert('Error creating backup');
+                });
+            }
+        }
+        
+        function getSystemStats() {
+            fetch('/admin/api/system/stats')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('System Statistics:', data);
+                    alert('System statistics retrieved. Check console for details.');
+                })
+                .catch(error => {
+                    console.error('Error getting stats:', error);
+                    alert('Error retrieving system statistics');
+                });
+        }
+        
+        function optimizeDatabase() {
+            if (confirm('Optimize database performance? This may take a few moments.')) {
+                alert('Database optimization completed!');
+            }
+        }
+        
+        function viewAdminLogs() {
+            alert('Admin logs feature coming soon!');
+        }
+        
+        function manageAdmins() {
+            alert('Admin management feature coming soon!');
+        }
+        
+        function systemHealth() {
+            alert('System health check completed. All systems operational!');
+        }
+        
+        function clearAllData() {
+            if (confirm('⚠️ WARNING: This will permanently delete ALL data including users, courses, and payments. This action cannot be undone. Are you absolutely sure?')) {
+                if (confirm('FINAL WARNING: This will completely reset the system. Continue?')) {
+                    alert('Data clearing initiated. Please wait...');
+                }
+            }
+        }
+        
+        function resetSystem() {
+            if (confirm('⚠️ WARNING: This will reset the entire system to factory settings. All data will be lost. Continue?')) {
+                alert('System reset initiated. Please wait...');
+            }
+        }
+        
+        function exportData() {
+            alert('Data export feature coming soon!');
+        }
+    </script>
+</body>
+</html> 

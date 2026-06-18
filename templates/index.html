@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SkillSprint Academy — Industry-leading tech training programs in Web Dev, AI/ML, Data Science & Cybersecurity. 500+ students placed.">
+  <title>SkillSprint Academy — Professional Tech Training</title>
+  <link rel="icon" href="/static/img/skill_logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar navbar-expand-lg fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+      <img src="/static/img/skill_logo.png" alt="SkillSprint Academy" width="38">
+      <div>
+        <span class="brand-title">SkillSprint</span>
+        <span class="brand-subtitle">Academy</span>
+      </div>
+    </a>
+    <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+      <i class="bi bi-list fs-4" style="color:var(--primary)"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+        <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="#programs">Programs</a></li>
+        <li class="nav-item"><a class="nav-link" href="/courses">Courses</a></li>
+        <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_admin %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-shield-lock me-1"></i>Admin</a></li>
+          {% endif %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              <i class="bi bi-person-circle me-1"></i>{{ current_user.first_name }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius:12px;">
+              <li><a class="dropdown-item" href="/dashboard"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-book me-2 text-primary"></i>My Courses</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Login</a></li>
+          <li class="nav-item ms-lg-2">
+            <a class="nav-link btn-nav-cta" href="{{ url_for('auth.register') }}">Register Free</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== HERO SECTION ===== -->
+<section class="hero-section">
+  <div class="hero-bg"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+  <div class="hero-grid"></div>
+
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="dot"></span>
+            India's #1 Tech Training Academy
+          </div>
+          <h1 class="hero-title">
+            Launch Your Career in <span class="gradient-text">Tech & AI</span>
+          </h1>
+          <p class="hero-subtitle">
+            Industry-expert led training in Web Development, AI/ML, Data Science &amp; Cybersecurity.
+            From beginner to job-ready in weeks — not years.
+          </p>
+
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <div class="hero-stat-number" data-count="500">0</div>
+              <div class="hero-stat-label">Students Trained</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-number" data-count="15">0</div>
+              <div class="hero-stat-label">Expert Courses</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-number" data-count="98">0</div>
+              <div class="hero-stat-label">% Placement Rate</div>
+            </div>
+          </div>
+
+          <div class="hero-buttons">
+            <a href="{{ url_for('auth.register') }}" class="btn-hero-primary" id="hero-register-btn">
+              <i class="bi bi-rocket-takeoff"></i> Start Learning Free
+            </a>
+            <a href="#programs" class="btn-hero-outline">
+              <i class="bi bi-play-circle"></i> Explore Programs
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="hero-image-panel">
+          <div class="hero-image-card">
+            <img src="/static/img/hero_illustration.png" alt="Students learning tech at SkillSprint Academy">
+          </div>
+          <!-- Floating chips -->
+          <div class="hero-chip hero-chip-1">
+            <i class="bi bi-mortarboard-fill chip-icon-success"></i>
+            <span>4.9 ★ Rating</span>
+          </div>
+          <div class="hero-chip hero-chip-2">
+            <i class="bi bi-patch-check-fill chip-icon-gold"></i>
+            <span>Certified Programs</span>
+          </div>
+          <div class="hero-chip hero-chip-3">
+            <i class="bi bi-people-fill chip-icon-success"></i>
+            <span>500+ Alumni</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TRUST STRIP ===== -->
+<div class="trust-strip">
+  <div class="container">
+    <div class="marquee-wrap align-items-center">
+      <span class="trust-strip-label d-none d-md-block">Our Alumni Work At:</span>
+      <div class="marquee-track" id="marqueeTrack">
+        <div class="marquee-item"><i class="bi bi-building"></i> TCS</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Infosys</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Wipro</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Accenture</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Cognizant</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> HCL</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Mphasis</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Capgemini</div>
+        <!-- Duplicate for seamless loop -->
+        <div class="marquee-item"><i class="bi bi-building"></i> TCS</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Infosys</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Wipro</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Accenture</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Cognizant</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> HCL</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Mphasis</div>
+        <div class="marquee-item"><i class="bi bi-building"></i> Capgemini</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATS SECTION ===== -->
+<section class="stats-section py-5">
+  <div class="container">
+    <div class="row g-0">
+      <div class="col-6 col-md-3 reveal delay-1">
+        <div class="stat-card">
+          <div class="stat-number"><span class="count-up" data-target="500">0</span><span>+</span></div>
+          <div class="stat-label">Students Trained</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 reveal delay-2">
+        <div class="stat-card">
+          <div class="stat-number"><span class="count-up" data-target="15">0</span><span>+</span></div>
+          <div class="stat-label">Expert-Led Courses</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 reveal delay-3">
+        <div class="stat-card">
+          <div class="stat-number"><span class="count-up" data-target="98">0</span><span>%</span></div>
+          <div class="stat-label">Placement Rate</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 reveal delay-4">
+        <div class="stat-card">
+          <div class="stat-number"><span class="count-up" data-target="4">0</span><span>.9★</span></div>
+          <div class="stat-label">Average Rating</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ABOUT / WHY US ===== -->
+<section id="about" class="py-6" style="padding:5rem 0;">
+  <div class="container">
+    <div class="text-center mb-2 reveal">
+      <span class="section-label"><i class="bi bi-star-fill"></i> Why Choose Us</span>
+    </div>
+    <h2 class="section-title reveal">Built for the Real World,<br>Not Just the Classroom</h2>
+    <p class="section-subtitle reveal">Every program is designed hand-in-hand with industry professionals so you learn exactly what employers hire for.</p>
+
+    <div class="row g-4 mt-2">
+      <div class="col-md-6 col-lg-4 reveal delay-1">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-award"></i></div>
+          <h4>Industry Certifications</h4>
+          <p>Earn recognized certificates that carry real weight with employers. Our credentials are backed by industry partnerships.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal delay-2">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-people"></i></div>
+          <h4>Expert Mentors</h4>
+          <p>Learn directly from seasoned professionals with 10+ years of real-world experience in their domains.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal delay-3">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-laptop"></i></div>
+          <h4>Hands-On Projects</h4>
+          <p>Every course includes real mini-projects and practical assignments that build a portfolio employers want to see.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal delay-1">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-briefcase"></i></div>
+          <h4>Placement Support</h4>
+          <p>Dedicated placement drives, resume reviews, mock interviews and direct referrals to our hiring partners.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal delay-2">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-calendar-week"></i></div>
+          <h4>Flexible Batches</h4>
+          <p>Weekend, weekday and intensive bootcamp batches. Learn at a pace that works for your schedule.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal delay-3">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-headset"></i></div>
+          <h4>Lifetime Community</h4>
+          <p>Join our active alumni network and get lifetime access to resources, Q&A sessions and job postings.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROGRAMS ===== -->
+<section id="programs" class="py-5" style="background:var(--gray-50);">
+  <div class="container">
+    <div class="text-center mb-2 reveal">
+      <span class="section-label"><i class="bi bi-grid"></i> Our Programs</span>
+    </div>
+    <h2 class="section-title reveal">Training Programs That Get You Hired</h2>
+    <p class="section-subtitle reveal">Comprehensive, career-focused programs built around what the market demands today.</p>
+
+    <div class="row g-4 mt-2">
+      {% set programs = [
+        {'icon':'bi-code-slash','title':'Full-Stack Web Dev','desc':'Master HTML, CSS, JS, React, Node.js &amp; databases. Build 5 full-stack apps.','weeks':12,'price':'₹2,499','original':'₹4,999','popular':true,'cls':'prog-icon-indigo'},
+        {'icon':'bi-robot','title':'AI &amp; Machine Learning','desc':'Python, ML algorithms, neural networks, scikit-learn, TensorFlow &amp; real-world projects.','weeks':16,'price':'₹2,999','original':'₹5,999','popular':false,'cls':'prog-icon-pink'},
+        {'icon':'bi-graph-up','title':'Data Science &amp; Analytics','desc':'Excel, Python, SQL, Power BI, Tableau. Solve real business problems with data.','weeks':14,'price':'₹2,499','original':'₹4,999','popular':false,'cls':'prog-icon-cyan'},
+        {'icon':'bi-shield-check','title':'Cybersecurity Essentials','desc':'Network security, ethical hacking, incident response &amp; compliance frameworks.','weeks':18,'price':'₹2,999','original':'₹5,999','popular':false,'cls':'prog-icon-emerald'}
+      ] %}
+
+      {% for p in programs %}
+      <div class="col-md-6 col-lg-3 reveal delay-{{ loop.index }}">
+        <div class="program-card {% if p.popular %}popular{% endif %}">
+          {% if p.popular %}<span class="popular-badge">⭐ Most Popular</span>{% endif %}
+          <div class="program-icon {{ p.cls }}">
+            <i class="bi {{ p.icon }}"></i>
+          </div>
+          <h5>{{ p.title }}</h5>
+          <p>{{ p.desc }}</p>
+          <div class="program-meta">
+            <span><i class="bi bi-clock"></i> {{ p.weeks }} Weeks</span>
+            <span><i class="bi bi-patch-check"></i> Certified</span>
+          </div>
+          <div class="program-price">
+            {{ p.price }}
+            <span class="price-label">/ batch</span>
+            <span class="price-original">{{ p.original }}</span>
+          </div>
+          <a href="/courses" class="btn btn-primary w-100 btn-sm">View Curriculum</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="text-center mt-5 reveal">
+      <a href="/courses" class="btn btn-outline-primary btn-lg">
+        <i class="bi bi-collection me-2"></i>Browse All Courses & Roadmaps
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="py-5" style="padding:5rem 0;">
+  <div class="container">
+    <div class="text-center mb-2 reveal">
+      <span class="section-label"><i class="bi bi-chat-quote"></i> Student Stories</span>
+    </div>
+    <h2 class="section-title reveal">What Our Students Say</h2>
+    <p class="section-subtitle reveal">Real results from real people who transformed their careers with SkillSprint.</p>
+
+    <div class="row g-4 mt-2">
+      {% set testimonials = [
+        {'name':'Priya Sharma','role':'Full-Stack Dev @ Infosys','text':'SkillSprint changed my life. Within 3 months of completing the web dev course, I had a job offer from Infosys. The hands-on projects were the key.','initials':'PS','stars':5},
+        {'name':'Rahul Mehta','role':'Data Analyst @ Wipro','text':'The Data Science program was exceptionally well-structured. The mentors were always available and the real datasets we worked on gave me an edge in interviews.','initials':'RM','stars':5},
+        {'name':'Ananya Patel','role':'ML Engineer @ Mphasis','text':'I came in with zero coding knowledge and graduated with a job in ML. The curriculum is perfectly paced and the placement support is unmatched.','initials':'AP','stars':5},
+        {'name':'Karthik Rao','role':'Security Analyst @ TCS','text':'The cybersecurity course covered everything from basics to advanced ethical hacking. Got CEH certified right after and landed my dream job!','initials':'KR','stars':5},
+        {'name':'Sneha Desai','role':'Frontend Dev @ Cognizant','text':'Professional instructors, real projects, and a community that keeps lifting you. SkillSprint is absolutely worth every rupee.','initials':'SD','stars':5},
+        {'name':'Vikram Singh','role':'BI Developer @ Capgemini','text':'The Power BI & Tableau modules were incredibly thorough. My portfolio from this course is what got me shortlisted for 4 companies simultaneously.','initials':'VS','stars':5}
+      ] %}
+
+      {% for t in testimonials %}
+      <div class="col-md-6 col-lg-4 reveal delay-{{ (loop.index % 4) + 1 }}">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">
+            {% for _ in range(t.stars) %}<i class="bi bi-star-fill"></i>{% endfor %}
+          </div>
+          <p class="testimonial-text">{{ t.text }}</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">{{ t.initials }}</div>
+            <div>
+              <p class="testimonial-name">{{ t.name }}</p>
+              <p class="testimonial-role">{{ t.role }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="py-5" style="background:var(--gray-50);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="text-center mb-2 reveal">
+          <span class="section-label"><i class="bi bi-question-circle"></i> FAQ</span>
+        </div>
+        <h2 class="section-title reveal">Frequently Asked Questions</h2>
+        <p class="section-subtitle reveal">Everything you need to know before you enroll.</p>
+
+        <div class="accordion mt-4" id="faqAccordion">
+          {% set faqs = [
+            ('Do I need prior coding experience?', 'No! Our beginner tracks start from absolute zero. We make sure every student builds a solid foundation before moving to advanced topics.'),
+            ('What is the class schedule?', 'We offer weekend batches (Sat–Sun, 4 hours/day), weekday evening batches (Mon–Fri, 2 hours/day), and intensive full-day bootcamps.'),
+            ('Will I get a certificate?', 'Yes. Every student who completes the program receives a digitally-verifiable certificate. We also provide additional certification exam guidance.'),
+            ('Is placement guaranteed?', 'We offer strong placement support with resume reviews, mock interviews, and job referrals to our hiring partners. Our current placement rate is 98%.'),
+            ('What if I miss a class?', 'All sessions are recorded. Missed classes are available as recordings within 24 hours so you never fall behind.'),
+            ('Can I pay in installments?', 'Yes! We offer easy 2–3 installment payment options via Razorpay with no extra charges. Scholarships are also available for meritorious students.'),
+            ('How large are the batches?', 'We keep batches small (max 25 students) to ensure every student gets personal attention from the instructor.'),
+            ('Is online training available?', 'Yes, all programs are available both in-person (Pune) and fully online via our live interactive platform.')
+          ] %}
+
+          {% for q, a in faqs %}
+          <div class="faq-item reveal delay-{{ (loop.index % 3) + 1 }}">
+            <button class="faq-question collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#faq{{ loop.index }}" aria-expanded="false">
+              {{ q }}
+              <i class="bi bi-plus-lg faq-icon"></i>
+            </button>
+            <div id="faq{{ loop.index }}" class="collapse" data-bs-parent="#faqAccordion">
+              <div class="faq-answer">{{ a }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA SECTION ===== -->
+<section class="cta-section py-5" style="padding:5rem 0;">
+  <div class="container">
+    <div class="cta-content text-center">
+      <span class="section-label mb-3 d-inline-flex" style="background:rgba(255,255,255,.15); color:rgba(255,255,255,.9);">
+        <i class="bi bi-rocket-takeoff"></i> Limited Seats Available
+      </span>
+      <h2 class="cta-title">Ready to Transform Your Career?</h2>
+      <p class="cta-subtitle mx-auto">Join 500+ students who levelled up with SkillSprint Academy. Next batch starts soon — secure your seat today.</p>
+      <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a href="{{ url_for('auth.register') }}" class="btn-hero-primary" id="cta-register-btn">
+          <i class="bi bi-mortarboard"></i> Enroll Now — It's Free
+        </a>
+        <a href="/contact" class="btn-hero-outline">
+          <i class="bi bi-telephone"></i> Talk to a Counsellor
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NEWSLETTER ===== -->
+<section class="newsletter-section">
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-6">
+        <h4 style="color:var(--white); font-family:'Outfit', sans-serif; font-weight:700; margin:0;">
+          <i class="bi bi-envelope-paper me-2" style="color:var(--gold-light)"></i>
+          Stay in the loop
+        </h4>
+        <p style="color:var(--gray-400); font-size:.9rem; margin:.5rem 0 0;">Get early access to new courses, batch announcements &amp; career tips.</p>
+      </div>
+      <div class="col-lg-6">
+        <form class="newsletter-form d-flex" id="newsletterForm" onsubmit="handleNewsletter(event)">
+          <input type="email" class="form-control" placeholder="Enter your email address" required>
+          <button type="submit" class="btn-subscribe">
+            <i class="bi bi-send me-1"></i> Subscribe
+          </button>
+        </form>
+        <p class="mt-2" style="font-size:.75rem; color:var(--gray-500);">No spam, unsubscribe anytime.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container">
+    <div class="row g-5">
+      <!-- Brand -->
+      <div class="col-lg-4 col-md-6">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <img src="/static/img/skill_logo.png" alt="SkillSprint Academy" width="40">
+          <div>
+            <div class="footer-brand-title">SkillSprint</div>
+            <div class="footer-brand-sub">Academy</div>
+          </div>
+        </div>
+        <p class="footer-desc">India's leading professional tech training academy. We transform ambitious learners into industry-ready professionals.</p>
+        <div class="footer-social">
+          <a href="#" class="social-btn" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="social-btn" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="social-btn" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+          <a href="#" class="social-btn" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+          <a href="#" class="social-btn" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+        </div>
+        <div class="mt-3">
+          <span class="security-badge"><i class="bi bi-shield-lock-fill"></i> Secure & Privacy Protected</span>
+        </div>
+      </div>
+
+      <!-- Programs -->
+      <div class="col-lg-2 col-md-3 col-6">
+        <div class="footer-heading">Programs</div>
+        <ul class="footer-links">
+          <li><a href="/courses"><i class="bi bi-chevron-right"></i>All Courses</a></li>
+          <li><a href="/courses"><i class="bi bi-chevron-right"></i>Web Development</a></li>
+          <li><a href="/courses"><i class="bi bi-chevron-right"></i>AI & ML</a></li>
+          <li><a href="/courses"><i class="bi bi-chevron-right"></i>Data Science</a></li>
+          <li><a href="/courses"><i class="bi bi-chevron-right"></i>Cybersecurity</a></li>
+        </ul>
+      </div>
+
+      <!-- Company -->
+      <div class="col-lg-2 col-md-3 col-6">
+        <div class="footer-heading">Company</div>
+        <ul class="footer-links">
+          <li><a href="/about"><i class="bi bi-chevron-right"></i>About Us</a></li>
+          <li><a href="/contact"><i class="bi bi-chevron-right"></i>Contact</a></li>
+          <li><a href="#"><i class="bi bi-chevron-right"></i>Careers</a></li>
+          <li><a href="#"><i class="bi bi-chevron-right"></i>Blog</a></li>
+          <li><a href="#"><i class="bi bi-chevron-right"></i>Partners</a></li>
+        </ul>
+      </div>
+
+      <!-- Support -->
+      <div class="col-lg-2 col-md-6 col-6">
+        <div class="footer-heading">Support</div>
+        <ul class="footer-links">
+          <li><a href="#"><i class="bi bi-chevron-right"></i>Help Center</a></li>
+          <li><a href="/contact"><i class="bi bi-chevron-right"></i>Contact Support</a></li>
+          <li><a href="#faqAccordion"><i class="bi bi-chevron-right"></i>FAQ</a></li>
+          <li><a href="/privacy"><i class="bi bi-chevron-right"></i>Privacy Policy</a></li>
+          <li><a href="/terms"><i class="bi bi-chevron-right"></i>Terms of Service</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="col-lg-2 col-md-6 col-6">
+        <div class="footer-heading">Get in Touch</div>
+        <ul class="footer-links">
+          <li>
+            <a href="mailto:skillsprint_support@gmail.com">
+              <i class="bi bi-envelope-fill" style="color:var(--success)"></i>
+              skillsprint_support@gmail.com
+            </a>
+          </li>
+          <li>
+            <a href="mailto:skillsprint_support@gmail.com">
+              <i class="bi bi-envelope-fill" style="color:var(--accent-light)"></i>
+              support@skillsprint
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="bi bi-geo-alt-fill" style="color:var(--danger)"></i>
+              Pune, Maharashtra
+            </a>
+          </li>
+          <li>
+            <a href="https://wa.me/910000000000" target="_blank">
+              <i class="bi bi-whatsapp" style="color:#25d366"></i>
+              WhatsApp Us
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="footer-divider">
+
+    <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+      <span>&copy; {{ 2025 }} SkillSprint Academy. All rights reserved.</span>
+      <span>Made by <img src="/static/img/techwolf.png" alt="TechWolf" width="20"> TechWolf</span>
+      <span>
+        <a href="/privacy" style="color:var(--gray-500);">Privacy</a> &middot;
+        <a href="/terms" style="color:var(--gray-500);">Terms</a> &middot;
+        <a href="#" style="color:var(--gray-500);">Cookies</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== FLOATING WHATSAPP ===== -->
+<a href="https://wa.me/910000000000" 
+   class="btn-whatsapp-float" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+  <i class="bi bi-whatsapp"></i>
+</a>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Navbar scroll effect
+const nav = document.getElementById('mainNav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+});
+
+// Scroll reveal
+const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.12 });
+revealEls.forEach(el => observer.observe(el));
+
+// Animated count-up
+function animateCount(el) {
+  const target = +el.dataset.target;
+  const duration = 1800;
+  const step = target / (duration / 16);
+  let current = 0;
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = Math.floor(current);
+    if (current >= target) clearInterval(timer);
+  }, 16);
+}
+
+const countEls = document.querySelectorAll('.count-up');
+const countObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { animateCount(e.target); countObserver.unobserve(e.target); }
+  });
+}, { threshold: 0.5 });
+countEls.forEach(el => countObserver.observe(el));
+
+// Hero stat counter (simpler)
+const heroStats = document.querySelectorAll('.hero-stat-number[data-count]');
+heroStats.forEach(el => {
+  const target = +el.dataset.count;
+  let cur = 0;
+  const step = target / 60;
+  const t = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = Math.floor(cur) + (target === 98 ? '%' : '+');
+    if (cur >= target) clearInterval(t);
+  }, 25);
+});
+
+// Newsletter
+function handleNewsletter(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.btn-subscribe');
+  btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Subscribed!';
+  btn.style.background = 'var(--success)';
+  setTimeout(() => {
+    btn.innerHTML = '<i class="bi bi-send me-1"></i> Subscribe';
+    btn.style.background = '';
+    e.target.reset();
+  }, 3000);
+}
+
+// FAQ icon toggle
+document.querySelectorAll('.faq-question').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const icon = this.querySelector('.faq-icon');
+    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+    document.querySelectorAll('.faq-question').forEach(b => {
+      b.querySelector('.faq-icon').className = 'bi bi-plus-lg faq-icon';
+    });
+    if (!isExpanded) icon.className = 'bi bi-x-lg faq-icon';
+  });
+});
+</script>
+</body>
+</html>

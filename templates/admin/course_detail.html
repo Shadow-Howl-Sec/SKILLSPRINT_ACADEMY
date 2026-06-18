@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Management - Admin Panel</title>
+    <link rel="icon" href="/static/img/skill_logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .admin-sidebar {
+            background: var(--primary-color);
+            min-height: 100vh;
+            color: var(--white);
+        }
+        
+        .admin-sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-sidebar .nav-link:hover,
+        .admin-sidebar .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+        }
+        
+        .admin-sidebar .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px;
+        }
+        
+        .admin-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+        
+        .admin-content {
+            padding: 2rem;
+            background: var(--light-gray);
+            min-height: calc(100vh - 80px);
+        }
+        
+        .course-section {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 0.75rem;
+            color: var(--primary-color);
+        }
+        
+        .test-card, .project-card {
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .test-card h6, .project-card h6 {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .test-stats, .project-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .stat-item {
+            background: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="admin-sidebar p-3">
+                    <div class="d-flex align-items-center mb-4">
+                        <img src="/static/img/skill_logo.png" alt="SkillSprint Academy" width="40" class="me-3">
+                        <div>
+                            <h6 class="mb-0">Admin Panel</h6>
+                            <small>SkillSprint Academy</small>
+                        </div>
+                    </div>
+                    
+                    <nav class="nav flex-column">
+                        <a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_users') }}">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                        <a class="nav-link active" href="{{ url_for('admin.admin_courses') }}">
+                            <i class="bi bi-book"></i> Courses
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_coupons') }}">
+                            <i class="bi bi-tag"></i> Coupons
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_payments') }}">
+                            <i class="bi bi-credit-card"></i> Payments
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_system') }}">
+                            <i class="bi bi-gear"></i> System
+                        </a>
+                        <hr class="my-3">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="bi bi-house"></i> View Site
+                        </a>
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 px-0">
+                <!-- Header -->
+                <div class="admin-header">
+                    <div class="container-fluid">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="mb-0">Course Management: {{ course.title }}</h4>
+                                <small class="text-muted">Manage course content, tests, and projects</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2">Admin</span>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-person-circle"></i> {{ current_user.first_name }}
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Profile</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content -->
+                <div class="admin-content">
+                    <div class="container-fluid">
+                        <!-- Course Overview -->
+                        <div class="course-section">
+                            <h5 class="section-title">
+                                <i class="bi bi-info-circle"></i>
+                                Course Overview
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h4>{{ course.title }}</h4>
+                                    <p class="text-muted">{{ course.description }}</p>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <strong>Category:</strong><br>
+                                            <span class="badge bg-primary">{{ course.category.title() }}</span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Difficulty:</strong><br>
+                                            <span class="badge bg-info">{{ course.difficulty.title() }}</span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Duration:</strong><br>
+                                            <span>{{ course.duration_weeks }} weeks</span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Price:</strong><br>
+                                            <span>₹{{ "{:,.0f}".format(course.price) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <span class="status-badge status-{{ 'active' if course.is_active else 'inactive' }}">
+                                        {{ 'Active' if course.is_active else 'Inactive' }}
+                                    </span>
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary btn-sm" onclick="editCourse()">
+                                            <i class="bi bi-pencil"></i> Edit Course
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="viewEnrollments()">
+                                            <i class="bi bi-people"></i> View Enrollments
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Practice Tests -->
+                        <div class="course-section">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="section-title mb-0">
+                                    <i class="bi bi-question-circle"></i>
+                                    Practice Tests
+                                </h5>
+                                <button class="btn btn-primary btn-sm" onclick="addPracticeTest()">
+                                    <i class="bi bi-plus"></i> Add Test
+                                </button>
+                            </div>
+                            
+                            {% if course.practice_tests_rel %}
+                                {% for test in course.practice_tests_rel %}
+                                <div class="test-card">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6>{{ test.title }}</h6>
+                                            <p class="text-muted mb-2">{{ test.description }}</p>
+                                            <div class="test-stats">
+                                                <span class="stat-item">
+                                                    <i class="bi bi-clock"></i> {{ test.time_limit }} min
+                                                </span>
+                                                <span class="stat-item">
+                                                    <i class="bi bi-check-circle"></i> {{ test.pass_percentage }}% pass
+                                                </span>
+                                                <span class="stat-item">
+                                                    <i class="bi bi-arrow-repeat"></i> {{ test.max_attempts }} attempts
+                                                </span>
+                                                <span class="stat-item">
+                                                    <i class="bi bi-people"></i> {{ test.attempts|length }} attempts
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="status-badge status-{{ 'active' if test.is_active else 'inactive' }}">
+                                                {{ 'Active' if test.is_active else 'Inactive' }}
+                                            </span>
+                                            <div class="mt-2">
+                                                <button class="btn btn-outline-primary btn-sm" onclick="editTest({{ test.id }})">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info btn-sm" onclick="viewTestResults({{ test.id }})">
+                                                    <i class="bi bi-graph-up"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="bi bi-question-circle" style="font-size: 3rem; color: var(--text-secondary);"></i>
+                                    <h6 class="mt-3">No Practice Tests</h6>
+                                    <p class="text-muted">Add practice tests to help students evaluate their progress.</p>
+                                    <button class="btn btn-primary" onclick="addPracticeTest()">
+                                        <i class="bi bi-plus"></i> Add First Test
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Mini Projects -->
+                        <div class="course-section">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="section-title mb-0">
+                                    <i class="bi bi-briefcase"></i>
+                                    Mini Projects
+                                </h5>
+                                <button class="btn btn-primary btn-sm" onclick="addMiniProject()">
+                                    <i class="bi bi-plus"></i> Add Project
+                                </button>
+                            </div>
+                            
+                            {% if course.mini_projects_rel %}
+                                {% for project in course.mini_projects_rel %}
+                                <div class="project-card">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6>{{ project.title }}</h6>
+                                            <p class="text-muted mb-2">{{ project.description }}</p>
+                                            <div class="project-stats">
+                                                <span class="stat-item">
+                                                    <i class="bi bi-flag"></i> {{ project.difficulty_level.title() }}
+                                                </span>
+                                                <span class="stat-item">
+                                                    <i class="bi bi-clock"></i> {{ project.estimated_hours }} hours
+                                                </span>
+                                                <span class="stat-item">
+                                                    <i class="bi bi-upload"></i> {{ project.submissions|length }} submissions
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="status-badge status-{{ 'active' if project.is_active else 'inactive' }}">
+                                                {{ 'Active' if project.is_active else 'Inactive' }}
+                                            </span>
+                                            <div class="mt-2">
+                                                <button class="btn btn-outline-primary btn-sm" onclick="editProject({{ project.id }})">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info btn-sm" onclick="viewSubmissions({{ project.id }})">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="bi bi-briefcase" style="font-size: 3rem; color: var(--text-secondary);"></i>
+                                    <h6 class="mt-3">No Mini Projects</h6>
+                                    <p class="text-muted">Add mini projects to help students develop industry-ready skills.</p>
+                                    <button class="btn btn-primary" onclick="addMiniProject()">
+                                        <i class="bi bi-plus"></i> Add First Project
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Course Materials -->
+                        <div class="course-section">
+                            <h5 class="section-title">
+                                <i class="bi bi-file-earmark-text"></i>
+                                Course Materials
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Video Links</h6>
+                                    <div class="mb-3">
+                                        <textarea class="form-control" rows="4" placeholder="Enter video links (one per line)">{% if course.video_links %}{{ course.video_links }}{% endif %}</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Downloadable Materials</h6>
+                                    <div class="mb-3">
+                                        <textarea class="form-control" rows="4" placeholder="Enter material links (one per line)">{% if course.course_materials %}{{ course.course_materials }}{% endif %}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Target Branches</h6>
+                                    <div class="mb-3">
+                                        <select class="form-select" multiple>
+                                            <option value="IT" {% if 'IT' in course.target_branches %}selected{% endif %}>Information Technology (IT)</option>
+                                            <option value="Computer Engineering" {% if 'Computer Engineering' in course.target_branches %}selected{% endif %}>Computer Engineering</option>
+                                            <option value="AI&DS" {% if 'AI&DS' in course.target_branches %}selected{% endif %}>Artificial Intelligence & Data Science (AI&DS)</option>
+                                            <option value="AI&ML" {% if 'AI&ML' in course.target_branches %}selected{% endif %}>Artificial Intelligence & Machine Learning (AI&ML)</option>
+                                            <option value="CS-related" {% if 'CS-related' in course.target_branches %}selected{% endif %}>Other CS-related domains</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Industry Relevance</h6>
+                                    <div class="mb-3">
+                                        <textarea class="form-control" rows="4" placeholder="Describe industry applications and relevance">{% if course.industry_relevance %}{{ course.industry_relevance }}{% endif %}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="saveCourseMaterials()">
+                                <i class="bi bi-save"></i> Save Materials
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function editCourse() {
+            // Redirect to course edit page
+            window.location.href = `/admin/courses/edit/${course.id}`;
+        }
+        
+        function viewEnrollments() {
+            // Show enrollments modal or redirect
+            alert('View enrollments functionality coming soon!');
+        }
+        
+        function addPracticeTest() {
+            // Open add test modal
+            alert('Add practice test functionality coming soon!');
+        }
+        
+        function editTest(testId) {
+            // Open edit test modal
+            alert('Edit test functionality coming soon!');
+        }
+        
+        function viewTestResults(testId) {
+            // Show test results
+            alert('View test results functionality coming soon!');
+        }
+        
+        function addMiniProject() {
+            // Open add project modal
+            alert('Add mini project functionality coming soon!');
+        }
+        
+        function editProject(projectId) {
+            // Open edit project modal
+            alert('Edit project functionality coming soon!');
+        }
+        
+        function viewSubmissions(projectId) {
+            // Show project submissions
+            alert('View submissions functionality coming soon!');
+        }
+        
+        function saveCourseMaterials() {
+            // Save course materials
+            alert('Course materials saved successfully!');
+        }
+    </script>
+</body>
+</html> 

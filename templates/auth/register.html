@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — SkillSprint Academy</title>
+  <link rel="icon" href="/static/img/skill_logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    :root {
+      --auth-bg: #0f172a;
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --accent-glow: rgba(99, 102, 241, 0.5);
+      --step-active: #6366f1;
+      --step-inactive: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+      background-color: var(--auth-bg);
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 0;
+    }
+
+    .auth-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .blob {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: var(--accent-glow);
+      filter: blur(100px);
+      border-radius: 50%;
+      opacity: 0.1;
+      animation: move 25s infinite alternate;
+    }
+
+    .blob-1 { top: -20%; right: -10%; background: #6366f1; }
+    .blob-2 { bottom: -20%; left: -10%; background: #10b981; animation-delay: -7s; }
+
+    @keyframes move {
+      from { transform: translate(0, 0) scale(1); }
+      to { transform: translate(-100px, 100px) scale(1.1); }
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 1200px;
+      padding: 1rem;
+    }
+
+    .auth-glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      overflow: hidden;
+      display: flex;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      animation: card-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes card-reveal {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .auth-visual {
+      flex: 0 0 400px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(16, 185, 129, 0.1));
+      padding: 3.5rem;
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .auth-form-side {
+      flex: 1;
+      padding: 3.5rem;
+      background: rgba(15, 23, 42, 0.2);
+    }
+
+    @media (max-width: 991px) {
+      .auth-visual { display: none; }
+      .auth-form-side { padding: 2.5rem 1.5rem; }
+      .auth-container { max-width: 600px; }
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      margin-bottom: 3rem;
+    }
+
+    .brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: #fff;
+    }
+
+    .step-indicator {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      opacity: 0.5;
+      transition: all 0.3s;
+    }
+
+    .step-item.active {
+      opacity: 1;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--step-inactive);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border: 1px solid var(--glass-border);
+    }
+
+    .step-item.active .step-number {
+      background: var(--step-active);
+      box-shadow: 0 0 15px var(--step-active);
+    }
+
+    .step-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .auth-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.95rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .form-section {
+      display: none;
+      animation: section-fade 0.4s ease-out;
+    }
+
+    .form-section.active {
+      display: block;
+    }
+
+    @keyframes section-fade {
+      from { opacity: 0; transform: translateX(10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .form-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-control, .form-select {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      color: #fff;
+      transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--step-active);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+      color: #fff;
+    }
+
+    .form-select option {
+      background: #1e293b;
+      color: #fff;
+    }
+
+    .btn-step {
+      border-radius: 12px;
+      padding: 0.85rem 1.5rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+
+    .btn-next {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border: none;
+      color: #fff;
+    }
+
+    .btn-prev {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .btn-step:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-next:hover {
+      box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+    }
+
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .benefit-icon {
+      color: #10b981;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-backdrop">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <div class="auth-container">
+    <div class="auth-glass-card">
+      <!-- Sidebar -->
+      <div class="auth-visual">
+        <a href="/" class="brand-logo">
+          <img src="/static/img/skill_logo.png" alt="SkillSprint" width="45">
+          <span class="brand-name">SkillSprint Academy</span>
+        </a>
+
+        <div class="step-indicator">
+          <div class="step-item active" id="step-ind-1">
+            <div class="step-number">1</div>
+            <div class="step-label">Personal Profile</div>
+          </div>
+          <div class="step-item" id="step-ind-2">
+            <div class="step-number">2</div>
+            <div class="step-label">Academic Details</div>
+          </div>
+          <div class="step-item" id="step-ind-3">
+            <div class="step-number">3</div>
+            <div class="step-label">Account Security</div>
+          </div>
+        </div>
+
+        <div class="mt-auto">
+          <div class="benefit-item">
+            <i class="bi bi-check-circle-fill benefit-icon"></i>
+            <span>Verified Industry Certification</span>
+          </div>
+          <div class="benefit-item">
+            <i class="bi bi-check-circle-fill benefit-icon"></i>
+            <span>Direct Access to Mentors</span>
+          </div>
+          <div class="benefit-item">
+            <i class="bi bi-check-circle-fill benefit-icon"></i>
+            <span>Placement Support for Life</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="auth-form-side">
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-subtitle">Join 2,400+ students on their journey to tech excellence.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert" style="background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2); color:#fca5a5; border-radius:12px; font-size:0.85rem;">
+                {{ message }}
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.register') }}" id="regForm">
+          {{ form.hidden_tag() }}
+
+          <!-- Step 1: Personal -->
+          <div class="form-section active" id="section-1">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">First Name</label>
+                {{ form.first_name(class="form-control", placeholder="Rahul") }}
+                {% if form.first_name.errors %}<div class="text-danger small mt-1">{% for e in form.first_name.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Last Name</label>
+                {{ form.last_name(class="form-control", placeholder="Sharma") }}
+                {% if form.last_name.errors %}<div class="text-danger small mt-1">{% for e in form.last_name.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Phone Number</label>
+                {{ form.phone(class="form-control", placeholder="+91 00000 00000") }}
+                {% if form.phone.errors %}<div class="text-danger small mt-1">{% for e in form.phone.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+            </div>
+            <div class="d-flex justify-content-end mt-4">
+              <button type="button" class="btn-step btn-next" onclick="goToStep(2)">Next: Academic Details <i class="bi bi-arrow-right ms-2"></i></button>
+            </div>
+          </div>
+
+          <!-- Step 2: Academic -->
+          <div class="form-section" id="section-2">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">College / University</label>
+                {{ form.college(class="form-control", placeholder="IIT Bombay / Pune University") }}
+                {% if form.college.errors %}<div class="text-danger small mt-1">{% for e in form.college.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Year of Study</label>
+                {{ form.year(class="form-select") }}
+                {% if form.year.errors %}<div class="text-danger small mt-1">{% for e in form.year.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Branch / Stream</label>
+                {{ form.branch(class="form-control", placeholder="Computer Science") }}
+                {% if form.branch.errors %}<div class="text-danger small mt-1">{% for e in form.branch.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+              <button type="button" class="btn-step btn-prev" onclick="goToStep(1)">Back</button>
+              <button type="button" class="btn-step btn-next" onclick="goToStep(3)">Next: Account Security <i class="bi bi-arrow-right ms-2"></i></button>
+            </div>
+          </div>
+
+          <!-- Step 3: Account -->
+          <div class="form-section" id="section-3">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Username</label>
+                {{ form.username(class="form-control", placeholder="rahul_dev") }}
+                {% if form.username.errors %}<div class="text-danger small mt-1">{% for e in form.username.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">Email Address</label>
+                {{ form.email(class="form-control", placeholder="rahul@example.com") }}
+                {% if form.email.errors %}<div class="text-danger small mt-1">{% for e in form.email.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Password</label>
+                {{ form.password(class="form-control", placeholder="••••••••") }}
+                {% if form.password.errors %}<div class="text-danger small mt-1">{% for e in form.password.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Confirm Password</label>
+                {{ form.confirm_password(class="form-control", placeholder="••••••••") }}
+                {% if form.confirm_password.errors %}<div class="text-danger small mt-1">{% for e in form.confirm_password.errors %}{{ e }}{% endfor %}</div>{% endif %}
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+              <button type="button" class="btn-step btn-prev" onclick="goToStep(2)">Back</button>
+              <button type="submit" class="btn-step btn-next">Complete Registration <i class="bi bi-check-circle ms-2"></i></button>
+            </div>
+          </div>
+        </form>
+
+        <p class="text-center mt-4 mb-0" style="font-size:0.9rem; color:rgba(255,255,255,0.5);">
+          Already have an account? <a href="{{ url_for('auth.login') }}" style="color:#6366f1; font-weight:700; text-decoration:none;">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function goToStep(step) {
+      // Basic validation check before moving to next step (optional but good)
+      
+      // Update UI
+      document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+      document.getElementById('section-' + step).classList.add('active');
+      
+      document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active'));
+      for(let i=1; i<=step; i++) {
+        document.getElementById('step-ind-' + i).classList.add('active');
+      }
+    }
+
+    // If there are errors in specific fields, jump to that step initially
+    {% if form.first_name.errors or form.last_name.errors or form.phone.errors %}
+      goToStep(1);
+    {% elif form.college.errors or form.year.errors or form.branch.errors %}
+      goToStep(2);
+    {% elif form.username.errors or form.email.errors or form.password.errors or form.confirm_password.errors %}
+      goToStep(3);
+    {% endif %}
+  </script>
+</body>
+</html>

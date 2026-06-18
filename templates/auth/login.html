@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — SkillSprint Academy</title>
+  <link rel="icon" href="/static/img/skill_logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    :root {
+      --auth-bg: #0f172a;
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --accent-glow: rgba(99, 102, 241, 0.5);
+    }
+
+    body {
+      background-color: var(--auth-bg);
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .blob {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: var(--accent-glow);
+      filter: blur(80px);
+      border-radius: 50%;
+      opacity: 0.15;
+      animation: move 20s infinite alternate;
+    }
+
+    .blob-1 { top: -10%; left: -10%; background: #6366f1; }
+    .blob-2 { bottom: -10%; right: -10%; background: #ec4899; width: 600px; height: 600px; animation-delay: -5s; }
+    .blob-3 { top: 40%; left: 30%; background: #06b6d4; width: 300px; height: 300px; animation-delay: -10s; }
+
+    @keyframes move {
+      from { transform: translate(0, 0) scale(1); }
+      to { transform: translate(100px, 50px) scale(1.1); }
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 1100px;
+      padding: 1.5rem;
+      perspective: 1000px;
+    }
+
+    .auth-glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      overflow: hidden;
+      display: flex;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: card-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes card-reveal {
+      from { opacity: 0; transform: translateY(30px) rotateX(-5deg); }
+      to { opacity: 1; transform: translateY(0) rotateX(0); }
+    }
+
+    .auth-visual {
+      flex: 1;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(79, 70, 229, 0.2));
+      padding: 3.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-right: 1px solid var(--glass-border);
+    }
+
+    .auth-form-side {
+      flex: 0 0 450px;
+      padding: 3.5rem;
+      background: rgba(15, 23, 42, 0.3);
+    }
+
+    @media (max-width: 991px) {
+      .auth-visual { display: none; }
+      .auth-form-side { flex: 1; padding: 2.5rem 1.5rem; }
+      .auth-container { max-width: 500px; }
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      margin-bottom: 2.5rem;
+    }
+
+    .brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .brand-sub {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 2px;
+    }
+
+    .auth-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      color: #fff;
+      transition: all 0.2s;
+    }
+
+    .form-control:focus {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+      color: #fff;
+    }
+
+    .btn-auth-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      width: 100%;
+      margin-top: 1rem;
+      transition: all 0.2s;
+    }
+
+    .btn-auth-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #fff;
+      color: #1e293b;
+      border-radius: 12px;
+      padding: 0.75rem;
+      font-weight: 600;
+      text-decoration: none;
+      width: 100%;
+      margin-bottom: 1.5rem;
+      transition: all 0.2s;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 0.8rem;
+      margin: 1.5rem 0;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .divider:not(:empty)::before { margin-right: 1rem; }
+    .divider:not(:empty)::after { margin-left: 1rem; }
+
+    .input-group-text {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      margin-bottom: 2rem;
+    }
+
+    .feature-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(99, 102, 241, 0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #818cf8;
+      flex-shrink: 0;
+    }
+
+    .feature-text div:first-child {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .feature-text div:last-child {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-backdrop">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="auth-container">
+    <div class="auth-glass-card">
+      <!-- Visual Side -->
+      <div class="auth-visual">
+        <a href="/" class="brand-logo">
+          <img src="/static/img/skill_logo.png" alt="SkillSprint" width="45">
+          <div>
+            <div class="brand-name">SkillSprint</div>
+            <div class="brand-sub">Academy</div>
+          </div>
+        </a>
+        
+        <h2 style="font-family:'Outfit',sans-serif; font-weight:800; font-size:2.2rem; margin-bottom:2.5rem; line-height:1.2;">
+          Elevate your tech<br><span style="color:#818cf8;">career path</span> with us.
+        </h2>
+
+        <div class="feature-item">
+          <div class="feature-icon"><i class="bi bi-rocket-takeoff"></i></div>
+          <div class="feature-text">
+            <div>Accelerated Learning</div>
+            <div>Go from zero to industry-ready in record time with expert guidance.</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
+          <div class="feature-text">
+            <div>Certified Excellence</div>
+            <div>Industry-recognized certifications backed by top tech companies.</div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon"><i class="bi bi-people"></i></div>
+          <div class="feature-text">
+            <div>Elite Community</div>
+            <div>Join a network of 500+ professionals working at global tech giants.</div>
+          </div>
+        </div>
+
+        <div class="mt-auto pt-4" style="border-top:1px solid var(--glass-border);">
+          <div class="d-flex align-items-center gap-3">
+            <div class="d-flex -space-x-2">
+              <img src="https://i.pravatar.cc/100?u=1" width="32" style="border-radius:50%; border:2px solid var(--auth-bg);">
+              <img src="https://i.pravatar.cc/100?u=2" width="32" style="border-radius:50%; border:2px solid var(--auth-bg); margin-left:-10px;">
+              <img src="https://i.pravatar.cc/100?u=3" width="32" style="border-radius:50%; border:2px solid var(--auth-bg); margin-left:-10px;">
+            </div>
+            <span style="font-size:0.85rem; color:rgba(255,255,255,0.6);">Join <b>2,400+</b> active learners globally.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Side -->
+      <div class="auth-form-side">
+        <div class="d-flex align-items-center gap-2 mb-4 d-lg-none">
+          <img src="/static/img/skill_logo.png" alt="SkillSprint" width="32">
+          <span class="brand-name" style="font-size:1.1rem;">SkillSprint Academy</span>
+        </div>
+
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Sign in to your professional dashboard.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert" style="background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2); color:#fca5a5; border-radius:12px; font-size:0.85rem;">
+                {{ message }}
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <a href="{{ url_for('google.login') }}" class="btn-google">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
+          Continue with Google
+        </a>
+
+        <div class="divider">or use email</div>
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            <label class="form-label">Email Address</label>
+            {{ form.email(class="form-control", placeholder="name@company.com") }}
+            {% if form.email.errors %}
+              <div class="text-danger small mt-1">{% for e in form.email.errors %}{{ e }}{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between">
+              <label class="form-label">Password</label>
+              <a href="{{ url_for('auth.reset_password_request') }}" style="font-size:0.75rem; color:#818cf8; text-decoration:none;">Forgot password?</a>
+            </div>
+            <div class="input-group">
+              {{ form.password(class="form-control", id="passwordField", placeholder="••••••••") }}
+              <span class="input-group-text" onclick="togglePassword()">
+                <i class="bi bi-eye-slash" id="toggleIcon"></i>
+              </span>
+            </div>
+            {% if form.password.errors %}
+              <div class="text-danger small mt-1">{% for e in form.password.errors %}{{ e }}{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-check mb-4">
+            {{ form.remember(class="form-check-input", style="background-color:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.1);") }}
+            <label class="form-check-label" style="font-size:0.85rem; color:rgba(255,255,255,0.5);">Remember me for 30 days</label>
+          </div>
+
+          <button type="submit" class="btn-auth-primary">
+            Sign In to Account
+          </button>
+        </form>
+
+        <p class="text-center mt-4 mb-0" style="font-size:0.9rem; color:rgba(255,255,255,0.5);">
+          New here? <a href="{{ url_for('auth.register') }}" style="color:#818cf8; font-weight:700; text-decoration:none;">Create a free account</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const p = document.getElementById('passwordField');
+      const i = document.getElementById('toggleIcon');
+      if (p.type === 'password') {
+        p.type = 'text';
+        i.classList.replace('bi-eye-slash', 'bi-eye');
+      } else {
+        p.type = 'password';
+        i.classList.replace('bi-eye', 'bi-eye-slash');
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Management - Admin Panel</title>
+    <link rel="icon" href="/static/img/skill_logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .admin-sidebar {
+            background: var(--primary-color);
+            min-height: 100vh;
+            color: var(--white);
+        }
+        
+        .admin-sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-sidebar .nav-link:hover,
+        .admin-sidebar .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+        }
+        
+        .admin-sidebar .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px;
+        }
+        
+        .admin-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+        
+        .admin-content {
+            padding: 2rem;
+            background: var(--light-gray);
+            min-height: calc(100vh - 80px);
+        }
+        
+        .payment-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .payment-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .payment-id {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .payment-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-right: 0.5rem;
+        }
+        
+        .detail-value {
+            color: var(--text-primary);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-refunded {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .amount {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--success-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="admin-sidebar p-3">
+                    <div class="d-flex align-items-center mb-4">
+                        <img src="/static/img/skill_logo.png" alt="SkillSprint Academy" width="40" class="me-3">
+                        <div>
+                            <h6 class="mb-0">Admin Panel</h6>
+                            <small>SkillSprint Academy</small>
+                        </div>
+                    </div>
+                    
+                    <nav class="nav flex-column">
+                        <a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_users') }}">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_courses') }}">
+                            <i class="bi bi-book"></i> Courses
+                        </a>
+                        <a class="nav-link" href="{{ url_for('admin.admin_coupons') }}">
+                            <i class="bi bi-tag"></i> Coupons
+                        </a>
+                        <a class="nav-link active" href="{{ url_for('admin.admin_payments') }}">
+                            <i class="bi bi-credit-card"></i> Payments
+                        </a>
+                        <hr class="my-3">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="bi bi-house"></i> View Site
+                        </a>
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 px-0">
+                <!-- Header -->
+                <div class="admin-header">
+                    <div class="container-fluid">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="mb-0">Payment Management</h4>
+                                <small class="text-muted">Track and manage all payment transactions</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2">Admin</span>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-person-circle"></i> {{ current_user.first_name }}
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Profile</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content -->
+                <div class="admin-content">
+                    <div class="container-fluid">
+                        <!-- Header Actions -->
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5>All Payments ({{ payments.total }})</h5>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary">
+                                    <i class="bi bi-download"></i> Export
+                                </button>
+                                <button class="btn btn-outline-success">
+                                    <i class="bi bi-graph-up"></i> Reports
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Payments List -->
+                        {% for payment in payments.items %}
+                        <div class="payment-card">
+                            <div class="payment-header">
+                                <div class="d-flex align-items-center">
+                                    <div class="payment-id">#{{ payment.id }}</div>
+                                    <span class="status-badge status-{{ payment.status }} ms-3">
+                                        {{ payment.status.title() }}
+                                    </span>
+                                </div>
+                                <div class="amount">₹{{ "{:,.0f}".format(payment.final_amount) }}</div>
+                            </div>
+                            
+                            <div class="payment-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">User:</span>
+                                    <span class="detail-value">{{ payment.user.first_name }} {{ payment.user.last_name }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Course:</span>
+                                    <span class="detail-value">{{ payment.course.title }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Original Amount:</span>
+                                    <span class="detail-value">₹{{ "{:,.0f}".format(payment.amount) }}</span>
+                                </div>
+                                {% if payment.discount_amount > 0 %}
+                                <div class="detail-item">
+                                    <span class="detail-label">Discount:</span>
+                                    <span class="detail-value">₹{{ "{:,.0f}".format(payment.discount_amount) }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="detail-item">
+                                    <span class="detail-label">Date:</span>
+                                    <span class="detail-value">{{ payment.payment_date.strftime('%b %d, %Y %H:%M') }}</span>
+                                </div>
+                                {% if payment.razorpay_payment_id %}
+                                <div class="detail-item">
+                                    <span class="detail-label">Payment ID:</span>
+                                    <span class="detail-value">{{ payment.razorpay_payment_id }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewPayment({{ payment.id }})">
+                                    <i class="bi bi-eye"></i> View Details
+                                </button>
+                                {% if payment.status == 'completed' %}
+                                <button class="btn btn-sm btn-outline-warning" onclick="refundPayment({{ payment.id }})">
+                                    <i class="bi bi-arrow-return-left"></i> Refund
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if not payments.items %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-credit-card" style="font-size: 3rem; color: var(--text-secondary);"></i>
+                            <h5 class="mt-3">No payments found</h5>
+                            <p class="text-muted">Payment transactions will appear here once users start enrolling.</p>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Pagination -->
+                        {% if payments.pages > 1 %}
+                        <nav aria-label="Payment pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if payments.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.admin_payments', page=payments.prev_num) }}">Previous</a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for page_num in payments.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != payments.page %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('admin.admin_payments', page=page_num) }}">{{ page_num }}</a>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                        {% endif %}
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if payments.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.admin_payments', page=payments.next_num) }}">Next</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function viewPayment(paymentId) {
+            // Implement view functionality
+            alert('View payment ' + paymentId);
+        }
+        
+        function refundPayment(paymentId) {
+            // Implement refund functionality
+            if (confirm('Are you sure you want to refund this payment?')) {
+                alert('Refund payment ' + paymentId);
+            }
+        }
+    </script>
+</body>
+</html> 
