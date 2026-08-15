@@ -10,7 +10,7 @@ import razorpay
 import oracledb
 from flask_dance.contrib.google import make_google_blueprint, google
 from sqlalchemy import text
-from extensions import db, limiter, talisman
+from extensions import db, limiter, talisman, migrate
 
 # Load environment variables
 load_dotenv()
@@ -20,6 +20,7 @@ app.config.from_object('config.Config')
 
 # Initialize extensions
 db.init_app(app)
+migrate.init_app(app, db)
 limiter.init_app(app)
 
 # Basic Talisman config
@@ -59,6 +60,25 @@ from auth import auth
 from admin import admin
 app.register_blueprint(auth)
 app.register_blueprint(admin)
+
+# --- CyberSec Platform Blueprints ---
+from blueprints.onboarding.routes import onboarding_bp
+from blueprints.assessment.routes import assessment_bp
+from blueprints.roadmap.routes import roadmap_bp
+from blueprints.dashboard.routes import dashboard_bp
+from blueprints.labs.routes import labs_bp
+from blueprints.library.routes import library_bp
+from blueprints.assistant.routes import assistant_bp
+from blueprints.job_roles.routes import job_roles_bp
+
+app.register_blueprint(onboarding_bp)
+app.register_blueprint(assessment_bp)
+app.register_blueprint(roadmap_bp)
+app.register_blueprint(dashboard_bp)
+app.register_blueprint(labs_bp)
+app.register_blueprint(library_bp)
+app.register_blueprint(assistant_bp)
+app.register_blueprint(job_roles_bp)
 
 login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Please log in to access this page.'
@@ -209,10 +229,8 @@ def contact_submit():
 @app.route('/dashboard')
 @login_required
 def student_dashboard():
-    from models import Enrollment
-    enrollments = Enrollment.query.filter_by(user_id=current_user.id).all()
-    now = datetime.now(timezone.utc)
-    return render_template('student/dashboard.html', enrollments=enrollments, now=now)
+    """Redirect legacy dashboard to new cybersecurity dashboard."""
+    return redirect(url_for('dashboard.today'))
 
 @app.route('/profile')
 @login_required

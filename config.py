@@ -40,6 +40,24 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
     PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
 
+    # --- CyberSec Platform ---
+    # Anthropic AI Tutor
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+
+    # XP & Gamification
+    XP_PER_CONTENT_ITEM = int(os.environ.get('XP_PER_CONTENT_ITEM', 10))
+    XP_PER_LAB = int(os.environ.get('XP_PER_LAB', 25))
+    XP_PER_QUIZ = int(os.environ.get('XP_PER_QUIZ', 15))
+    XP_STREAK_BONUS = int(os.environ.get('XP_STREAK_BONUS', 5))
+    STREAK_FREEZES_PER_WEEK = int(os.environ.get('STREAK_FREEZES_PER_WEEK', 1))
+
+    # Assessment Engine
+    ASSESSMENT_QUESTIONS_PER_AREA = int(os.environ.get('ASSESSMENT_QUESTIONS_PER_AREA', 5))
+    ASSESSMENT_START_DIFFICULTY = int(os.environ.get('ASSESSMENT_START_DIFFICULTY', 3))  # 1-5
+
+    # Roadmap Engine
+    ROADMAP_BUFFER_PERCENT = float(os.environ.get('ROADMAP_BUFFER_PERCENT', 0.20))  # 20% buffer for spaced rep
+
 class DevelopmentConfig(Config):
     DEBUG = True
 
