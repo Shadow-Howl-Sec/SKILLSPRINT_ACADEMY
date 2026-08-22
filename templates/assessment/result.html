@@ -1,0 +1,56 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Assessment Result — SkillSprint{% endblock %}
+{% block page_title %}Your Skill Profile{% endblock %}
+{% block page_subtitle %}Overall {{ profile.overall or 0 }}/100 · Level: {{ profile.level or 'Beginner' }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="admin-card p-4">
+      <h6 style="font-weight:700;margin:0 0 1rem;">Scores by skill area</h6>
+      {% if profile.areas %}
+        {% for area in profile.areas %}
+        {% set bar_color = 'var(--success)' if area.score >= 75 else ('var(--warning)' if area.score >= 40 else 'var(--danger)') %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span style="font-size:.85rem;font-weight:600;">{{ area.area_name }}</span>
+            <span style="font-size:.8rem;color:var(--text-muted);">
+              {{ area.correct }}/{{ area.answered }} correct
+              · <span class="text-capitalize text-muted">{{ area.confidence }}</span> confidence
+            </span>
+          </div>
+          <div class="progress" style="height:10px;border-radius:6px;">
+            <div class="progress-bar" style="width:{{ area.score }}%;background:{{ bar_color }};"></div>
+          </div>
+          <div class="small text-muted" style="font-size:.75rem;">Score: {{ area.score }}/100</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center text-muted py-4">
+          <p>No profile data yet. Questions may be pending in the question bank for these areas.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="admin-card p-4 text-center">
+      <div class="mb-3" style="font-size:3rem;">{{ '🏆' if profile.level == 'Advanced' else ('🎯' if profile.level == 'Intermediate' else '🌱') }}</div>
+      <h4 style="font-family:'Outfit',sans-serif;font-weight:700;">{{ profile.level or 'Beginner' }}</h4>
+      <p class="text-muted" style="font-size:.9rem;">Based on {{ profile.areas | length }} skill areas assessed.</p>
+      <form method="post" action="{{ url_for('assessment.generate', session_id=session.id) }}">
+        <button type="submit" class="btn btn-primary mt-2" style="border-radius:18px;padding:.65rem 1.5rem;">
+          <i class="bi bi-signpost-2 me-1"></i> Generate my Roadmap
+        </button>
+      </form>
+      <p class="text-muted mt-3" style="font-size:.78rem;">
+        You can re-take this assessment anytime from the dashboard to recalibrate your roadmap.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="text-center mt-3">
+  <a href="{{ url_for('dashboard.today') }}" class="btn btn-link text-muted">I'll skip the roadmap for now</a>
+</div>
+{% endblock %}

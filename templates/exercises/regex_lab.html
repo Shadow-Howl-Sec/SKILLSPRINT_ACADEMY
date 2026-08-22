@@ -1,0 +1,42 @@
+{# regex_lab: write a regex matching given payloads, client-side tested #}
+<div class="mb-2 small text-muted">{{ spec.prompt }}</div>
+<div class="row g-2 mb-3">
+  <div class="col-sm-8">
+    <input id="ss_pat" class="form-control font-monospace"
+           placeholder="e.g. ^[a-z]+@[a-z]+\.com$" value="{{ spec.starter|default('') }}">
+  </div>
+  <div class="col-sm-4">
+    <input id="ss_flags" class="form-control" placeholder="flags: g, i, m…" value="{{ spec.flags|default('') }}">
+  </div>
+</div>
+<button class="btn btn-primary mb-3" id="ss_check"><i class="bi bi-check2-circle"></i> Check pattern</button>
+<ul class="list-group" id="ss_results">
+  {% for s in spec.samples %}
+  <li class="list-group-item d-flex justify-content-between">
+    <code>{{ s.input }}</code>
+    <span class="small">should {% if not s.shouldMatch %}NOT {% endif %}match</span>
+  </li>
+  {% endfor %}
+  <li class="list-group-item" id="ss_summary">(unchecked)</li>
+</ul>
+
+<script>
+const SPEC = {{ spec_json|safe }};
+const $ = (s) => document.querySelector(s);
+$("#ss_check").addEventListener("click", () => {
+  const r = window.SkillSprintExercise.checkRegex(
+    $("#ss_pat").value, $("#ss_flags").value, SPEC.samples || []);
+  const lis = document.querySelectorAll("ul#ss_results li");
+  const n = (SPEC.samples || []).length;
+  for (let i = 0; i < n; i++) {
+    const li = lis[i];
+    const ok = r.results[i].matched;
+    li.style.background = ok ? "rgba(40,167,69,.15)" : "rgba(220,53,69,.15)";
+    li.classList.add("text-muted");
+  }
+  lis[n].textContent = r.passed ? "[PASS] all samples behave as expected"
+                                : "[FAIL] " + (r.error || "some samples mismatched");
+  lis[n].style.fontWeight = "bold";
+  lis[n].style.color = r.passed ? "var(--success)" : "var(--danger)";
+});
+</script>

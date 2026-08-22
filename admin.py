@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from models import db, User, Course, Coupon, Enrollment, Payment, AdminLog
+from extensions import db
+from models import User, Course, Coupon, Enrollment, Payment, AdminLog
 from datetime import datetime
 import json
 
@@ -180,7 +181,12 @@ def admin_system():
     if not current_user.is_admin:
         flash('Access denied. Admin privileges required.', 'error')
         return redirect(url_for('index'))
-    
+
+    # Local inbox (offline replacement for SMTP contact — plan §9).
+    from models import LocalInbox
+    inbox_msgs = (LocalInbox.query
+                  .order_by(LocalInbox.created_at.desc()).limit(20).all())
+
     # Get system information
     system_info = {
         'total_users': User.query.count(),
@@ -188,9 +194,12 @@ def admin_system():
         'total_enrollments': Enrollment.query.count(),
         'total_revenue': db.session.query(db.func.sum(Payment.final_amount)).filter_by(status='completed').scalar() or 0,
         'admin_users': User.query.filter_by(is_admin=True).count(),
-        'recent_activities': AdminLog.query.order_by(AdminLog.created_at.desc()).limit(20).all()
+        'recent_activities': AdminLog.query.order_by(AdminLog.created_at.desc()).limit(20).all(),
+        'offline_mode': current_app.config.get('OFFLINE_MODE', False),
+        'inbox_msgs': inbox_msgs,
+        'unread_inbox': sum(1 for m in inbox_msgs if not m.is_read),
     }
-    
+
     return render_template('admin/system.html', system_info=system_info)
 
 # API endpoints for admin actions

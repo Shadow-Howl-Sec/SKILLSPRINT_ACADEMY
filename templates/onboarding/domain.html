@@ -1,0 +1,26 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Pick Your Domain — SkillSprint{% endblock %}
+{% block page_title %}Let's get you started{% endblock %}
+{% block page_subtitle %}Step 1 of 3 — choose your domain{% endblock %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+  <div class="col-md-7">
+    <div class="admin-card p-4 text-center">
+      <div class="mb-3" style="font-size:3rem;"><i class="bi bi-shield-shaded text-primary"></i></div>
+      <h4 style="font-family:'Outfit',sans-serif;font-weight:700;">Cybersecurity</h4>
+      <p class="text-muted">A personal cybersecurity mentor: adaptive assessments, a personalized roadmap, daily labs and an AI tutor — all calibrated to your goal.</p>
+      <p class="text-muted small">More domains (Cloud, Data Science) coming soon.</p>
+      <a href="{{ url_for('onboarding.goal') }}" class="btn btn-primary mt-2">
+        Continue to Goal <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+    <!-- progress dots -->
+    <div class="d-flex justify-content-center gap-2 mt-3">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--gray-300);"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--gray-300);"></span>
+    </div>
+  </div>
+</div>
+{% endblock %}

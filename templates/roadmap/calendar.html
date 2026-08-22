@@ -1,0 +1,42 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Calendar — SkillSprint{% endblock %}
+{% set active = "calendar" %}
+{% block page_title %}Next 14 days{% endblock %}
+{% block page_subtitle %}Drag-reschedule comes in v2 · for now, use Move on each item{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  {% for day in days %}
+  <div class="col-md-6 col-xl-3">
+    <div class="admin-card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 style="margin:0;font-weight:700;font-size:.85rem;">{{ day.date.strftime('%a %b %d') }}</h6>
+        {% if day.tasks %}<span class="badge bg-light text-secondary" style="font-size:.65rem;">{{ day.tasks | length }}</span>{% endif %}
+      </div>
+      {% for it in day.tasks %}
+      <div class="d-flex align-items-center gap-2 py-1 small {% if it.status == 'done' %}text-muted{% endif %}">
+        <i class="bi {% if it.status == 'done' %}bi-check-circle-fill text-success{% else %}bi-circle{% endif %}"></i>
+        <span class="flex-grow-1" style="{% if it.status == 'done' %}text-decoration:line-through;{% endif %}font-size:.78rem;">
+          {{ it.content_item.title if it.content_item else (it.lab.title if it.lab else (it.user_resource.title if it.user_resource else (it.topic.title if it.topic else 'Checkpoint'))) }}
+        </span>
+        {% if it.status != 'done' %}
+        <button class="btn btn-sm btn-link p-0 text-muted" title="Move"
+                data-bs-toggle="collapse" data-bs-target="#move_{{ it.id }}"><i class="bi bi-calendar-event"></i></button>
+        {% endif %}
+      </div>
+      {% if it.status != 'done' %}
+      <div class="collapse" id="move_{{ it.id }}">
+        <form method="post" action="{{ url_for('roadmap.move_item', item_id=it.id) }}" class="d-flex gap-1">
+          <input type="date" name="new_date" value="{{ day.date.isoformat() }}" class="form-control form-control-sm">
+          <button class="btn btn-sm btn-outline-primary">Move</button>
+        </form>
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="small text-muted">— free —</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

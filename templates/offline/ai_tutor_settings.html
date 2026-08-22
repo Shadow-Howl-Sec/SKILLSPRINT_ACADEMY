@@ -1,0 +1,66 @@
+{% extends "base_cybersec.html" %}
+{% block title %}AI Tutor Setup — SkillSprint{% endblock %}
+{% set active = "assistant" %}
+{% block page_title %}AI Tutor Setup{% endblock %}
+{% block page_subtitle %}Pick a local Ollama model and test the connection{% endblock %}
+
+{% block content %}
+<div class="admin-card p-4">
+  <p class="text-muted">
+    In offline mode the tutor autoswitches: if <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>
+    is running on <code>{{ base_url }}</code>, chat uses it. Otherwise it falls back to deterministic
+    topic-specific hints. Set up Ollama once with the helper script:
+  </p>
+  <pre class="bg-dark text-light p-3 rounded small">pwsh scripts\setup_ollama.ps1                     # auto-picks by RAM
+pwsh scripts\setup_ollama.ps1 -Model mistral:7b-instruct</pre>
+
+  <div class="mb-3">
+    <span class="badge {% if ollama_alive %}bg-success{% else %}bg-secondary{% endif %} p-2 me-2">
+      Ollama {% if ollama_alive %}reachable{% else %}not reachable{% endif %}
+    </span>
+    <span class="small text-muted">Current model: <code>{{ current_model }}</code></span>
+  </div>
+
+  <form method="post" action="{{ url_for('offline.ai_tutor_settings') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <h6 style="font-weight:700;">Select model</h6>
+    <div class="row g-2 mb-3">
+      <div class="col-sm-8">
+        <input class="form-control" name="model" value="{{ current_model }}"
+               placeholder="e.g. llama3.1:8b-instruct">
+      </div>
+      <div class="col-sm-4">
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save me-1"></i>Save choice</button>
+      </div>
+    </div>
+
+    {% if models %}
+    <p class="small text-muted">Detected models on this Ollama instance:</p>
+    <ul class="list-inline small">
+      {% for m in models %}<li class="list-inline-item"><span class="badge bg-light text-secondary me-1">{{ m }}</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    <a href="{{ url_for('offline.ai_tutor_settings', test=1) }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-repeat me-1"></i> Test connection
+    </a>
+  </form>
+
+  <hr class="my-4">
+  <h6 style="font-weight:700;">Recommended models</h6>
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered small mb-0">
+      <thead class="table-light"><tr>
+        <th>Model</th><th>Size</th><th>Min RAM</th><th>Best for</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><code>phi3:mini</code></td>           <td>~2.3 GB</td><td>8 GB</td>  <td>Low-RAM machines, decent explanations</td></tr>
+        <tr><td><code>llama3.1:8b-instruct</code></td><td>~4.7 GB</td><td>16 GB</td><td>Default — best quality/size balance</td></tr>
+        <tr><td><code>mistral:7b-instruct</code></td> <td>~4.1 GB</td><td>16 GB</td><td>Good alternative default</td></tr>
+        <tr><td><code>qwen2.5-coder:7b</code></td>    <td>~4.7 GB</td><td>16 GB</td><td>Scripting / exploit-dev tier</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

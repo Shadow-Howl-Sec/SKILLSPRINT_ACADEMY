@@ -1,0 +1,164 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Today — SkillSprint{% endblock %}
+{% set active = "today" %}
+{% block page_title %}Today's Plan{% endblock %}
+{% block page_subtitle %}{{ today_items | length + (done_today | length) }} scheduled today · {{ percent }}% through your roadmap{% endblock %}
+
+{% block content %}
+<!-- Top strip stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="admin-stats-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="admin-stats-icon badge-pink"><i class="bi bi-fire"></i></div>
+        <div>
+          <div style="font-size:1.5rem;font-weight:800;line-height:1;">{{ streak.current_streak if streak else 0 }}</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">day streak</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="admin-stats-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="admin-stats-icon badge-indigo"><i class="bi bi-stars"></i></div>
+        <div>
+          <div style="font-size:1.5rem;font-weight:800;line-height:1;">{{ xp }}</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">XP · Lvl {{ level }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="admin-stats-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="admin-stats-icon badge-cyan"><i class="bi bi-graph-up"></i></div>
+        <div>
+          <div style="font-size:1.5rem;font-weight:800;line-height:1;">{{ percent }}%</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">roadmap done</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="admin-stats-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="admin-stats-icon badge-emerald"><i class="bi bi-flag"></i></div>
+        <div>
+          <div style="font-size:1.5rem;font-weight:800;line-height:1;">{{ today_items | length }}</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">to-do today</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Today's tasks -->
+  <div class="col-lg-8">
+    <div class="admin-card p-3 mb-4">
+      <div class="d-flex align-items-center justify-content-between p-2 mb-3">
+        <h6 style="margin:0;font-weight:700;"><i class="bi bi-list-check me-2 text-primary"></i>Today's Schedule</h6>
+        {% if next_pending %}
+          <a href="{{ url_for('roadmap.view') }}" class="small text-primary fw-semibold">View full roadmap →</a>
+        {% endif %}
+      </div>
+
+      {% if today_items %}
+        {% for item in today_items %}
+        <div style="border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.6rem;" class="d-flex align-items-center gap-3">
+          <i class="{{ {'content_item':'bi-book','lab':'bi-flag','checkpoint_quiz':'bi-patch-question','review':'bi-arrow-repeat','external_resource':'bi-link-45deg'}[item.item_type] or 'bi-circle' }}" style="font-size:1.2rem;color:var(--accent);width:24px;"></i>
+          <div class="flex-grow-1">
+            <div style="font-weight:600;font-size:.92rem;">
+              {{ item.content_item.title if item.content_item else (item.lab.title if item.lab else ('External: ' ~ item.user_resource.title if item.user_resource else (item.topic.title if item.topic else 'Checkpoint'))) }}
+            </div>
+            <div class="small text-muted">
+              <i class="bi bi-clock me-1"></i>{{ item.estimated_minutes }} min
+              {% if item.topic %}· {{ item.topic.title }}{% endif %}
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            {% if item.item_type == 'lab' %}<a href="{{ url_for('labs.detail', lab_id=item.lab_id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-play"></i> Start</a>{% endif %}
+            <form method="post" action="{{ url_for('dashboard.complete_item', item_id=item.id) }}">
+              <button type="submit" class="btn btn-sm btn-success" title="Mark done"><i class="bi bi-check2"></i></button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-4">
+          <i class="bi bi-check2-circle" style="font-size:2.5rem;color:var(--success);"></i>
+          <p class="mt-2 mb-1" style="font-weight:600;">All clear for today! 🎉</p>
+          <p class="text-muted small">You're ahead of schedule. Check your roadmap for what's next, or explore labs.</p>
+          <a href="{{ url_for('labs.browse') }}" class="btn btn-outline-primary btn-sm mt-2"><i class="bi bi-flag me-1"></i> Explore Labs</a>
+        </div>
+      {% endif %}
+
+      {% if done_today %}
+        <hr>
+        <div class="small text-muted mb-2"><i class="bi bi-check2-all me-1"></i>Completed today</div>
+        {% for item in done_today %}
+        <div style="opacity:.65;" class="d-flex align-items-center gap-2 mb-1">
+          <i class="bi bi-check-circle-fill text-success"></i>
+          <span class="small" style="text-decoration:line-through;">
+            {{ item.content_item.title if item.content_item else (item.lab.title if item.lab else (item.topic.title if item.topic else 'External resource')) }}
+          </span>
+        </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <!-- Continue -->
+    {% if next_pending %}
+    <div class="admin-card p-3">
+      <div class="d-flex align-items-center justify-content-between p-2">
+        <div>
+          <h6 style="margin:0;font-weight:700;"><i class="bi bi-arrow-return-left me-2 text-primary"></i>Continue where you left off</h6>
+          <span class="small text-muted">Your next pending item, one click to resume.</span>
+        </div>
+        {% if next_pending.item_type == 'lab' and next_pending.lab %}
+          <a href="{{ url_for('labs.detail', lab_id=next_pending.lab_id) }}" class="btn btn-primary btn-sm"><i class="bi bi-play me-1"></i> Resume</a>
+        {% else %}
+          <form method="post" action="{{ url_for('dashboard.complete_item', item_id=next_pending.id) }}">
+            <button class="btn btn-primary btn-sm"><i class="bi bi-check2 me-1"></i> Mark done</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right column -->
+  <div class="col-lg-4">
+    <!-- Week at a glance -->
+    <div class="admin-card p-3 mb-4">
+      <h6 style="margin:0 0 .75rem;font-weight:700;"><i class="bi bi-calendar-week me-2 text-primary"></i>This week</h6>
+      <div class="d-flex justify-content-between">
+        {% for day in week %}
+        <div class="text-center" style="flex:1;">
+          <div class="small text-muted">{{ day.label }}</div>
+          <div style="width:32px;height:32px;border-radius:50%;margin:4px auto;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;
+               background:{% if day.total %}{% if day.done == day.total %}var(--success){% elif day.done > 0 %}var(--accent){% else %}var(--gray-200){% endif %}{% else %}var(--gray-100){% endif %};
+               color:{% if day.total and day.done == day.total %}#fff{% endif %};">
+            {{ day.done }}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="text-center mt-2"><a href="{{ url_for('roadmap.calendar') }}" class="small text-primary fw-semibold">Open calendar →</a></div>
+    </div>
+
+    <!-- Quick links -->
+    <div class="admin-card p-3">
+      <h6 style="margin:0 0 .75rem;font-weight:700;"><i class="bi bi-lightning-charge me-2 text-primary"></i>Quick actions</h6>
+      <div class="d-grid gap-2">
+        <a href="{{ url_for('library.add') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-link-45deg me-2"></i>Add an external resource</a>
+        <a href="{{ url_for('job_roles.browse') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-briefcase me-2"></i>Browse job-role tracks</a>
+        <a href="{{ url_for('assessment.start', track_type='general') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-arrow-repeat me-2"></i>Re-take assessment</a>
+        <a href="{{ url_for('assistant.chat') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-robot me-2"></i>Ask the AI tutor</a>
+        <a href="{{ url_for('dashboard.progress') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-graph-up me-2"></i>See your progress</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

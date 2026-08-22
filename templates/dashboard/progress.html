@@ -1,0 +1,75 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Progress — SkillSprint{% endblock %}
+{% set active = "progress" %}
+{% block page_title %}Your Progress{% endblock %}
+{% block page_subtitle %}Skill profile by area, XP history & streak{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="admin-card p-4">
+      <h6 style="font-weight:700;margin:0 0 1rem;">Skill Radar</h6>
+      {% if radar %}
+      <canvas id="radarChart" height="280"></canvas>
+      {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-radar" style="font-size:2.5rem;"></i>
+        <p class="mt-2">Take an assessment to generate your skill profile.</p>
+        <a href="{{ url_for('assessment.start', track_type='general') }}" class="btn btn-primary btn-sm">Start Assessment</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="admin-card p-4 mb-4">
+      <h6 style="font-weight:700;margin:0 0 .75rem;"><i class="bi bi-fire me-2 text-warning"></i>Streak</h6>
+      <div class="d-flex align-items-center gap-3">
+        <div style="font-size:2.5rem;font-weight:800;">{{ streak.current_streak if streak else 0 }}</div>
+        <div class="small text-muted">
+          day current streak<br>
+          Longest: {{ streak.longest_streak if streak else 0 }} days<br>
+          Freezes left: {{ streak.freezes_available if streak else 1 }}
+        </div>
+      </div>
+    </div>
+    <div class="admin-card p-4">
+      <h6 style="font-weight:700;margin:0 0 .75rem;"><i class="bi bi-stars me-2 text-primary"></i>Recent XP</h6>
+      {% if xp_history %}
+        {% for log in xp_history %}
+        <div class="d-flex justify-content-between align-items-center py-1 small border-bottom">
+          <span><i class="bi bi-{{ {'lab':'flag','roadmap_item':'book','checkpoint_quiz':'patch-question','streak_bonus':'fire','assessment':'patch-check','badge':'award'}[log.source_type] or 'circle' }}"></i> {{ log.description or log.source_type }}</span>
+          <span class="text-success fw-semibold">+{{ log.xp_amount }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-muted small">No XP yet — complete today's tasks to start earning!</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if radar %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const labels = {{ radar | map(attribute='label') | list | tojson }};
+const scores = {{ radar | map(attribute='score') | list | tojson }};
+new Chart(document.getElementById('radarChart').getContext('2d'), {
+  type: 'radar',
+  data: { labels: labels,
+    datasets: [{ label: 'Skill score', data: scores,
+      backgroundColor: 'rgba(99,102,241,.2)', borderColor: '#6366f1',
+      pointBackgroundColor: '#6366f1', borderWidth: 2 }] },
+  options: {
+    responsive: true,
+    scales: { r: { min: 0, max: 100,
+      ticks: { stepSize: 25, font:{size:10} },
+      pointLabels:{font:{size:11}} } },
+    plugins:{legend:{display:false}}
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

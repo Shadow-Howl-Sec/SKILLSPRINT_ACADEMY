@@ -1,0 +1,37 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Weekly Availability — SkillSprint{% endblock %}
+{% block page_title %}When can you study?{% endblock %}
+{% block page_subtitle %}Step 3 of 3 — we'll fit your roadmap into your real schedule{% endblock %}
+
+{% block content %}
+<form method="post" action="{{ url_for('onboarding.availability') }}">
+  <div class="admin-card p-4">
+    <p class="text-muted" style="font-size:.9rem;">Enter how many <strong>minutes per day</strong> you can realistically study on each day. We'll reserve ~20% for spaced-repetition review.</p>
+    <div class="row g-3">
+      {% for name, idx, default in days %}
+      <div class="col-md-6 col-xl-4">
+        <label class="form-label small fw-semibold">{{ name }}</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-clock"></i></span>
+          <input type="number" min="0" max="720" step="15" class="form-control"
+                 name="day_{{ idx }}" value="{{ default }}">
+          <span class="input-group-text">min</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check2-circle me-1"></i> Save & Take Skill Assessment
+      </button>
+      <a href="{{ url_for('onboarding.goal') }}" class="btn btn-outline-secondary">Back</a>
+    </div>
+  </div>
+</form>
+
+<div class="d-flex justify-content-center gap-2 mt-3">
+  <span style="width:8px;height:8px;border-radius:50%;background:var(--gray-300);"></span>
+  <span style="width:8px;height:8px;border-radius:50%;background:var(--gray-300);"></span>
+  <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);"></span>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Skill Assessment — SkillSprint{% endblock %}
+{% block page_title %}Skill Assessment{% endblock %}
+{% block page_subtitle %}Adaptive quiz · {{ progress[0] }} of ~{{ progress[1] }} answered{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="admin-card p-4">
+      <!-- progress -->
+      {% set pct = (progress[1] > 0) and ((progress[0] / progress[1]) * 100) | round | int or 0 %}
+      <div class="progress mb-4" style="height:8px;border-radius:6px;">
+        <div class="progress-bar" style="width:{{ pct }}%;background:var(--gradient-primary);"></div>
+      </div>
+
+      <form method="post" action="{{ url_for('assessment.answer', session_id=session.id) }}">
+        <input type="hidden" name="question_id" value="{{ question.id }}">
+
+        <div class="mb-3">
+          <span class="badge bg-light text-secondary mb-2">
+            <i class="bi bi-{{ 'layers' if question.question_type == 'mcq' else 'keyboard' }}"></i>
+            {{ question.question_type }}
+            {% if question.skill_area %}· {{ question.skill_area.name }}{% endif %}
+            · Difficulty {{ question.difficulty }}/5
+          </span>
+        </div>
+
+        <h5 style="font-family:'Outfit',sans-serif;font-weight:700;line-height:1.4;">{{ question.question_text }}</h5>
+
+        <div class="mt-4">
+          {% if question.question_type == "mcq" %}
+            {% set opts = (question.options | from_json) or [] %}
+            {% for opt in opts %}
+            <div class="form-check" style="border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem .75rem 2.75rem;margin-bottom:.5rem;cursor:pointer;" onclick="this.querySelector('input').checked=true">
+              <input class="form-check-input" type="radio" name="answer" id="opt_{{ loop.index0 }}" value="{{ loop.index0 }}" required style="margin-left:-1.75rem;">
+              <label class="form-check-label" for="opt_{{ loop.index0 }}" style="cursor:pointer;width:100%;">{{ opt }}</label>
+            </div>
+            {% endfor %}
+          {% else %}
+            <label class="form-label small text-muted">Your answer (keyword/short answer):</label>
+            <textarea class="form-control" name="answer" rows="3" required placeholder="Type your answer…"></textarea>
+          {% endif %}
+        </div>
+
+        <div class="mt-4 d-flex justify-content-between">
+          <a href="{{ url_for('dashboard.today') }}" class="btn btn-link text-muted">Save & exit</a>
+          <button type="submit" class="btn btn-primary">
+            Next question <i class="bi bi-arrow-right ms-1"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+    <p class="text-center text-muted small mt-2">Answer honestly — the assessment adapts to your level to build a roadmap that fits you.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block head_extra %}
+{% endblock %}

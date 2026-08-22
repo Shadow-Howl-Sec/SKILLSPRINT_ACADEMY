@@ -1,0 +1,24 @@
+{# binary_inspector: simple hex viewer; user finds a marked byte pattern #}
+<div class="mb-2 small text-muted">{{ spec.prompt|default('Inspect the bytes and find the marker pattern.') }}</div>
+<div class="mb-3">
+  <a href="{{ url_for('labs.serve_bundle_file', lab_id=spec.lab_id|default(''), filename=spec.binary_path|default('')) }}"
+     class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i> Download binary</a>
+</div>
+<div class="d-flex gap-2 mb-3">
+  <input id="ss_marker" class="form-control font-monospace" placeholder="hex pattern, e.g. deadbeef"
+         value="{{ spec.marker_hex|default('') }}">
+  <button class="btn btn-success" id="ss_check"><i class="bi bi-check2-circle"></i> Verify</button>
+</div>
+<pre class="bg-dark text-light p-3 rounded small" id="ss_out"
+     style="max-height:18rem;overflow:auto;">(download the binary file and search it locally with `xxd`)</pre>
+
+<script>
+const SPEC = {{ spec_json|safe }};
+const $ = (s) => document.querySelector(s);
+$("#ss_check").addEventListener("click", () => {
+  const got = $("#ss_marker").value.replace(/\s+/g, '').toLowerCase();
+  const expected = SPEC.marker_hex.replace(/\s+/g, '').toLowerCase();
+  $("#ss_out").textContent = "Expected marker: " + expected + "\nYour marker:   " + got;
+  $("#ss_out").style.color = got === expected ? "var(--success)" : "var(--danger)";
+});
+</script>

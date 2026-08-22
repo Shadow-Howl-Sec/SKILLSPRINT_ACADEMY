@@ -1,0 +1,45 @@
+{% extends "base_cybersec.html" %}
+{% block title %}My Library — SkillSprint{% endblock %}
+{% set active = "library" %}
+{% block page_title %}My Library{% endblock %}
+{% block page_subtitle %}External resources you've added — slot any of them into your schedule{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+  <a href="{{ url_for('library.add') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Add a Resource</a>
+</div>
+
+<div class="row g-3">
+  {% for r in resources %}
+  <div class="col-md-6 col-lg-4">
+    <div class="admin-card p-3 h-100 d-flex flex-column">
+      {% if r.thumbnail_url %}
+        <img src="{{ r.thumbnail_url }}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:.75rem;" onerror="this.style.display='none'">
+      {% else %}
+        <div style="height:120px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;margin-bottom:.75rem;">
+          <i class="bi {{ {'video':'bi-play-btn','article':'bi-file-earmark-text','course':'bi-mortarboard','pdf':'bi-file-earmark-pdf','github':'bi-github','other':'bi-link-45deg'}[r.resource_type] or 'bi-link-45deg' }}" style="font-size:1.75rem;color:var(--gray-400);"></i>
+        </div>
+      {% endif %}
+      <h6 style="font-weight:700;font-size:.92rem;line-height:1.3;">{{ r.title }}</h6>
+      <a href="{{ r.url }}" target="_blank" rel="noopener" class="small text-primary" style="word-break:break-word;">{{ r.url[:60] }}…</a>
+      <div class="small text-muted mt-1">
+        <span class="badge bg-light text-secondary" style="font-size:.62rem;">{{ r.resource_type }}</span>
+        {% if r.skill_area %}· {{ r.skill_area.name }}{% endif %}
+        · {{ r.estimated_minutes }}min
+      </div>
+      {% if r.is_completed %}<span class="badge bg-success mt-2" style="font-size:.62rem;">Completed</span>{% endif %}
+      <div class="d-flex gap-2 mt-auto pt-2">
+        {% if not r.is_completed %}
+        <form method="post" action="{{ url_for('library.schedule', resource_id=r.id) }}" class="d-flex gap-1">
+          <input type="date" name="date" class="form-control form-control-sm" value="{{ now }}">
+          <button class="btn btn-sm btn-outline-primary">Schedule</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12"><div class="admin-card text-center p-5"><i class="bi bi-collection" style="font-size:2.5rem;color:var(--gray-300);"></i><p class="mt-2">Your library is empty.</p><a href="{{ url_for('library.add') }}" class="btn btn-primary">Add your first resource</a></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

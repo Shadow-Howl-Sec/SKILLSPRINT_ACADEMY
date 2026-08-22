@@ -1,0 +1,33 @@
+{% extends "base_cybersec.html" %}
+{% block title %}External Resource Cache — SkillSprint{% endblock %}
+{% set active = "offline" %}
+{% block page_title %}External Resource Cache{% endblock %}
+{% block page_subtitle %}One-time online sync of public-domain CS articles{% endblock %}
+
+{% block content %}
+<div class="admin-card p-4">
+  <p class="text-muted">
+    Optional one-time online sync (plan §6.2). The shipped <code>resource_catalog.json</code>
+    lists public-domain / CC-licensed pages and PDFs (OWASP cheat sheets, NIST publications,
+    MITRE ATT&CK technique pages, PortSwigger articles). Running the script once downloads each
+    URL into <code>instance/resource_cache/<sha256>.html</code> and records a
+    <code>CachedResource</code> DB row, after which the link metadata service serves cached
+    metadata forever without any outbound HTTP.
+  </p>
+
+  <pre class="bg-dark text-light p-3 rounded small"># one-time online:
+pwsh scripts\sync_resource_cache.ps1</pre>
+
+  <p class="text-muted">
+    Re-runs are safe — already-cached URLs are skipped and DB rows are upserted by original URL.
+  </p>
+
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" name="run" value="true" class="btn btn-primary"
+            onclick="return confirm('This will download cached resources. Internet must be available. Continue?')">
+      <i class="bi bi-cloud-download me-1"></i> Run sync now
+    </button>
+  </form>
+</div>
+{% endblock %}

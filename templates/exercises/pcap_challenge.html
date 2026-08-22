@@ -1,0 +1,33 @@
+{# pcap_challenge: prompt student to answer questions about a bundled PCAP #}
+<div class="mb-3 small text-muted">{{ spec.prompt|default('Answer the questions using the bundled packet capture.') }}</div>
+<div class="mb-3">
+  <a href="{{ url_for('labs.serve_bundle_file', lab_id=spec.lab_id|default(''), filename=spec.pcap_path|default('')) }}"
+     class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i> Download the PCAP</a>
+  <span class="small text-muted ms-2">open it in Wireshark on your local Kali VM.</span>
+</div>
+
+<form id="ss_form">
+{% for q in spec.questions %}
+  <div class="mb-3">
+    <label class="form-label small fw-semibold">Q{{ loop.index }}. {{ q.question }}</label>
+    <input class="form-control" data-i="{{ loop.index0 }}" data-expected="{{ q.expected }}">
+  </div>
+{% endfor %}
+  <button type="button" class="btn btn-success" id="ss_check"><i class="bi bi-check2-circle"></i> Check answers</button>
+</form>
+<div class="mt-3" id="ss_out"></div>
+
+<script>
+const out = document.getElementById("ss_out");
+document.getElementById("ss_check").addEventListener("click", () => {
+  const inputs = document.querySelectorAll("#ss_form input[data-expected]");
+  let ok = 0, total = inputs.length;
+  inputs.forEach((el) => {
+    const pass = window.SkillSprintExercise.equalsIgnoreCase(el.value, el.dataset.expected);
+    el.style.borderColor = pass ? "var(--success)" : "var(--danger)";
+    if (pass) ok++;
+  });
+  out.innerHTML = "<span style='color:" + (ok === total ? "var(--success)" : "var(--danger)") + ";font-weight:700;'>" +
+                  ok + "/" + total + " correct</span>";
+});
+</script>

@@ -218,16 +218,21 @@ class TestAttempt(db.Model):
 
 class MiniProject(db.Model):
     id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
+    # course_id nullable since capstone projects (plan §3, Tier 4) are tied
+    # to a JobRole, not a legacy Course row.
+    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
     project_brief = db.Column(db.Text)  # Detailed project requirements
     deliverables = db.Column(db.Text)  # JSON string of expected deliverables
     difficulty_level = db.Column(db.String(20))  # easy, medium, hard
     estimated_hours = db.Column(db.Integer)
+    # Capstone grading strategy (plan §3): "flag_submission" | "ioc_checklist"
+    # | "self_grade_checklist".  When non-null, this is a Tier-4 capstone.
+    grading_method = db.Column(db.String(30), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     submissions = db.relationship('ProjectSubmission', backref='mini_project', lazy=True)
     def __repr__(self):
@@ -337,12 +342,19 @@ class JobRole(db.Model):
     icon_emoji = db.Column(db.String(10), default='🛡️')
     color_hex = db.Column(db.String(7), default='#6366f1')
     difficulty_label = db.Column(db.String(30), default='Beginner Friendly')
+    # Tier 4 capstone project (plan §3, §11 Phase B4) — nullable so existing
+    # rows don't break; points at a MiniProject row carrying the role's final
+    # graded project (mock OSCP, IR tabletop, etc.).
+    capstone_project_id = db.Column(db.Integer, db.ForeignKey('mini_project.id'),
+                                    nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
-    role_topics = db.relationship('JobRoleTopic', backref='job_role', lazy=True, order_by='JobRoleTopic.order_index')
+    role_topics = db.relationship('JobRoleTopic', backref='job_role', lazy=True,
+                                  order_by='JobRoleTopic.order_index')
     roadmaps = db.relationship('Roadmap', backref='job_role', lazy=True)
+    capstone_project = db.relationship('MiniProject', foreign_keys=[capstone_project_id])
 
     def __repr__(self):
         return f"<JobRole {self.slug}>"
@@ -370,6 +382,7 @@ class ContentItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
     # Types: lesson_md | video | pdf | external_link | quiz_checkpoint
+    #        | interactive_exercise  (offline, plan §4)
     type = db.Column(db.String(30), nullable=False, default='lesson_md')
     title = db.Column(db.String(200), nullable=False)
     body_markdown = db.Column(db.Text)             # for lesson_md type
@@ -383,8 +396,73 @@ class ContentItem(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Interactive exercise spec (plan §4) — JSON blob describing the exercise
+    # (kind ∈ {code_py, code_js, pcap_challenge, cipher_lab, regex_lab,
+    # quiz_interactive, binary_inspector}, plus kind-specific fields like unit
+    # tests, expected answers, bundled-file pointers). MVP stores this as JSON
+    # text so no migration is needed; a future column split is fine too.
+    exercise_spec = db.Column(db.Text)
+
     def __repr__(self):
         return f"<ContentItem {self.title[:40]}>"
+
+
+class TopicHint(db.Model):
+    """Authored hints for the rules-based AI-tutor fallback (plan §7.2).
+
+    Every Topic can have several `TopicHint` rows keyed to trigger keywords
+    and a 1-3 hint level so the tutor escalates without ever leaking a flag.
+    """
+    __tablename__ = 'topic_hint'
+    id = db.Column(db.Integer, primary_key=True)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
+    trigger_keywords = db.Column(db.Text)    # JSON list of lowercase keywords
+    hint_text = db.Column(db.Text, nullable=False)  # Markdown
+    hint_level = db.Column(db.Integer, default=1)  # 1..3 (progressive)
+    is_active = db.Column(db.Boolean, default=True)
+
+    topic = db.relationship('Topic', backref='hints', lazy=True)
+
+    def __repr__(self):
+        return f"<TopicHint topic={self.topic_id} lvl={self.hint_level}>"
+
+
+class CachedResource(db.Model):
+    """One-time-synced offline copy of an external page/PDF (plan §6.2).
+
+    Populated by `scripts/sync_resource_cache.ps1`. The link_metadata_service
+    reads from this table instead of fetching live URLs when OFFLINE_MODE.
+    """
+    __tablename__ = 'cached_resource'
+    id = db.Column(db.Integer, primary_key=True)
+    original_url = db.Column(db.String(500), nullable=False, unique=True)
+    local_path = db.Column(db.String(500), nullable=False)  # relative under instance/resource_cache
+    title = db.Column(db.String(300))
+    resource_type = db.Column(db.String(20))   # article | pdf | video | github | course
+    fetched_at = db.Column(db.DateTime, default=datetime.utcnow)
+    content_hash = db.Column(db.String(64))    # sha-256 of cached body
+
+    def __repr__(self):
+        return f"<CachedResource {self.original_url[:60]}>"
+
+
+class LocalInbox(db.Model):
+    """In-app replacement for the SMTP contact form (plan §9)."""
+    __tablename__ = 'local_inbox'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20))
+    subject = db.Column(db.String(200))
+    body = db.Column(db.Text, nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='local_inbox', lazy=True)
+
+    def __repr__(self):
+        return f"<LocalInbox id={self.id} subject={self.subject}>"
 
 
 class Lab(db.Model):
@@ -394,7 +472,8 @@ class Lab(db.Model):
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    # Providers: self_hosted | tryhackme | htb | portswigger | overthewire | picoctf | other
+    # Providers: self_hosted | tryhackme | htb | portswigger | overthewire
+    #           | picoctf | self_hosted_offline | other
     provider = db.Column(db.String(30), nullable=False, default='other')
     url_or_container_ref = db.Column(db.String(500))
     difficulty = db.Column(db.Integer, default=2)   # 1-5
@@ -406,6 +485,11 @@ class Lab(db.Model):
     mitre_techniques = db.Column(db.Text)          # JSON list of MITRE technique IDs
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @property
+    def is_offline_available(self) -> bool:
+        """True when the lab can be run without external network (plan §5.4)."""
+        return self.provider == "self_hosted_offline"
 
     def __repr__(self):
         return f"<Lab {self.title[:40]}>"

@@ -1,0 +1,34 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Lab Setup — SkillSprint{% endblock %}
+{% set active = "labs" %}
+{% block page_title %}Lab Setup Guide{% endblock %}
+{% block page_subtitle %}Local Kali VirtualBox VM + bundled challenges{% endblock %}
+
+{% block content %}
+<div class="admin-card p-4">
+  <h6 style="font-weight:700;">1. Install VirtualBox</h6>
+  <p class="text-muted">Download VirtualBox for Windows from <code>https://www.virtualbox.org/</code> and run the installer. No reboot required for the host-only network on Windows 10/11.</p>
+
+  <h6 style="font-weight:700;">2. Provision the Kali VM</h6>
+  <pre class="bg-dark text-light p-3 rounded small"># Option A — already have the .ova:
+pwsh scripts\setup_kali_vm.ps1 -OvaPath C:\iso\kali.ova
+
+# Option B — fetch it once (online, ~3GB):
+pwsh scripts\setup_kali_vm.ps1 -Download</pre>
+  <p class="text-muted">The script imports the appliance, attaches a host-only adapter, mounts <code>bundles\labs</code> as a shared folder, snapshots a clean state, and prints SSH/RDP connection details.</p>
+
+  <h6 style="font-weight:700;">3. Fetch challenge artifacts</h6>
+  <p class="text-muted">The bundled labs live under <code>bundles\labs\</code> and are accessed directly from the VM via the shared folder. They are mounted at <code>/media/sf_skillSprint-labs</code> inside the guest.</p>
+
+  <h6 style="font-weight:700;">4. Work a lab</h6>
+  <ol class="text-muted">
+    <li>Go to <a href="{{ url_for('labs.browse') }}">/labs</a> and open any <strong>self_hosted_offline</strong> lab.</li>
+    <li>Click <strong>"Open challenge files"</strong> to download the artifact, OR access it from <code>/media/sf_skillSprint-labs/<...></code> inside the VM.</li>
+    <li>Perform the analysis / solve the challenge.</li>
+    <li>Submit the flag (or write-up URL) on the lab page to claim XP — all flag-hash comparison happens locally.</li>
+  </ol>
+
+  <h6 style="font-weight:700;">5. Resetting the VM</h6>
+  <pre class="bg-dark text-light p-3 rounded small">VBoxManage snapshot "SkillSprint-Kali" restore skillSprint-clean-state</pre>
+</div>
+{% endblock %}

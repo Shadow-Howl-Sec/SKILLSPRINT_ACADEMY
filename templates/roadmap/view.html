@@ -1,0 +1,51 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Roadmap — SkillSprint{% endblock %}
+{% set active = "roadmap" %}
+{% block page_title %}Your Roadmap{% endblock %}
+{% block page_subtitle %}{{ roadmap.items | length }} items · v{{ roadmap.version }} · target {{ roadmap.target_completion_date.strftime('%b %d, %Y') if roadmap.target_completion_date else 'TBD' }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <span class="small text-muted">Phases below are ordered by your skill profile & the curriculum DAG.</span>
+  <form method="post" action="{{ url_for('roadmap.replan') }}">
+    <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-repeat me-1"></i> Re-plan</button>
+  </form>
+</div>
+
+{% if groups %}
+  {% for tid, phase in groups.items() %}
+  <div class="admin-card p-3 mb-3">
+    <div class="d-flex align-items-center justify-content-between p-2 mb-2">
+      <div>
+        <h6 style="margin:0;font-weight:700;">
+          {% if phase.topic %}<i class="bi bi-collection me-2 text-primary"></i>{{ phase.topic.title }}{% else %}Ungrouped{% endif %}
+        </h6>
+        {% if phase.topic and phase.topic.skill_area %}<span class="small text-muted">{{ phase.topic.skill_area.name }}</span>{% endif %}
+      </div>
+      <span class="badge bg-light text-secondary">{{ phase.done }}/{{ phase.total }}</span>
+    </div>
+    {% if phase['items'] %}
+      {% for it in phase['items'] %}
+      <div class="d-flex align-items-center gap-3 py-1 small {% if it.status == 'done' %}text-muted{% endif %}">
+        <i class="bi {% if it.status == 'done' %}bi-check-circle-fill text-success{% else %}bi-circle{% endif %}"></i>
+        <span class="flex-grow-1" {% if it.status == 'done' %}style="text-decoration:line-through;"{% endif %}>
+          {{ it.content_item.title if it.content_item else (it.lab.title if it.lab else (it.user_resource.title if it.user_resource else 'Checkpoint')) }}
+        </span>
+        <span class="text-muted" style="font-size:.72rem;">
+          {% if it.scheduled_date %}{{ it.scheduled_date.strftime('%b %d') }}{% endif %}
+          · {{ it.estimated_minutes }}min
+        </span>
+        <i class="bi {{ {'content_item':'bi-book','lab':'bi-flag','checkpoint_quiz':'bi-patch-question','external_resource':'bi-link-45deg','review':'bi-arrow-repeat'}[it.item_type] or 'bi-dot' }} text-muted"></i>
+      </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="admin-card text-center p-5">
+    <i class="bi bi-signpost-2" style="font-size:3rem;color:var(--gray-300);"></i>
+    <p class="mt-3">Your roadmap is empty.</p>
+    <a href="{{ url_for('assessment.start', track_type='general') }}" class="btn btn-primary">Take an assessment to build one</a>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Add Resource — SkillSprint{% endblock %}
+{% set active = "library" %}
+{% block page_title %}Add an external resource{% endblock %}
+{% block page_subtitle %}Paste a URL — we'll auto-fetch the title and thumbnail{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="admin-card p-4">
+      <form method="post" action="{{ url_for('library.add') }}">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">URL <span class="text-danger">*</span></label>
+          <input class="form-control" name="url" required type="url" placeholder="https://www.youtube.com/watch?v=…" onblur="autoDetectType(this.value)">
+        </div>
+        <div class="alert alert-info small" role="alert"><i class="bi bi-info-circle me-1"></i> Title & thumbnail will be auto-fetched from the page. Override below if needed.</div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Title (optional — auto-detected)</label>
+          <input class="form-control" name="title" placeholder="e.g. Bypassing SQLi filters — freeCodeCamp">
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Type</label>
+            <select name="resource_type" id="resource_type" class="form-control form-select">
+              <option value="video">Video</option>
+              <option value="article">Article</option>
+              <option value="course">Course</option>
+              <option value="pdf">PDF</option>
+              <option value="github">GitHub repo</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Skill area (optional)</label>
+            <select name="skill_area_id" class="form-control form-select">
+              <option value="">— none —</option>
+              {% for a in areas %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label small fw-semibold">Estimated minutes to complete</label>
+          <input class="form-control" name="estimated_minutes" type="number" min="5" max="1200" value="30">
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label small fw-semibold">Notes (optional)</label>
+          <textarea class="form-control" name="notes" rows="2" placeholder="Why are you saving this? e.g. covers boolean-based blind SQLi"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-plus-circle me-1"></i> Add to library</button>
+        <a href="{{ url_for('library.list') }}" class="btn btn-link text-muted">Back</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function autoDetectType(url){
+  const u=(url||'').toLowerCase();
+  let t='other';
+  if(u.includes('youtube.com')||u.includes('youtu.be')) t='video';
+  else if(u.includes('udemy.com')) t='course';
+  else if(u.includes('github.com')) t='github';
+  else if(u.endsWith('.pdf')) t='pdf';
+  else t='article';
+  const sel=document.getElementById('resource_type');
+  for(const o of sel.options){if(o.value===t){o.selected=true;break;}}
+}
+</script>
+{% endblock %}

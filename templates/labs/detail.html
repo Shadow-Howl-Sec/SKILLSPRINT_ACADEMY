@@ -1,0 +1,80 @@
+{% extends "base_cybersec.html" %}
+{% block title %}{{ lab.title }} — SkillSprint{% endblock %}
+{% set active = "labs" %}
+{% block page_title %}{{ lab.title }}{% endblock %}
+{% block page_subtitle %}{{ lab.provider }} · L{{ lab.difficulty }} · {{ lab.estimated_minutes }} min · +{{ lab.xp_reward }} XP{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="admin-card p-4">
+      {% if lab.description %}<p class="text-muted">{{ lab.description }}</p>{% endif %}
+      {% if lab.topic %}<div class="small text-muted mb-3"><i class="bi bi-collection me-1"></i>Topic: {{ lab.topic.title }}</div>{% endif %}
+
+      {% if OFFLINE_MODE and lab.is_offline_available %}
+        {# --------------------------------------------------------------- #}
+        {# OFFLINE BUNDLED LAB (plan §5.3)                                  #}
+        {# --------------------------------------------------------------- #}
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+          <i class="bi bi-box-seam me-2"></i>
+          <div>This is an offline bundled challenge — no internet required. Download the artifact(s) below and work on them locally (or inside your Kali VM).</div>
+        </div>
+
+        <h6 style="font-weight:700;margin:1rem 0 .5rem;">Step 1 — Get the challenge files</h6>
+        <p class="small text-muted">Bundle path: <code>bundles/labs/{{ (lab.url_or_container_ref or '') }}</code></p>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          <a href="{{ url_for('labs.serve_bundle_file', lab_id=lab.id, filename=(lab.url_or_container_ref or '') | basename|default('README.md')) }}"
+             class="btn btn-primary">
+            <i class="bi bi-download me-1"></i> Open challenge files
+          </a>
+          <a href="{{ url_for('offline.lab_setup') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-hdd-network me-1"></i> Setup the Kali VM
+          </a>
+        </div>
+      {% elif OFFLINE_MODE %}
+        {# A link-out lab — should not normally happen since browse filters them #}
+        <div class="alert alert-warning">
+          <i class="bi bi-wifi-off me-1"></i> This lab requires internet and is disabled in offline mode.
+        </div>
+      {% else %}
+        {# Online mode — original behaviour #}
+        <a href="{{ lab.url_or_container_ref or '#' }}" target="_blank" rel="noopener" class="btn btn-primary mb-4">
+          <i class="bi bi-box-arrow-up-right me-1"></i> Launch lab (opens in new tab)
+        </a>
+      {% endif %}
+
+      {% if not (OFFLINE_MODE and not lab.is_offline_available) %}
+      <h6 style="font-weight:700;margin-bottom:.5rem;">Submit proof of completion</h6>
+      <p class="small text-muted">Proof type: <strong>{{ lab.proof_type }}</strong>
+      {% if lab.proof_type == 'flag' %}— enter the flag you found.{% elif lab.proof_type == 'self_report' %}— write a brief sentence about what you did.{% else %}— paste a screenshot URL / write-up link.{% endif %}
+      </p>
+      <form method="post" action="{{ url_for('labs.submit', lab_id=lab.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Proof / Flag</label>
+          <input class="form-control" name="proof" required
+            placeholder="{% if lab.proof_type == 'flag' %}e.g. HTB{...} or CTF{...}{% else %}Your proof — flags, write-up URL, summary…{% endif %}">
+        </div>
+        <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle me-1"></i> Submit & claim XP</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="admin-card p-4">
+      <h6 style="font-weight:700;margin:0 0 .5rem;">Reward</h6>
+      <div style="font-size:2rem;font-weight:800;color:var(--accent);">+{{ lab.xp_reward }} XP</div>
+      {% if lab.mitre_techniques %}
+        <div class="small text-muted mt-3">MITRE technique tags:</div>
+        {% set techniques = (lab.mitre_techniques | from_json) or [] %}
+        {% for t in techniques %}<span class="badge bg-light text-secondary me-1" style="font-size:.65rem;">{{ t }}</span>{% endfor %}
+      {% endif %}
+      {% if OFFLINE_MODE %}
+      <hr class="my-3">
+      <div class="small text-muted">Hint: stuck on this lab? Ask the <a href="{{ url_for('assistant.chat') }}">AI tutor</a> — say "hint" for progressive nudges without revealing the flag.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
