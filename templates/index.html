@@ -39,10 +39,10 @@
         <li class="nav-item"><a class="nav-link" href="#programs">Programs</a></li>
         <li class="nav-item"><a class="nav-link" href="/courses">Courses</a></li>
         <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
-        {% if current_user.is_authenticated %}
-          {% if current_user.is_admin %}
+        {%- if current_user.is_authenticated -%}
+          {%- if current_user.is_admin -%}
             <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-shield-lock me-1"></i>Admin</a></li>
-          {% endif %}
+          {%- endif -%}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
               <i class="bi bi-person-circle me-1"></i>{{ current_user.first_name }}

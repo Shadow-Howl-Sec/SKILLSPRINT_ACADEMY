@@ -97,7 +97,7 @@
         {% if messages %}
           {% for category, message in messages %}
             <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-4" role="alert">
-              {{ message }}<button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+              {{ message }}<button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close" title="Close"></button>
             </div>
           {% endfor %}
         {% endif %}

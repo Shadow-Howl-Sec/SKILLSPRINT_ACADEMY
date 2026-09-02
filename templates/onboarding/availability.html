@@ -20,21 +20,21 @@
           
           <!-- Block 1 -->
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Block 1 (Morning / 2.5hr)</label>
+            <label class="form-label small fw-semibold" for="day_{{ idx }}_b1_start">Block 1 (Morning / 2.5hr)</label>
             <div class="d-flex gap-2">
-              <input type="time" class="form-control form-control-sm" name="day_{{ idx }}_b1_start" value="{{ blocks[0].start if blocks|length > 0 else '09:00' }}">
+              <input type="time" id="day_{{ idx }}_b1_start" class="form-control form-control-sm" name="day_{{ idx }}_b1_start" value="{{ blocks[0].start if blocks|length > 0 else '09:00' }}" aria-label="{{ name }} Block 1 Start Time" title="{{ name }} Block 1 Start Time">
               <span class="align-self-center">-</span>
-              <input type="time" class="form-control form-control-sm" name="day_{{ idx }}_b1_end" value="{{ blocks[0].end if blocks|length > 0 else '11:30' }}">
+              <input type="time" id="day_{{ idx }}_b1_end" class="form-control form-control-sm" name="day_{{ idx }}_b1_end" value="{{ blocks[0].end if blocks|length > 0 else '11:30' }}" aria-label="{{ name }} Block 1 End Time" title="{{ name }} Block 1 End Time">
             </div>
           </div>
 
           <!-- Block 2 -->
           <div>
-            <label class="form-label small fw-semibold">Block 2 (Afternoon/Evening / 2.5hr)</label>
+            <label class="form-label small fw-semibold" for="day_{{ idx }}_b2_start">Block 2 (Afternoon/Evening / 2.5hr)</label>
             <div class="d-flex gap-2">
-              <input type="time" class="form-control form-control-sm" name="day_{{ idx }}_b2_start" value="{{ blocks[1].start if blocks|length > 1 else '14:00' }}">
+              <input type="time" id="day_{{ idx }}_b2_start" class="form-control form-control-sm" name="day_{{ idx }}_b2_start" value="{{ blocks[1].start if blocks|length > 1 else '14:00' }}" aria-label="{{ name }} Block 2 Start Time" title="{{ name }} Block 2 Start Time">
               <span class="align-self-center">-</span>
-              <input type="time" class="form-control form-control-sm" name="day_{{ idx }}_b2_end" value="{{ blocks[1].end if blocks|length > 1 else '16:30' }}">
+              <input type="time" id="day_{{ idx }}_b2_end" class="form-control form-control-sm" name="day_{{ idx }}_b2_end" value="{{ blocks[1].end if blocks|length > 1 else '16:30' }}" aria-label="{{ name }} Block 2 End Time" title="{{ name }} Block 2 End Time">
             </div>
           </div>
         </div>
