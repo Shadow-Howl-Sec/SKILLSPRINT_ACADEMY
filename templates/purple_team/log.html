@@ -1,0 +1,202 @@
+{% extends "base_cybersec.html" %}
+
+{% block title %}Purple Team Exercise Log{% endblock %}
+{% set active = "purple_team" %}
+
+{% block page_title %}Exercise Log{% endblock %}
+{% block page_subtitle %}Timeline of attack → detect → document exercises{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <nav aria-label="breadcrumb" class="mb-2">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{{ url_for('purple_team.log_list') }}">Purple Team</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Exercise Log</li>
+      </ol>
+    </nav>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('purple_team.log_new') }}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Log Exercise
+    </a>
+    <a href="{{ url_for('purple_team.coverage') }}" class="btn btn-outline-info">
+      <i class="bi bi-grid-3x3-gap me-1"></i> Coverage Matrix
+    </a>
+    <a href="{{ url_for('purple_team.export') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-download me-1"></i> Export Markdown
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small" for="filterTechnique">MITRE Technique</label>
+        <select class="form-select form-select-sm" name="technique" id="filterTechnique">
+          <option value="">All Techniques</option>
+          {% for tech in user_techniques %}
+          <option value="{{ tech }}" {% if tech == technique_filter %}selected{% endif %}>{{ tech }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small" for="filterDateFrom">Date From</label>
+        <input type="date" class="form-control form-control-sm" name="date_from" id="filterDateFrom" value="{{ date_from or '' }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small" for="filterDateTo">Date To</label>
+        <input type="date" class="form-control form-control-sm" name="date_to" id="filterDateTo" value="{{ date_to or '' }}">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-sm btn-outline-primary w-100">Filter</button>
+      </div>
+      <div class="col-md-3">
+        {% if technique_filter or date_from or date_to %}
+        <a href="{{ url_for('purple_team.log_list') }}" class="btn btn-sm btn-outline-secondary w-100">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Exercise Log Table -->
+<div class="card">
+  <div class="card-body p-0">
+    {% if logs.items %}
+    <div class="table-responsive">
+      <table class="table table-dark table-hover mb-0">
+        <thead>
+          <tr>
+            <th style="width: 140px;">Date</th>
+            <th>Technique</th>
+            <th style="width: 100px;">MITRE</th>
+            <th style="width: 120px;">Lab</th>
+            <th style="width: 140px;" class="text-center">Attack</th>
+            <th style="width: 100px;" class="text-center">Detected</th>
+            <th style="width: 100px;" class="text-center">Rule</th>
+            <th style="width: 100px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs.items %}
+          <tr>
+            <td class="text-nowrap">{{ log.date_completed.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+              <strong>{{ log.technique_title }}</strong>
+              {% if log.notes %}
+              <button class="btn btn-sm btn-link text-muted p-0 ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#notes-{{ log.id }}" aria-label="Toggle notes">
+                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+              </button>
+              {% endif %}
+            </td>
+            <td>
+              {% if log.mitre_id %}
+              <code class="text-info">{{ log.mitre_id }}</code>
+              {% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+            <td>
+              {% if log.lab %}
+              <a href="{{ url_for('labs.detail', lab_id=log.lab.id) }}" class="text-decoration-none">
+                <span class="badge bg-secondary">{{ log.lab.title }}</span>
+              </a>
+              {% else %}
+              <span class="badge bg-outline-info">Manual</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if log.attack_succeeded %}
+              <span class="badge bg-success"><i class="bi bi-check-lg"></i> Yes</span>
+              {% else %}
+              <span class="badge bg-danger"><i class="bi bi-x-lg"></i> No</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if log.detected %}
+              <span class="badge bg-success"><i class="bi bi-check-lg"></i></span>
+              {% else %}
+              <span class="badge bg-danger"><i class="bi bi-x-lg"></i></span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if log.rule_written %}
+              <span class="badge bg-success"><i class="bi bi-check-lg"></i></span>
+              {% else %}
+              <span class="badge bg-secondary"><i class="bi bi-x-lg"></i></span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('purple_team.log_edit', log_id=log.id) }}" class="btn btn-outline-primary" aria-label="Edit exercise log">
+                  <i class="bi bi-pencil" aria-hidden="true"></i>
+                </a>
+                <form method="POST" action="{{ url_for('purple_team.log_delete', log_id=log.id) }}" class="d-inline" onsubmit="return confirm('Delete this exercise log?')">
+                  <button type="submit" class="btn btn-outline-danger" aria-label="Delete exercise log">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% if log.notes %}
+          <tr class="collapse" id="notes-{{ log.id }}">
+            <td colspan="8" class="bg-dark">
+              <div class="p-3">
+                <small class="text-muted">Notes:</small>
+                <div class="markdown-content mt-1">{{ log.notes | markdown | safe }}</div>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if logs.pages > 1 %}
+    <div class="card-footer">
+      <nav aria-label="Exercise log pagination">
+        <ul class="pagination pagination-sm mb-0 justify-content-center">
+          {% if logs.has_prev %}
+          <li class="page-item"><a class="page-link" href="{{ url_for('purple_team.log_list', page=logs.prev_num, technique=technique_filter, date_from=date_from, date_to=date_to) }}">Previous</a></li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          {% endif %}
+          
+          {% for p in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+              {% if p == logs.page %}
+              <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+              {% else %}
+              <li class="page-item"><a class="page-link" href="{{ url_for('purple_team.log_list', page=p, technique=technique_filter, date_from=date_from, date_to=date_to) }}">{{ p }}</a></li>
+              {% endif %}
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if logs.has_next %}
+          <li class="page-item"><a class="page-link" href="{{ url_for('purple_team.log_list', page=logs.next_num, technique=technique_filter, date_from=date_from, date_to=date_to) }}">Next</a></li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-journal-x fs-1 text-muted"></i>
+      <h5 class="mt-3 text-muted">No exercises logged yet</h5>
+      <p class="text-muted">Complete a vm_exercise lab or <a href="{{ url_for('purple_team.log_new') }}">log an exercise manually</a> to get started.</p>
+      <a href="{{ url_for('purple_team.log_new') }}" class="btn btn-primary mt-2">
+        <i class="bi bi-plus-lg me-1"></i> Log First Exercise
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

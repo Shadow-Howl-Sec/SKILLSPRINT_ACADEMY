@@ -9,23 +9,22 @@ from __future__ import annotations
 
 from datetime import datetime, date, timedelta
 
-from flask import Blueprint, render_template, redirect, url_for, flash, abort
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, g
 from extensions import db
 from models import Roadmap, RoadmapItem, StreakRecord, XPLog, SkillProfile, SkillArea
+from services.xp_service import award_xp, touch_streak
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
 @dashboard_bp.route("/dashboard")
-@login_required
 def today():
-    # If the user has no active roadmap yet, send them to onboarding.
+    # If the user has no active roadmap yet, send them to job roles.
     roadmap = Roadmap.query.filter_by(
-        user_id=current_user.id, status="active").first()
+        user_id=g.user.id, status="active").first()
     if roadmap is None:
-        flash("Let's set up your learning plan first.", "info")
-        return redirect(url_for("onboarding.domain"))
+        flash("Choose a job role to generate your roadmap.", "info")
+        return redirect(url_for("job_roles.browse"))
 
     today_date = date.today()
     today_items = sorted(
@@ -56,8 +55,8 @@ def today():
     completed = sum(1 for i in roadmap.items if i.status == "done")
     percent = int((completed / total_items) * 100)
 
-    streak = current_user.streak_record
-    xp = current_user.total_xp
+    streak = g.user.streak_record
+    xp = g.user.total_xp
     level = max(1, xp // 100 + 1)
 
     return render_template("dashboard/today.html",
@@ -73,10 +72,9 @@ def today():
 
 
 @dashboard_bp.route("/progress")
-@login_required
 def progress():
     profiles = (SkillProfile.query
-                .filter_by(user_id=current_user.id)
+                .filter_by(user_id=g.user.id)
                 .join(SkillArea, SkillProfile.skill_area_id == SkillArea.id)
                 .order_by(SkillArea.order_index)
                 .all())
@@ -84,10 +82,10 @@ def progress():
               "score": p.score, "confidence": p.confidence}
              for p in profiles]
 
-    streak = current_user.streak_record
-    xp = current_user.total_xp
+    streak = g.user.streak_record
+    xp = g.user.total_xp
     xp_history = (XPLog.query
-                  .filter_by(user_id=current_user.id)
+                  .filter_by(user_id=g.user.id)
                   .order_by(XPLog.created_at.desc())
                   .limit(20).all())
 
@@ -97,11 +95,9 @@ def progress():
 
 
 @dashboard_bp.route("/roadmap-item/<int:item_id>/complete", methods=["POST"])
-@login_required
 def complete_item(item_id: int):
-    from services.xp_service import award_xp, touch_streak
     item = RoadmapItem.query.get_or_404(item_id)
-    if item.roadmap.user_id != current_user.id:
+    if item.roadmap.user_id != g.user.id:
         abort(403)
     if item.status == "done":
         return redirect(url_for("dashboard.today"))
@@ -113,11 +109,11 @@ def complete_item(item_id: int):
     source_type = "lab" if item.item_type == "lab" else \
                    "checkpoint_quiz" if item.item_type == "checkpoint_quiz" else \
                    "roadmap_item"
-    xp = award_xp(current_user.id, source_type, item.id,
+    xp = award_xp(g.user.id, source_type, item.id,
                   description=f"Completed: {item.item_type}")
-    touch_streak(current_user.id, date.today())
-    if current_user.current_streak and current_user.current_streak % 7 == 0:
-        award_xp(current_user.id, "streak_bonus", None)
+    touch_streak(g.user.id, date.today())
+    if g.user.current_streak and g.user.current_streak % 7 == 0:
+        award_xp(g.user.id, "streak_bonus", None)
     db.session.commit()
     flash(f"+{xp} XP — nice work!", "success")
     return redirect(url_for("dashboard.today"))

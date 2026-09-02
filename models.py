@@ -1,40 +1,35 @@
 from extensions import db
-from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
-import uuid
+from datetime import datetime
 
-class User(UserMixin, db.Model):
+# Import VMConfig for type hints
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from models import VMConfig
+
+class User(db.Model):
     id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    phone = db.Column(db.String(15), nullable=False)
-    college = db.Column(db.String(100), nullable=False)
-    year = db.Column(db.String(20), nullable=False)
-    branch = db.Column(db.String(50), nullable=False)
-    email_verified = db.Column(db.Boolean, default=False)
-    email_verification_token = db.Column(db.String(100), unique=True)
-    reset_password_token = db.Column(db.String(100), unique=True)
-    reset_password_expires = db.Column(db.DateTime)
+    email_verified = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_admin = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     
-    # Relationships — existing
-    enrollments = db.relationship('Enrollment', backref='user', lazy=True)
-    payments = db.relationship('Payment', backref='user', lazy=True)
-    # Relationships — CyberSec platform
+    # VM Configuration (stored per user for multi-VM setups)
+    vm_config = db.relationship('VMConfig', backref='user', uselist=False, lazy=True)
+    
+    # Relationships — Purple Team platform
     skill_profiles = db.relationship('SkillProfile', backref='user', lazy=True)
     roadmaps = db.relationship('Roadmap', backref='user', lazy=True)
     weekly_availability = db.relationship('WeeklyAvailability', backref='user', lazy=True)
     user_resources = db.relationship('UserResource', backref='user', lazy=True)
     streak_record = db.relationship('StreakRecord', backref='user', uselist=False, lazy=True)
     xp_logs = db.relationship('XPLog', backref='user', lazy=True)
-    assessment_sessions = db.relationship('AssessmentSession', backref='user', lazy=True)
     chat_messages = db.relationship('ChatMessage', backref='user', lazy=True)
 
     @property
@@ -59,168 +54,32 @@ class User(UserMixin, db.Model):
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
-    def generate_verification_token(self):
-        self.email_verification_token = str(uuid.uuid4())
-        return self.email_verification_token
-    
-    def generate_reset_token(self):
-        self.reset_password_token = str(uuid.uuid4())
-        self.reset_password_expires = datetime.utcnow() + timedelta(hours=24)
-        return self.reset_password_token
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return self.is_active
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
+
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.id}>"
 
 
-class Course(db.Model):
-    id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    category = db.Column(db.String(50), nullable=False)  # IT, Computer Engineering, AI&DS, AI&ML, CS-related
-    difficulty = db.Column(db.String(30), nullable=False)  # beginner, intermediate, advanced
-    duration_weeks = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    discounted_price = db.Column(db.Float)
-    image_url = db.Column(db.String(255))
-    icon_class = db.Column(db.String(50))  # Bootstrap icon class
-    features = db.Column(db.Text)  # JSON string of features
-    roadmap_steps = db.Column(db.Text)  # JSON string of roadmap steps
-    
-    # Enhanced fields for your requirements
-    video_links = db.Column(db.Text)  # JSON string of video/tutorial links
-    practice_tests = db.Column(db.Text)  # JSON string of practice test configurations
-    mini_projects = db.Column(db.Text)  # JSON string of mini project briefs
-    course_materials = db.Column(db.Text)  # JSON string of downloadable materials
-    target_branches = db.Column(db.Text)  # JSON string of target branches (IT, Computer Engineering, etc.)
-    industry_relevance = db.Column(db.Text)  # Description of industry applications
-    certification_info = db.Column(db.Text)  # Certification details
-    
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationships
-    enrollments = db.relationship('Enrollment', backref='course', lazy=True)
-    coupons = db.relationship('Coupon', backref='course', lazy=True)
-    practice_tests_rel = db.relationship('PracticeTest', backref='course', lazy=True)
-    mini_projects_rel = db.relationship('MiniProject', backref='course', lazy=True)
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.id}>"
 
-
-class Coupon(db.Model):
-    id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
-    code = db.Column(db.String(20), unique=True, nullable=False)
-    discount_type = db.Column(db.String(10), nullable=False)  # percentage, fixed
-    discount_value = db.Column(db.Float, nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=True)
-    max_uses = db.Column(db.Integer, default=100)
-    used_count = db.Column(db.Integer, default=0)
-    valid_from = db.Column(db.DateTime, nullable=False)
-    valid_until = db.Column(db.DateTime, nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    payments = db.relationship('Payment', backref='coupon', lazy=True)
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.id}>"
-
-
-class Enrollment(db.Model):
-    id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    enrollment_date = db.Column(db.DateTime, default=datetime.utcnow)
-    completion_date = db.Column(db.DateTime)
-    progress = db.Column(db.Float, default=0.0)  # 0-100%
-    status = db.Column(db.String(20), default='enrolled')  # enrolled, in_progress, completed, cancelled
-    payment_id = db.Column(db.Integer, db.ForeignKey('payment.id'), nullable=True)
-    
-    # Relationships
-    payment = db.relationship('Payment', backref='enrollment', lazy=True)
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.id}>"
-
-
-class Payment(db.Model):
-    id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    coupon_id = db.Column(db.Integer, db.ForeignKey('coupon.id'), nullable=True)
-    razorpay_order_id = db.Column(db.String(100), unique=True)
-    razorpay_payment_id = db.Column(db.String(100), unique=True)
-    amount = db.Column(db.Float, nullable=False)
-    discount_amount = db.Column(db.Float, default=0.0)
-    final_amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, completed, failed, refunded
-    payment_date = db.Column(db.DateTime, default=datetime.utcnow)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    course = db.relationship('Course', backref='payments', lazy=True)
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.id}>"
-
-
-class AdminLog(db.Model):
-    id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
-    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    action = db.Column(db.String(100), nullable=False)
-    table_name = db.Column(db.String(50), nullable=False)
-    record_id = db.Column(db.Integer)
-    old_values = db.Column(db.Text)  # JSON string
-    new_values = db.Column(db.Text)  # JSON string
-    ip_address = db.Column(db.String(45))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    admin = db.relationship('User', backref='admin_logs', lazy=True)
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.id}>"
-
-
-class PracticeTest(db.Model):
-    id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=False)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
-    questions = db.Column(db.Text)  # JSON string of MCQ questions
-    time_limit = db.Column(db.Integer)  # Time limit in minutes
-    pass_percentage = db.Column(db.Float, default=70.0)  # Pass percentage
-    max_attempts = db.Column(db.Integer, default=3)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    attempts = db.relationship('TestAttempt', backref='practice_test', lazy=True)
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.id}>"
-
-
-class TestAttempt(db.Model):
-    id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    test_id = db.Column(db.Integer, db.ForeignKey('practice_test.id'), nullable=False)
-    score = db.Column(db.Float)
-    total_questions = db.Column(db.Integer)
-    correct_answers = db.Column(db.Integer)
-    time_taken = db.Column(db.Integer)  # Time taken in seconds
-    passed = db.Column(db.Boolean)
-    answers = db.Column(db.Text)  # JSON string of user answers
-    attempt_date = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    user = db.relationship('User', backref='test_attempts', lazy=True)
-    def __repr__(self):
-        return f"<{self.__class__.__name__} {self.id}>"
 
 
 class MiniProject(db.Model):
     id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
     # course_id nullable since capstone projects (plan §3, Tier 4) are tied
     # to a JobRole, not a legacy Course row.
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), nullable=True)
+    # Legacy FK to 'course' table removed - table doesn't exist in this build
+    course_id = db.Column(db.Integer, nullable=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
     project_brief = db.Column(db.Text)  # Detailed project requirements
@@ -279,7 +138,6 @@ class SkillArea(db.Model):
 
     # Relationships
     topics = db.relationship('Topic', backref='skill_area', lazy=True)
-    assessment_questions = db.relationship('AssessmentQuestion', backref='skill_area', lazy=True)
     skill_profiles = db.relationship('SkillProfile', backref='skill_area', lazy=True)
     children = db.relationship('SkillArea', backref=db.backref('parent', remote_side=[id]), lazy=True)
 
@@ -299,6 +157,8 @@ class Topic(db.Model):
     estimated_minutes = db.Column(db.Integer, default=60)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Gap 3 optional: Curriculum week assignment
+    week_id = db.Column(db.Integer, db.ForeignKey('curriculum_week.id'), nullable=True)
 
     # Relationships
     prerequisites = db.relationship(
@@ -329,6 +189,31 @@ class TopicPrerequisite(db.Model):
         return f"<TopicPrerequisite {self.prerequisite_topic_id} -> {self.topic_id}>"
 
 
+# =============================================================================
+# CURRICULUM WEEKS (Optional - Gap 3 polish)
+# =============================================================================
+
+class CurriculumWeek(db.Model):
+    """A week in the structured curriculum (e.g., 12-week program).
+    
+    Allows the dashboard to show "Week 7 of 12: Detecting AD Attacks" 
+    instead of just a generic progress percentage.
+    """
+    __tablename__ = 'curriculum_week'
+    id = db.Column(db.Integer, primary_key=True)
+    week_number = db.Column(db.Integer, nullable=False)  # 1-12, or 0 for ongoing-mastery
+    title = db.Column(db.String(200), nullable=False)
+    phase = db.Column(db.String(20), nullable=False)  # 'month1' | 'month2' | 'month3' | 'ongoing'
+    goal_description = db.Column(db.Text, nullable=False)
+    order_index = db.Column(db.Integer, default=0)
+
+    # Relationships
+    topics = db.relationship('Topic', backref='curriculum_week', lazy=True)
+
+    def __repr__(self):
+        return f"<CurriculumWeek {self.week_number}: {self.title}>"
+
+
 class JobRole(db.Model):
     """A cybersecurity job-role track (SOC Analyst, Pentester, etc.)."""
     __tablename__ = 'job_role'
@@ -347,6 +232,8 @@ class JobRole(db.Model):
     # graded project (mock OSCP, IR tabletop, etc.).
     capstone_project_id = db.Column(db.Integer, db.ForeignKey('mini_project.id'),
                                     nullable=True)
+    # Gap 3: Purple Team as default track
+    is_default = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -473,89 +360,103 @@ class Lab(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     # Providers: self_hosted | tryhackme | htb | portswigger | overthewire
-    #           | picoctf | self_hosted_offline | other
+    #           | picoctf | self_hosted_offline | other | vm_exercise
     provider = db.Column(db.String(30), nullable=False, default='other')
     url_or_container_ref = db.Column(db.String(500))
     difficulty = db.Column(db.Integer, default=2)   # 1-5
     estimated_minutes = db.Column(db.Integer, default=30)
-    # Proof types: flag | screenshot | writeup_url | self_report
-    proof_type = db.Column(db.String(20), default='self_report')
+    # Proof types: flag | screenshot | writeup_url | self_report | self_report_checklist
+    proof_type = db.Column(db.String(30), default='self_report')
     flag_hash = db.Column(db.String(128))          # SHA-256 hash of flag for self-hosted
     xp_reward = db.Column(db.Integer, default=25)
     mitre_techniques = db.Column(db.Text)          # JSON list of MITRE technique IDs
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # --- NEW: fields for vm_exercise provider (Gap 1) ---
+    attacker_vm = db.Column(db.String(100), nullable=True)       # e.g. "Kali"
+    target_vm = db.Column(db.String(100), nullable=True)         # e.g. "GOAD-DC01", "Metasploitable2"
+    detection_vm = db.Column(db.String(100), nullable=True)      # e.g. "Wazuh Manager"
+    instructions_md = db.Column(db.Text, nullable=True)          # step-by-step attack instructions
+    detection_task_md = db.Column(db.Text, nullable=True)        # what to look for/build in Wazuh
+    mitre_technique = db.Column(db.String(20), nullable=True)    # single MITRE technique for this lab
+    # --- end new fields ---
+
     @property
     def is_offline_available(self) -> bool:
         """True when the lab can be run without external network (plan §5.4)."""
-        return self.provider == "self_hosted_offline"
+        return self.provider in ("self_hosted_offline", "vm_exercise")
+
+    @property
+    def is_vm_exercise(self) -> bool:
+        return self.provider == "vm_exercise"
 
     def __repr__(self):
         return f"<Lab {self.title[:40]}>"
 
 
-class AssessmentQuestion(db.Model):
-    """Question bank entry for the adaptive skill assessment."""
-    __tablename__ = 'assessment_question'
+class VMConfig(db.Model):
+    """User's VM configuration for offline purple team labs.
+    
+    Stores connection details for attacker, target, and detection VMs.
+    All connections are local/host-only network — no internet required.
+    """
+    __tablename__ = 'vm_config'
     id = db.Column(db.Integer, primary_key=True)
-    skill_area_id = db.Column(db.Integer, db.ForeignKey('skill_area.id'), nullable=False)
-    question_text = db.Column(db.Text, nullable=False)
-    # Types: mcq | short_answer | scenario
-    question_type = db.Column(db.String(20), nullable=False, default='mcq')
-    options = db.Column(db.Text)                   # JSON list of strings (for MCQ)
-    correct_answer = db.Column(db.Text, nullable=False)  # option index (MCQ) or keyword list (short_answer)
-    explanation = db.Column(db.Text)               # shown after answering
-    difficulty = db.Column(db.Integer, nullable=False, default=3)  # 1-5
-    mitre_technique_id = db.Column(db.String(20))  # e.g. T1110
-    applicable_roles = db.Column(db.Text)          # JSON list of job_role slugs
-    is_active = db.Column(db.Boolean, default=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    
+    # Attacker VM (Kali Linux)
+    kali_ip = db.Column(db.String(45), nullable=True)  # IPv4 or IPv6
+    kali_ssh_user = db.Column(db.String(50), default='kali')
+    kali_ssh_key_path = db.Column(db.String(500), nullable=True)
+    kali_ssh_port = db.Column(db.Integer, default=22)
+    
+    # Target VMs
+    goad_dc_ip = db.Column(db.String(45), nullable=True)      # GOAD Domain Controller
+    goad_dc_winrm_user = db.Column(db.String(50), default='Administrator')
+    goad_dc_winrm_pass = db.Column(db.String(255), nullable=True)
+    goad_dc_winrm_port = db.Column(db.Integer, default=5985)
+    
+    goad_win10_ip = db.Column(db.String(45), nullable=True)   # GOAD Windows 10
+    goad_win10_winrm_user = db.Column(db.String(50), default='Administrator')
+    goad_win10_winrm_pass = db.Column(db.String(255), nullable=True)
+    goad_win10_winrm_port = db.Column(db.Integer, default=5985)
+    
+    metasploitable_ip = db.Column(db.String(45), nullable=True)
+    metasploitable_ssh_user = db.Column(db.String(50), default='msfadmin')
+    metasploitable_ssh_pass = db.Column(db.String(255), nullable=True)
+    metasploitable_ssh_port = db.Column(db.Integer, default=22)
+    
+    dvwa_ip = db.Column(db.String(45), nullable=True)
+    dvwa_port = db.Column(db.Integer, default=80)
+    
+    # Detection VM (Wazuh Manager)
+    wazuh_ip = db.Column(db.String(45), nullable=True)
+    wazuh_api_url = db.Column(db.String(500), nullable=True)  # e.g., https://192.168.56.30:55000
+    wazuh_api_user = db.Column(db.String(50), default='wazuh')
+    wazuh_api_pass = db.Column(db.String(255), nullable=True)
+    
+    # Network configuration
+    network_cidr = db.Column(db.String(20), default='192.168.56.0/24')  # Host-only network
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # Relationships
-    responses = db.relationship('AssessmentResponse', backref='question', lazy=True)
-
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_validated = db.Column(db.Boolean, default=False)  # Set true after connection test passes
+    
     def __repr__(self):
-        return f"<AssessmentQuestion area={self.skill_area_id} diff={self.difficulty}>"
-
-
-class AssessmentSession(db.Model):
-    """One adaptive assessment attempt by a user."""
-    __tablename__ = 'assessment_session'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    # track_type: general | job_role
-    track_type = db.Column(db.String(20), nullable=False, default='general')
-    job_role_id = db.Column(db.Integer, db.ForeignKey('job_role.id'), nullable=True)
-    started_at = db.Column(db.DateTime, default=datetime.utcnow)
-    completed_at = db.Column(db.DateTime)
-    # status: in_progress | completed | abandoned
-    status = db.Column(db.String(20), default='in_progress')
-    # Stores computed skill profile as JSON after completion
-    result_json = db.Column(db.Text)
-
-    # Relationships
-    responses = db.relationship('AssessmentResponse', backref='session', lazy=True)
-    job_role = db.relationship('JobRole', backref='assessment_sessions', lazy=True)
-
-    def __repr__(self):
-        return f"<AssessmentSession user={self.user_id} status={self.status}>"
-
-
-class AssessmentResponse(db.Model):
-    """One question response within an AssessmentSession."""
-    __tablename__ = 'assessment_response'
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.Integer, db.ForeignKey('assessment_session.id'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('assessment_question.id'), nullable=False)
-    answer_given = db.Column(db.Text)
-    is_correct = db.Column(db.Boolean)
-    difficulty_at_time = db.Column(db.Integer)     # difficulty level when question was served
-    time_taken_seconds = db.Column(db.Integer)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"<AssessmentResponse session={self.session_id} correct={self.is_correct}>"
+        return f"<VMConfig user={self.user_id} kali={self.kali_ip}>"
+    
+    def get_vm_dict(self) -> dict:
+        """Return VM config as dictionary for lab use."""
+        return {
+            'kali': {'ip': self.kali_ip, 'ssh_user': self.kali_ssh_user, 'ssh_key': self.kali_ssh_key_path, 'ssh_port': self.kali_ssh_port},
+            'goad_dc': {'ip': self.goad_dc_ip, 'winrm_user': self.goad_dc_winrm_user, 'winrm_pass': self.goad_dc_winrm_pass, 'winrm_port': self.goad_dc_winrm_port},
+            'goad_win10': {'ip': self.goad_win10_ip, 'winrm_user': self.goad_win10_winrm_user, 'winrm_pass': self.goad_win10_winrm_pass, 'winrm_port': self.goad_win10_winrm_port},
+            'metasploitable': {'ip': self.metasploitable_ip, 'ssh_user': self.metasploitable_ssh_user, 'ssh_pass': self.metasploitable_ssh_pass, 'ssh_port': self.metasploitable_ssh_port},
+            'dvwa': {'ip': self.dvwa_ip, 'port': self.dvwa_port},
+            'wazuh': {'ip': self.wazuh_ip, 'api_url': self.wazuh_api_url, 'api_user': self.wazuh_api_user, 'api_pass': self.wazuh_api_pass},
+            'network_cidr': self.network_cidr,
+        }
 
 
 class SkillProfile(db.Model):
@@ -608,6 +509,7 @@ class RoadmapItem(db.Model):
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=True)
     user_resource_id = db.Column(db.Integer, db.ForeignKey('user_resource.id'), nullable=True)
     scheduled_date = db.Column(db.DateTime)
+    time_slot = db.Column(db.String(100), nullable=True)  # e.g. "09:00-11:00 (Block 1)"
     order_index = db.Column(db.Integer, default=0)
     # status: pending | in_progress | done | skipped
     status = db.Column(db.String(20), default='pending')
@@ -630,7 +532,8 @@ class WeeklyAvailability(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     day_of_week = db.Column(db.Integer, nullable=False)  # 0=Mon … 6=Sun
-    available_minutes = db.Column(db.Integer, default=60)
+    available_minutes = db.Column(db.Integer, default=120)
+    time_blocks = db.Column(db.Text, nullable=True)  # JSON list of block dicts e.g. [{"name":"Block 1","start":"09:00","end":"11:00","duration":120}]
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'day_of_week', name='uq_availability_user_day'),
@@ -672,7 +575,7 @@ class XPLog(db.Model):
     __tablename__ = 'xp_log'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    # source_type: roadmap_item | lab | streak_bonus | assessment | badge
+    # source_type: roadmap_item | lab | streak_bonus | badge | purple_team_exercise
     source_type = db.Column(db.String(30), nullable=False)
     source_id = db.Column(db.Integer)              # FK to relevant record
     xp_amount = db.Column(db.Integer, nullable=False)
@@ -697,6 +600,31 @@ class StreakRecord(db.Model):
         return f"<StreakRecord user={self.user_id} streak={self.current_streak}>"
 
 
+class AssessmentQuestion(db.Model):
+    """Checkpoint quiz questions tied to topics and skill areas."""
+    __tablename__ = 'assessment_question'
+    id = db.Column(db.Integer, primary_key=True)
+    skill_area_id = db.Column(db.Integer, db.ForeignKey('skill_area.id'), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=True)
+    question_text = db.Column(db.Text, nullable=False)
+    # Types: mcq | true_false | short_answer | interactive_exercise
+    question_type = db.Column(db.String(20), default='mcq')
+    options = db.Column(db.Text)  # JSON list for MCQ
+    correct_answer = db.Column(db.Text, nullable=False)  # JSON or string
+    explanation = db.Column(db.Text)
+    difficulty = db.Column(db.Integer, default=1)  # 1-5
+    applicable_roles = db.Column(db.Text)  # JSON list of role slugs
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    skill_area = db.relationship('SkillArea', backref='assessment_questions', lazy=True)
+    topic = db.relationship('Topic', backref='checkpoint_questions', lazy=True)
+
+    def __repr__(self):
+        return f"<AssessmentQuestion {self.id}: {self.question_text[:50]}>"
+
+
 class ChatMessage(db.Model):
     """AI tutor conversation history."""
     __tablename__ = 'chat_message'
@@ -713,4 +641,61 @@ class ChatMessage(db.Model):
     related_topic = db.relationship('Topic', backref='chat_messages', lazy=True)
 
     def __repr__(self):
-        return f"<ChatMessage user={self.user_id} role={self.role}>"
+        return f"<ChatMessage user={self.user_id} role={self.role}>"
+
+
+# =============================================================================
+# PURPLE TEAM EXERCISE LOG & COVERAGE (Gap 2)
+# =============================================================================
+
+class PurpleTeamExerciseLog(db.Model):
+    """Log of a completed purple-team exercise (attack → detect → document).
+    
+    Auto-created when a vm_exercise lab is completed, or added manually
+    for ad-hoc practice (e.g., Atomic Red Team tests run outside curriculum).
+    """
+    __tablename__ = 'purple_team_exercise_log'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    lab_id = db.Column(db.Integer, db.ForeignKey('lab.id'), nullable=True)
+    technique_title = db.Column(db.String(200), nullable=False)
+    mitre_id = db.Column(db.String(20), nullable=True)
+    date_completed = db.Column(db.DateTime, default=datetime.utcnow)
+    attack_succeeded = db.Column(db.Boolean, default=False)
+    detected = db.Column(db.Boolean, default=False)
+    rule_written = db.Column(db.Boolean, default=False)
+    notes = db.Column(db.Text, nullable=True)          # your own write-up
+    writeup_path = db.Column(db.String(300), nullable=True)  # link to a local file if you keep longer notes elsewhere
+
+    # Relationships
+    user = db.relationship('User', backref='purple_team_logs', lazy=True)
+    lab = db.relationship('Lab', backref='purple_team_logs', lazy=True)
+
+    def __repr__(self):
+        return f"<PurpleTeamExerciseLog user={self.user_id} technique={self.technique_title}>"
+
+
+class AttackCoverage(db.Model):
+    """Tracks which MITRE ATT&CK techniques you've attacked/detected/written rules for.
+    
+    This forms your skill-coverage map and portfolio visual.
+    """
+    __tablename__ = 'attack_coverage'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    mitre_tactic = db.Column(db.String(100), nullable=False)
+    mitre_technique_id = db.Column(db.String(20), nullable=False)
+    first_attacked_date = db.Column(db.DateTime, nullable=True)
+    first_detected_date = db.Column(db.DateTime, nullable=True)
+    detection_rule_written = db.Column(db.Boolean, default=False)
+    last_reviewed_date = db.Column(db.DateTime, nullable=True)
+
+    # Relationships
+    user = db.relationship('User', backref='attack_coverage', lazy=True)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'mitre_technique_id', name='uq_attack_coverage_user_technique'),
+    )
+
+    def __repr__(self):
+        return f"<AttackCoverage user={self.user_id} {self.mitre_tactic}:{self.mitre_technique_id}>"

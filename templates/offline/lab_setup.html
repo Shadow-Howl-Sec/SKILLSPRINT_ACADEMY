@@ -1,34 +1,174 @@
 {% extends "base_cybersec.html" %}
 {% block title %}Lab Setup — SkillSprint{% endblock %}
 {% set active = "labs" %}
-{% block page_title %}Lab Setup Guide{% endblock %}
-{% block page_subtitle %}Local Kali VirtualBox VM + bundled challenges{% endblock %}
+{% block page_title %}Lab Setup & VM Prerequisites{% endblock %}
+{% block page_subtitle %}Configure your Kali VM + target infrastructure for vm_exercise labs{% endblock %}
 
 {% block content %}
-<div class="admin-card p-4">
-  <h6 style="font-weight:700;">1. Install VirtualBox</h6>
-  <p class="text-muted">Download VirtualBox for Windows from <code>https://www.virtualbox.org/</code> and run the installer. No reboot required for the host-only network on Windows 10/11.</p>
+<!-- VM Prerequisite Checklist -->
+<div class="admin-card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-checklist me-2"></i>VM Prerequisite Checklist</h5>
+    <span class="badge bg-primary fs-6">{{ prereqs | select('value') | list | length }}/{{ vm_list | length }} Ready</span>
+  </div>
+  <p class="text-muted mb-4">Tick off each VM once it's running and networked. <strong>vm_exercise labs require their prerequisite VMs to be checked</strong> before they become available in the lab browser.</p>
+  
+  <form method="POST" id="vm-checklist-form">
+    <div class="row g-3">
+      {% for key, label, desc in vm_list %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100 {% if prereqs.get(key) %}border-success{% else %}border-secondary{% endif %}">
+          <div class="card-body">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="vm_{{ key }}" name="vm_{{ key }}" 
+                     {% if prereqs.get(key) %}checked{% endif %} onchange="this.form.submit()">
+              <label class="form-check-label fw-bold" for="vm_{{ key }}">{{ label }}</label>
+            </div>
+            <p class="text-muted small mt-2 mb-0">{{ desc }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </form>
+</div>
 
-  <h6 style="font-weight:700;">2. Provision the Kali VM</h6>
-  <pre class="bg-dark text-light p-3 rounded small"># Option A — already have the .ova:
+<!-- VM Exercise Labs Status -->
+<div class="admin-card p-4 mb-4">
+  <h5 class="mb-3"><i class="bi bi-diagram-3 me-2"></i>VM Exercise Labs</h5>
+  <p class="text-muted mb-4">These labs run on your own VM infrastructure. They are <strong>greyed out</strong> in the lab browser until all their prerequisite VMs are checked above.</p>
+  
+  {% if vm_labs %}
+  <div class="table-responsive">
+    <table class="table table-dark table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Lab</th>
+          <th>Skill Area</th>
+          <th>MITRE</th>
+          <th>Prerequisites</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lab in vm_labs %}
+        <tr>
+          <td>
+            <a href="{{ url_for('labs.detail', lab_id=lab.id) }}" class="text-decoration-none">{{ lab.title }}</a>
+            <br><small class="text-muted">{{ lab.estimated_minutes }} min • +{{ lab.xp_reward }} XP</small>
+          </td>
+          <td>{{ lab.topic.skill_area.name if lab.topic and lab.topic.skill_area else '—' }}</td>
+          <td>
+            {% if lab.mitre_technique %}
+            <code class="text-info">{{ lab.mitre_technique }}</code>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <div class="d-flex flex-wrap gap-1">
+              {% for req in lab_requirements.get(lab.id, []) %}
+                {% set is_ready = prereqs.get(req, false) %}
+                <span class="badge {% if is_ready %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                  {{ req.replace('_', ' ').title() }} {% if is_ready %}<i class="bi bi-check-lg"></i>{% else %}<i class="bi bi-x-lg"></i>{% endif %}
+                </span>
+              {% endfor %}
+            </div>
+          </td>
+          <td>
+            {% if lab_all_ready.get(lab.id, false) %}
+            <span class="badge bg-success">Ready</span>
+            {% else %}
+            <span class="badge bg-warning text-dark">Missing VMs</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-4 text-muted">
+    <i class="bi bi-box-seam fs-1"></i>
+    <p class="mt-2">No vm_exercise labs seeded yet. Run <code>py seed_vm_labs.py</code> to add them.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Kali VM Setup Guide (Legacy) -->
+<div class="admin-card p-4">
+  <h5 class="mb-3"><i class="bi bi-terminal me-2"></i>Kali VM Quick Start (for bundled self_hosted_offline labs)</h5>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <h6 class="fw-bold">1. Install VirtualBox</h6>
+      <p class="text-muted small">Download from <code>virtualbox.org</code>. No reboot needed for host-only adapter on Windows 10/11.</p>
+      
+      <h6 class="fw-bold">2. Provision Kali VM</h6>
+      <pre class="bg-dark text-light p-3 rounded small"><code># Option A — import existing .ova:
 pwsh scripts\setup_kali_vm.ps1 -OvaPath C:\iso\kali.ova
 
-# Option B — fetch it once (online, ~3GB):
-pwsh scripts\setup_kali_vm.ps1 -Download</pre>
-  <p class="text-muted">The script imports the appliance, attaches a host-only adapter, mounts <code>bundles\labs</code> as a shared folder, snapshots a clean state, and prints SSH/RDP connection details.</p>
+# Option B — download (~3GB):
+pwsh scripts\setup_kali_vm.ps1 -Download</code></pre>
+      <p class="text-muted small">Script imports appliance, adds host-only adapter, mounts <code>bundles\labs</code> as shared folder, snapshots clean state.</p>
+    </div>
+    <div class="col-md-6">
+      <h6 class="fw-bold">3. Access Bundled Labs</h6>
+      <p class="text-muted small">Labs under <code>bundles\labs\</code> mount at <code>/media/sf_skillSprint-labs</code> inside Kali.</p>
+      <ol class="text-muted small">
+        <li>Go to <a href="{{ url_for('labs.browse') }}">/labs</a> → open a <strong>self_hosted_offline</strong> lab</li>
+        <li>Click "Open challenge files" or access from Kali at <code>/media/sf_skillSprint-labs/...</code></li>
+        <li>Analyze / solve the challenge</li>
+        <li>Submit flag/write-up for XP</li>
+      </ol>
+      
+      <h6 class="fw-bold">4. Reset VM to Clean State</h6>
+      <pre class="bg-dark text-light p-3 rounded small"><code>VBoxManage snapshot "SkillSprint-Kali" restore skillSprint-clean-state</code></pre>
+    </div>
+  </div>
+</div>
 
-  <h6 style="font-weight:700;">3. Fetch challenge artifacts</h6>
-  <p class="text-muted">The bundled labs live under <code>bundles\labs\</code> and are accessed directly from the VM via the shared folder. They are mounted at <code>/media/sf_skillSprint-labs</code> inside the guest.</p>
-
-  <h6 style="font-weight:700;">4. Work a lab</h6>
-  <ol class="text-muted">
-    <li>Go to <a href="{{ url_for('labs.browse') }}">/labs</a> and open any <strong>self_hosted_offline</strong> lab.</li>
-    <li>Click <strong>"Open challenge files"</strong> to download the artifact, OR access it from <code>/media/sf_skillSprint-labs/<...></code> inside the VM.</li>
-    <li>Perform the analysis / solve the challenge.</li>
-    <li>Submit the flag (or write-up URL) on the lab page to claim XP — all flag-hash comparison happens locally.</li>
-  </ol>
-
-  <h6 style="font-weight:700;">5. Resetting the VM</h6>
-  <pre class="bg-dark text-light p-3 rounded small">VBoxManage snapshot "SkillSprint-Kali" restore skillSprint-clean-state</pre>
+<!-- Target VM Setup References -->
+<div class="admin-card p-4 mt-4">
+  <h5 class="mb-3"><i class="bi bi-hdd-network me-2"></i>Target VM Setup References</h5>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-title"><i class="bi bi-shield-lock text-danger me-1"></i>Metasploitable2</h6>
+          <p class="card-text small text-muted">Download from SourceForge/Rapid7. Import .ova, attach to same host-only network as Kali. Default creds: <code>msfadmin/msfadmin</code></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-title"><i class="bi bi-globe text-warning me-1"></i>DVWA / Juice Shop</h6>
+          <p class="card-text small text-muted">Docker: <code>docker run -d -p 80:80 vulnerables/web-dvwa</code> or <code>docker run -d -p 3000:3000 bkimminich/juice-shop</code>. Attach to host-only network.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-title"><i class="bi bi-diagram-3 text-info me-1"></i>GOAD (Game of AD)</h6>
+          <p class="card-text small text-muted">GitHub: <code>Orange-Cyberdefense/GOAD</code>. Deploy via Vagrant/VirtualBox. Creates DC01 + WIN10 joined to GOAD.LOCAL. Creds in repo docs.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-title"><i class="bi bi-shield-check text-success me-1"></i>Wazuh Manager</h6>
+          <p class="card-text small text-muted">Deploy via <code>docker-compose</code> from Wazuh docs. Enroll agents on Metasploitable2, GOAD-DC01, GOAD-WIN10. Configure Sysmon on Windows.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-title"><i class="bi bi-cpu text-primary me-1"></i>Network Config</h6>
+          <p class="card-text small text-muted">All VMs on same host-only network (e.g., 192.168.56.0/24). Kali needs promiscuous mode: VM Settings → Network → Adapter 2 → Promiscuous Mode: Allow All.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

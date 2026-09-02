@@ -1,18 +1,18 @@
 {% extends "base_cybersec.html" %}
-{% block title %}Today — SkillSprint{% endblock %}
+{% block title %}Today's Dashboard — ZeroCipher{% endblock %}
 {% set active = "today" %}
-{% block page_title %}Today's Plan{% endblock %}
-{% block page_subtitle %}{{ today_items | length + (done_today | length) }} scheduled today · {{ percent }}% through your roadmap{% endblock %}
+{% block page_title %}Operational Dashboard{% endblock %}
+{% block page_subtitle %}{{ today_items | length + (done_today | length) }} items scheduled today · {{ percent }}% overall purple team completion{% endblock %}
 
 {% block content %}
-<!-- Top strip stats -->
+<!-- Top Stats Strip -->
 <div class="row g-3 mb-4">
   <div class="col-6 col-lg-3">
     <div class="admin-stats-card">
       <div class="d-flex align-items-center gap-3">
         <div class="admin-stats-icon badge-pink"><i class="bi bi-fire"></i></div>
         <div>
-          <div style="font-size:1.5rem;font-weight:800;line-height:1;">{{ streak.current_streak if streak else 0 }}</div>
+          <div style="font-size:1.6rem;font-weight:800;line-height:1;color:#ffffff;">{{ streak.current_streak if streak else 0 }}</div>
           <div style="font-size:.78rem;color:var(--text-muted);">day streak</div>
         </div>
       </div>
@@ -23,8 +23,8 @@
       <div class="d-flex align-items-center gap-3">
         <div class="admin-stats-icon badge-indigo"><i class="bi bi-stars"></i></div>
         <div>
-          <div style="font-size:1.5rem;font-weight:800;line-height:1;">{{ xp }}</div>
-          <div style="font-size:.78rem;color:var(--text-muted);">XP · Lvl {{ level }}</div>
+          <div style="font-size:1.6rem;font-weight:800;line-height:1;color:#ffffff;">{{ xp }}</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">XP · Level {{ level }}</div>
         </div>
       </div>
     </div>
@@ -32,9 +32,9 @@
   <div class="col-6 col-lg-3">
     <div class="admin-stats-card">
       <div class="d-flex align-items-center gap-3">
-        <div class="admin-stats-icon badge-cyan"><i class="bi bi-graph-up"></i></div>
+        <div class="admin-stats-icon badge-cyan"><i class="bi bi-graph-up-arrow"></i></div>
         <div>
-          <div style="font-size:1.5rem;font-weight:800;line-height:1;">{{ percent }}%</div>
+          <div style="font-size:1.6rem;font-weight:800;line-height:1;color:#ffffff;">{{ percent }}%</div>
           <div style="font-size:.78rem;color:var(--text-muted);">roadmap done</div>
         </div>
       </div>
@@ -43,9 +43,9 @@
   <div class="col-6 col-lg-3">
     <div class="admin-stats-card">
       <div class="d-flex align-items-center gap-3">
-        <div class="admin-stats-icon badge-emerald"><i class="bi bi-flag"></i></div>
+        <div class="admin-stats-icon badge-emerald"><i class="bi bi-card-checklist"></i></div>
         <div>
-          <div style="font-size:1.5rem;font-weight:800;line-height:1;">{{ today_items | length }}</div>
+          <div style="font-size:1.6rem;font-weight:800;line-height:1;color:#ffffff;">{{ today_items | length }}</div>
           <div style="font-size:.78rem;color:var(--text-muted);">to-do today</div>
         </div>
       </div>
@@ -54,73 +54,83 @@
 </div>
 
 <div class="row g-4">
-  <!-- Today's tasks -->
+  <!-- Today's Schedule -->
   <div class="col-lg-8">
-    <div class="admin-card p-3 mb-4">
-      <div class="d-flex align-items-center justify-content-between p-2 mb-3">
-        <h6 style="margin:0;font-weight:700;"><i class="bi bi-list-check me-2 text-primary"></i>Today's Schedule</h6>
+    <div class="admin-card p-4 mb-4">
+      <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+        <h6 style="margin:0;font-weight:700;color:var(--text-primary);">
+          <i class="bi bi-calendar-day me-2 text-primary"></i>Today's Schedule
+        </h6>
         {% if next_pending %}
-          <a href="{{ url_for('roadmap.view') }}" class="small text-primary fw-semibold">View full roadmap →</a>
+          <a href="{{ url_for('roadmap.view') }}" class="small text-primary fw-semibold">View Full Roadmap →</a>
         {% endif %}
       </div>
 
       {% if today_items %}
         {% for item in today_items %}
-        <div style="border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.6rem;" class="d-flex align-items-center gap-3">
-          <i class="{{ {'content_item':'bi-book','lab':'bi-flag','checkpoint_quiz':'bi-patch-question','review':'bi-arrow-repeat','external_resource':'bi-link-45deg'}[item.item_type] or 'bi-circle' }}" style="font-size:1.2rem;color:var(--accent);width:24px;"></i>
+        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:0.75rem;" class="d-flex align-items-center gap-3">
+          <i class="{{ {'content_item':'bi-book-fill','lab':'bi-flag-fill','checkpoint_quiz':'bi-patch-question-fill','review':'bi-arrow-repeat','external_resource':'bi-link-45deg'}[item.item_type] or 'bi-circle' }}"
+             style="font-size:1.25rem;color:{% if item.item_type == 'lab' %}var(--danger){% elif item.item_type == 'checkpoint_quiz' %}var(--warning){% else %}var(--primary){% endif %};width:24px;"></i>
           <div class="flex-grow-1">
-            <div style="font-weight:600;font-size:.92rem;">
+            <div style="font-weight:600;font-size:0.92rem;color:var(--text-primary);">
               {{ item.content_item.title if item.content_item else (item.lab.title if item.lab else ('External: ' ~ item.user_resource.title if item.user_resource else (item.topic.title if item.topic else 'Checkpoint'))) }}
             </div>
             <div class="small text-muted">
               <i class="bi bi-clock me-1"></i>{{ item.estimated_minutes }} min
-              {% if item.topic %}· {{ item.topic.title }}{% endif %}
+              {% if item.time_slot %} · <i class="bi bi-geo-alt me-1"></i>{{ item.time_slot }}{% endif %}
+              {% if item.topic %} · {{ item.topic.title }}{% endif %}
             </div>
           </div>
           <div class="d-flex gap-2">
-            {% if item.item_type == 'lab' %}<a href="{{ url_for('labs.detail', lab_id=item.lab_id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-play"></i> Start</a>{% endif %}
+            {% if item.item_type == 'lab' and item.lab_id %}
+              <a href="{{ url_for('labs.detail', lab_id=item.lab_id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-play-fill"></i> Start Lab</a>
+            {% elif item.item_type == 'checkpoint_quiz' and item.topic_id %}
+              <a href="{{ url_for('assessment.topic_quiz', topic_id=item.topic_id) }}" class="btn btn-sm btn-warning"><i class="bi bi-patch-question"></i> Take Quiz</a>
+            {% endif %}
             <form method="post" action="{{ url_for('dashboard.complete_item', item_id=item.id) }}">
-              <button type="submit" class="btn btn-sm btn-success" title="Mark done"><i class="bi bi-check2"></i></button>
+              <button type="submit" class="btn btn-sm btn-success" title="Mark done"><i class="bi bi-check2"></i> Done</button>
             </form>
           </div>
         </div>
         {% endfor %}
       {% else %}
-        <div class="text-center py-4">
-          <i class="bi bi-check2-circle" style="font-size:2.5rem;color:var(--success);"></i>
-          <p class="mt-2 mb-1" style="font-weight:600;">All clear for today! 🎉</p>
-          <p class="text-muted small">You're ahead of schedule. Check your roadmap for what's next, or explore labs.</p>
-          <a href="{{ url_for('labs.browse') }}" class="btn btn-outline-primary btn-sm mt-2"><i class="bi bi-flag me-1"></i> Explore Labs</a>
+        <div class="text-center py-5">
+          <i class="bi bi-check2-circle" style="font-size:3rem;color:var(--success);"></i>
+          <h5 class="mt-3 mb-1" style="font-weight:700;">All clear for today! 🎉</h5>
+          <p class="text-muted small">You're on track with your training roadmap. Check your calendar for upcoming time blocks.</p>
+          <a href="{{ url_for('labs.browse') }}" class="btn btn-outline-primary btn-sm mt-2"><i class="bi bi-terminal-fill me-1"></i> Browse Practice Labs</a>
         </div>
       {% endif %}
 
       {% if done_today %}
-        <hr>
-        <div class="small text-muted mb-2"><i class="bi bi-check2-all me-1"></i>Completed today</div>
+        <hr style="border-color:var(--border);">
+        <div class="small text-muted mb-2"><i class="bi bi-check2-all me-1 text-success"></i>Completed Today</div>
         {% for item in done_today %}
-        <div style="opacity:.65;" class="d-flex align-items-center gap-2 mb-1">
+        <div style="opacity:0.65;" class="d-flex align-items-center gap-2 mb-1">
           <i class="bi bi-check-circle-fill text-success"></i>
-          <span class="small" style="text-decoration:line-through;">
-            {{ item.content_item.title if item.content_item else (item.lab.title if item.lab else (item.topic.title if item.topic else 'External resource')) }}
+          <span class="small text-muted" style="text-decoration:line-through;">
+            {{ item.content_item.title if item.content_item else (item.lab.title if item.lab else (item.topic.title if item.topic else 'External Resource')) }}
           </span>
         </div>
         {% endfor %}
       {% endif %}
     </div>
 
-    <!-- Continue -->
+    <!-- Continue Where You Left Off -->
     {% if next_pending %}
-    <div class="admin-card p-3">
-      <div class="d-flex align-items-center justify-content-between p-2">
+    <div class="admin-card p-4">
+      <div class="d-flex align-items-center justify-content-between">
         <div>
-          <h6 style="margin:0;font-weight:700;"><i class="bi bi-arrow-return-left me-2 text-primary"></i>Continue where you left off</h6>
-          <span class="small text-muted">Your next pending item, one click to resume.</span>
+          <h6 style="margin:0;font-weight:700;"><i class="bi bi-play-circle me-2 text-primary"></i>Continue Where You Left Off</h6>
+          <span class="small text-muted">Your next pending item on the roadmap.</span>
         </div>
         {% if next_pending.item_type == 'lab' and next_pending.lab %}
-          <a href="{{ url_for('labs.detail', lab_id=next_pending.lab_id) }}" class="btn btn-primary btn-sm"><i class="bi bi-play me-1"></i> Resume</a>
+          <a href="{{ url_for('labs.detail', lab_id=next_pending.lab_id) }}" class="btn btn-primary btn-sm"><i class="bi bi-play-fill me-1"></i> Resume Lab</a>
+        {% elif next_pending.item_type == 'checkpoint_quiz' and next_pending.topic_id %}
+          <a href="{{ url_for('assessment.topic_quiz', topic_id=next_pending.topic_id) }}" class="btn btn-warning btn-sm"><i class="bi bi-patch-question me-1"></i> Take Quiz</a>
         {% else %}
           <form method="post" action="{{ url_for('dashboard.complete_item', item_id=next_pending.id) }}">
-            <button class="btn btn-primary btn-sm"><i class="bi bi-check2 me-1"></i> Mark done</button>
+            <button class="btn btn-primary btn-sm"><i class="bi bi-check2 me-1"></i> Mark Done</button>
           </form>
         {% endif %}
       </div>
@@ -128,35 +138,37 @@
     {% endif %}
   </div>
 
-  <!-- Right column -->
+  <!-- Right Sidebar -->
   <div class="col-lg-4">
-    <!-- Week at a glance -->
-    <div class="admin-card p-3 mb-4">
-      <h6 style="margin:0 0 .75rem;font-weight:700;"><i class="bi bi-calendar-week me-2 text-primary"></i>This week</h6>
+    <!-- Week At A Glance -->
+    <div class="admin-card p-4 mb-4">
+      <h6 style="margin:0 0 1rem;font-weight:700;"><i class="bi bi-calendar-week me-2 text-primary"></i>This Week's Progress</h6>
       <div class="d-flex justify-content-between">
         {% for day in week %}
         <div class="text-center" style="flex:1;">
-          <div class="small text-muted">{{ day.label }}</div>
-          <div style="width:32px;height:32px;border-radius:50%;margin:4px auto;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;
-               background:{% if day.total %}{% if day.done == day.total %}var(--success){% elif day.done > 0 %}var(--accent){% else %}var(--gray-200){% endif %}{% else %}var(--gray-100){% endif %};
-               color:{% if day.total and day.done == day.total %}#fff{% endif %};">
+          <div class="small text-muted mb-1" style="font-size:0.75rem;">{{ day.label }}</div>
+          <div style="width:34px;height:34px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;
+               background:{% if day.total %}{% if day.done == day.total %}var(--success){% elif day.done > 0 %}var(--primary){% else %}rgba(255,255,255,0.06){% endif %}{% else %}rgba(255,255,255,0.03){% endif %};
+               color:{% if day.total %}#ffffff{% else %}var(--text-muted){% endif %};">
             {{ day.done }}
           </div>
         </div>
         {% endfor %}
       </div>
-      <div class="text-center mt-2"><a href="{{ url_for('roadmap.calendar') }}" class="small text-primary fw-semibold">Open calendar →</a></div>
+      <div class="text-center mt-3 pt-2 border-top">
+        <a href="{{ url_for('roadmap.calendar') }}" class="small text-primary fw-semibold text-decoration-none">Open Interactive Timetable →</a>
+      </div>
     </div>
 
-    <!-- Quick links -->
-    <div class="admin-card p-3">
-      <h6 style="margin:0 0 .75rem;font-weight:700;"><i class="bi bi-lightning-charge me-2 text-primary"></i>Quick actions</h6>
+    <!-- Quick Actions -->
+    <div class="admin-card p-4">
+      <h6 style="margin:0 0 1rem;font-weight:700;"><i class="bi bi-lightning-charge me-2 text-warning"></i>Quick Actions</h6>
       <div class="d-grid gap-2">
-        <a href="{{ url_for('library.add') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-link-45deg me-2"></i>Add an external resource</a>
-        <a href="{{ url_for('job_roles.browse') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-briefcase me-2"></i>Browse job-role tracks</a>
-        <a href="{{ url_for('assessment.start', track_type='general') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-arrow-repeat me-2"></i>Re-take assessment</a>
-        <a href="{{ url_for('assistant.chat') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-robot me-2"></i>Ask the AI tutor</a>
-        <a href="{{ url_for('dashboard.progress') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-graph-up me-2"></i>See your progress</a>
+        <a href="{{ url_for('roadmap.availability') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-clock-history me-2"></i>Configure 2-3hr Daily Blocks</a>
+        <a href="{{ url_for('purple_team.coverage') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-grid-3x3-gap-fill me-2"></i>ATT&CK Coverage Matrix</a>
+        <a href="{{ url_for('purple_team.log_new') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-journal-plus me-2"></i>Log Purple Team Exercise</a>
+        <a href="{{ url_for('offline.lab_setup') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-pc-display me-2"></i>VirtualBox VM Status Guide</a>
+        <a href="{{ url_for('assistant.chat') }}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-robot me-2"></i>Ask Local AI Mentor</a>
       </div>
     </div>
   </div>

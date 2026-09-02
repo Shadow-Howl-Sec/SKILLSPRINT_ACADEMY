@@ -33,14 +33,8 @@ def reset_password(email: str, new_password: str) -> int:
 
 def reseed() -> int:
     with app.app_context():
-        import seed
-        import seed_exercises
-        import seed_offline_labs
-        import seed_topic_hints
-        seed.main()
-        seed_exercises.main()
-        seed_offline_labs.main()
-        seed_topic_hints.main()
+        import seed_comprehensive
+        seed_comprehensive.main()
         return 0
 
 

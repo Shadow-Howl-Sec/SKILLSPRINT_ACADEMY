@@ -1,15 +1,15 @@
-"""Seed reference data for the SkillSprint CyberSec platform.
+"""Seed reference data for the ZeroCipher Purple Team platform.
 
 Idempotent: only inserts rows that don't already exist (matched by slug /
 question text). Run with `py seed.py` after `db.create_all()` has run.
 
-Seeds (plan §16):
-  - 9 SkillAreas              (Networking, Linux, Web App Sec, Crypto, OSINT,
-                               Scripting/Python, Windows/AD, Cloud, GRC)
-  - ~50 Topics with a basic DAG (TopicPrerequisite edges)
-  - 9 JobRoles (NIST NICE-aligned) with JobRoleTopic mappings
-  - ~45 AssessmentQuestions (5 per area, difficulty 1-5)
-  - ~25 Tier-1 Labs (TryHackMe / PortSwigger / OverTheWire / PicoCTF links)
+Seeds:
+  - 20 SkillAreas (full 5-tier taxonomy)
+  - ~68 Topics with a DAG (TopicPrerequisite edges)
+  - 10 JobRoles (NIST NICE-aligned) with JobRoleTopic mappings
+  - 10 Tier-4 Capstone MiniProjects
+  - vm_exercise Labs for EVERY topic (offline-first purple team labs)
+  - 12-week Job-Ready curriculum + Ongoing Mastery curriculum weeks
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from app import app
 from extensions import db
 from models import (
     SkillArea, Topic, TopicPrerequisite, JobRole, JobRoleTopic,
-    AssessmentQuestion, Lab, MiniProject,
+    Lab, MiniProject, CurriculumWeek, AssessmentQuestion,
 )
 
 
@@ -284,6 +284,11 @@ def seed_topics(areas) -> dict[str, Topic]:
 # Created BEFORE roles so JobRole.capstone_project_id can reference them.
 # ---------------------------------------------------------------------------
 CAPSTONES = [
+    ("Purple Team Capstone: Full Attack+Detect Chain",
+     "Execute a complete purple-team exercise: attack GOAD (Kerberoasting, AS-REP, PTH), "
+     "detect via Wazuh/Sigma rules, document findings in a professional report. "
+     "Graded by self-assessment checklist covering attack execution, detection coverage, and report quality.",
+     "hard", 16, "self_grade_checklist"),
     ("Pentester Mock OSCP 24-hour Lab",
      "Graded 24-hour mock OSCP exam against a 5-machine vulnerable VM pack. "
      "Submit AD-, web-, and privesc-user flags; self-grade by checklist.",
@@ -324,6 +329,7 @@ CAPSTONES = [
 
 # Maps JobRole slug -> capstone title (so the role row gets the right FK)
 CAPSTONE_BY_ROLE = {
+    "purple-team":        "Purple Team Capstone: Full Attack+Detect Chain",
     "pentester":          "Pentester Mock OSCP 24-hour Lab",
     "appsec-engineer":    "AppSec Capstone: Secure SDLC Audit",
     "soc-analyst":        "SOC Analyst L2 Capstone: Alert Triage",
@@ -354,6 +360,25 @@ def seed_capstones() -> dict[str, MiniProject]:
 # Job roles (NIST NICE aligned) + per-role topic mapping
 # ---------------------------------------------------------------------------
 ROLES = [
+    # Purple Team Specialist — DEFAULT track (Gap 3)
+    ("Purple Team Specialist", "purple-team", "🎭",
+     "Combines red-team offense and blue-team detection — the default path for this platform. "
+     "Interleaves attack labs with their detection counterparts across AD, Network, Web, and Cloud.",
+     "₹10-30 LPA", ["OSCP", "GNFA", "GCFA", "GCIH"],
+     ["Networking Basics", "Linux Fundamentals", "Windows Fundamentals",
+      "Security Mindset & Ethics", "MITRE ATT&CK Overview",
+      "TCP/IP & Subnetting", "DNS & HTTP", "Packet Analysis & Wireshark",
+      "Web App Basics & HTTP", "OWASP Top 10 Overview", "SQL Injection",
+      "Cross-Site Scripting (XSS)", "Burp Suite Essentials",
+      "Active Directory Fundamentals", "Kerberos & BloodHound",
+      "Windows Internals", "Log Analysis & journald",
+      "Firewalls & Network Hardening", "Packet Forensics at Scale",
+      "SIEM Queries & Sigma Rules", "Threat Hunting at Scale", "SOC Playbooks",
+      "Linux Hardening & Audit", "Linux Disk & Memory Forensics",
+      "Malware Static Analysis", "Malware Dynamic Analysis & Sandboxing",
+      "YARA & AV Evasion (detect)", "Cloud IAM & S3 Security",
+      "Kubernetes Security Basics", "Cloud IAM Abuse",
+      "Kubernetes Attack Paths", "Terraform Misconfig Hunting"]),
     ("SOC Analyst",      "soc-analyst",       "🛡️",
      "Blue-team detection & triage — SIEM, log analysis, incident triage.",
      "₹6-15 LPA", ["CompTIA Security+", "CompTIA CySA+"],
@@ -439,6 +464,8 @@ def seed_roles(topics_by_title, capstones_by_title) -> None:
         capstone_id = (capstones_by_title[capstone_title].id
                        if capstone_title and capstone_title in capstones_by_title
                        else None)
+        # Set is_default=True for purple-team role
+        is_default = (slug == "purple-team")
         role, created = get_or_create(JobRole, defaults={
             "name": name, "description": desc,
             "avg_salary_note": salary,
@@ -446,12 +473,16 @@ def seed_roles(topics_by_title, capstones_by_title) -> None:
             "icon_emoji": emoji, "difficulty_label": "Beginner Friendly",
             "color_hex": "#6366f1",
             "capstone_project_id": capstone_id,
+            "is_default": is_default,
         }, slug=slug)
         if not created:
             # Update the capstone FK for roles that already existed from the
             # original seed (pre-Tier-4 rows).
             if role.capstone_project_id != capstone_id and capstone_id is not None:
                 role.capstone_project_id = capstone_id
+            # Ensure purple-team is marked as default
+            if slug == "purple-team" and not role.is_default:
+                role.is_default = True
             # Repopulate topic mapping so newly-added Tier 0/3 topics attach.
             JobRoleTopic.query.filter_by(job_role_id=role.id).delete()
             db.session.flush()
@@ -652,6 +683,83 @@ def seed_labs(topics_by_title) -> None:
     db.session.flush()
 
 
+# ---------------------------------------------------------------------------
+# Curriculum Weeks (Gap 3 optional polish) — 12-week structure
+# ---------------------------------------------------------------------------
+
+CURRICULUM_WEEKS = [
+    # Month 1: Foundations & Recon (Weeks 1-4)
+    (1, "Network Recon & Discovery", "month1",
+     "Master network scanning, enumeration, and service identification using Nmap, Masscan, and DNS tools against Metasploitable2 and GOAD."),
+    (2, "Linux & Windows Fundamentals", "month1",
+     "Build fluency in Linux (permissions, services, logs) and Windows (registry, PowerShell, AD basics) — the OS layer every attacker and defender needs."),
+    (3, "Web App Recon & OWASP Top 10", "month1",
+     "Map web applications, discover attack surface, and understand the OWASP Top 10 vulnerability classes through DVWA/Juice Shop."),
+    (4, "Active Directory Enumeration", "month1",
+     "Enumerate GOAD domain: users, groups, GPOs, trusts, SPNs, and delegation settings using BloodHound, ldapsearch, and PowerView."),
+    
+    # Month 2: Attack & Detect (Weeks 5-8)
+    (5, "Credential Attacks: Kerberoasting & AS-REP Roasting", "month2",
+     "Execute Kerberoasting and AS-REP roasting against GOAD service accounts; crack hashes with Hashcat; detect via Event ID 4769/4768."),
+    (6, "Lateral Movement & Privilege Escalation", "month2",
+     "Practice Pass-the-Hash, Pass-the-Ticket, and SMB relay; escalate via misconfigured services and delegation; detect via Event ID 4624/4672."),
+    (7, "Persistence & Defense Evasion", "month2",
+     "Implement registry run keys, scheduled tasks, WMI event subscriptions, and DLL hijacking; detect via Sysmon Event ID 12/13/14."),
+    (8, "Command & Control & Exfiltration", "month2",
+     "Simulate C2 channels (DNS, HTTP, HTTPS) and data exfiltration; build Sigma/Wazuh rules for beaconing and large transfers."),
+    
+    # Month 3: Detection Engineering & Capstone (Weeks 9-12)
+    (9, "SIEM Queries & Sigma Rule Development", "month3",
+     "Write advanced Wazuh/Sigma rules for ATT&CK techniques covered; tune for low false positives; test against Atomic Red Team."),
+    (10, "Threat Hunting at Scale", "month3",
+     "Hypothesis-driven hunting: use MITRE ATT&CK to structure hunts; query Wazuh/Elastic for anomalous patterns across GOAD environment."),
+    (11, "SOC Playbooks & Incident Response", "month3",
+     "Build and execute IR playbooks for ransomware, credential theft, and web shell scenarios; practice containment, eradication, recovery."),
+    (12, "Purple Team Capstone: Full Attack+Detect Chain", "month3",
+     "End-to-end exercise: attack GOAD (Kerberoasting → PTH → Lateral), detect each stage via Wazuh/Sigma, document in professional report."),
+]
+
+
+def seed_curriculum_weeks(topics_by_title: dict) -> None:
+    """Seed the 12-week curriculum structure and link topics to weeks."""
+    from models import CurriculumWeek
+    
+    for week_num, title, phase, goal in CURRICULUM_WEEKS:
+        week, _ = get_or_create(CurriculumWeek, defaults={
+            "title": title, "phase": phase, "goal_description": goal,
+            "order_index": week_num,
+        }, week_number=week_num)
+    
+    # Link topics to weeks based on the Purple Team role's topic order
+    # This is a simplified mapping - in production you'd have a more detailed config
+    week_topic_map = {
+        1: ["TCP/IP & Subnetting", "DNS & HTTP", "Packet Analysis & Wireshark", "Networking Basics"],
+        2: ["Linux Filesystem & Permissions", "Bash & Scripting Fundamentals", "Processes & Services", 
+            "Windows Fundamentals", "Windows Internals", "Security Mindset & Ethics"],
+        3: ["Web App Basics & HTTP", "OWASP Top 10 Overview", "SQL Injection", "Cross-Site Scripting (XSS)", "Burp Suite Essentials"],
+        4: ["Active Directory Fundamentals", "Kerberos & BloodHound", "Windows Internals"],
+        5: ["Kerberos & BloodHound", "Active Directory Fundamentals"],
+        6: ["Active Directory Fundamentals", "Kerberos & BloodHound", "Windows Internals", "Lateral Movement & OPSEC"],
+        7: ["Windows Internals", "Active Directory Fundamentals", "Linux Hardening & Audit"],
+        8: ["Packet Forensics at Scale", "Malware Static Analysis", "Red Team C2 & Infrastructure"],
+        9: ["SIEM Queries & Sigma Rules", "Threat Hunting at Scale", "Packet Forensics at Scale"],
+        10: ["Threat Hunting at Scale", "SIEM Queries & Sigma Rules", "Packet Forensics at Scale"],
+        11: ["SOC Playbooks", "Threat Hunting at Scale", "Incident Responder Tabletop"],
+        12: ["Kerberos & BloodHound", "Active Directory Fundamentals", "Lateral Movement & OPSEC", "SIEM Queries & Sigma Rules"],
+    }
+    
+    for week_num, topic_titles in week_topic_map.items():
+        week = CurriculumWeek.query.filter_by(week_number=week_num).first()
+        if not week:
+            continue
+        for t_title in topic_titles:
+            topic = topics_by_title.get(t_title)
+            if topic:
+                topic.week_id = week.id
+    
+    db.session.flush()
+
+
 def main() -> None:
     from models import MiniProject
     with app.app_context():
@@ -661,6 +769,7 @@ def main() -> None:
         seed_roles(topics, capstones)
         seed_questions(areas)
         seed_labs(topics)
+        seed_curriculum_weeks(topics)
         db.session.commit()
         n_areas = SkillArea.query.count()
         n_topics = Topic.query.count()

@@ -1,0 +1,418 @@
+{% extends "base_cybersec.html" %}
+
+{% block title %}{{ lab.title }} — VM Exercise{% endblock %}
+
+{% block extra_css %}
+<style>
+  .vm-setup-panel {
+    background: linear-gradient(135deg, #1e1e2e 0%, #16161e 100%);
+    border: 1px solid #2a2a3e;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .vm-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .vm-badge.attacker { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .vm-badge.target { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  .vm-badge.detection { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .markdown-content {
+    line-height: 1.7;
+  }
+  .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #e0e0e0;
+  }
+  .markdown-content h1 { font-size: 1.5rem; border-bottom: 1px solid #333; padding-bottom: 0.5rem; }
+  .markdown-content h2 { font-size: 1.25rem; }
+  .markdown-content h3 { font-size: 1rem; }
+  .markdown-content code {
+    background: #2d2d3a;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+    color: #f8f8f2;
+  }
+  .markdown-content pre {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+  .markdown-content pre code {
+    background: transparent;
+    padding: 0;
+    color: #f8f8f2;
+  }
+  .markdown-content ul, .markdown-content ol {
+    padding-left: 1.5rem;
+  }
+  .markdown-content li { margin: 0.5rem 0; }
+  .markdown-content blockquote {
+    border-left: 3px solid #6366f1;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #a0a0a0;
+    font-style: italic;
+  }
+  .checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #1e1e2e;
+    border: 1px solid #2a2a3e;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+  }
+  .checklist-item input[type="checkbox"] {
+    margin-top: 0.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: #6366f1;
+    flex-shrink: 0;
+  }
+  .checklist-item label {
+    flex: 1;
+    cursor: pointer;
+    line-height: 1.6;
+  }
+  .checklist-item .checklist-label-text {
+    font-weight: 500;
+  }
+  .checklist-item .checklist-label-desc {
+    display: block;
+    color: #a0a0a0;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  .mitre-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    background: #1e1e2e;
+    border: 1px solid #2a2a3e;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8125rem;
+    color: #c0c0c0;
+  }
+  .mitre-tag a {
+    color: #8b8cfb;
+    text-decoration: none;
+  }
+  .mitre-tag a:hover { text-decoration: underline; }
+  .completion-form {
+    background: #16161e;
+    border: 1px solid #2a2a3e;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .form-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #2a2a3e;
+  }
+  .form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .form-section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #e0e0e0;
+  }
+  .btn-submit {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .xp-reward {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border-radius: 9999px;
+    font-weight: 600;
+    color: white;
+    font-size: 0.875rem;
+  }
+  .prereq-warning {
+    background: #1e1e2e;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: #fcd34d;
+  }
+  .prereq-warning h5 { margin-bottom: 0.5rem; color: #fcd34d; }
+  .prereq-warning ul { margin: 0; padding-left: 1.25rem; }
+  .prereq-warning li { margin: 0.25rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+    <div>
+      <nav aria-label="breadcrumb" class="mb-2">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('labs.browse') }}">Labs</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('labs.browse') }}">{{ lab.topic.skill_area.name if lab.topic and lab.topic.skill_area else 'Labs' }}</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{{ lab.title }}</li>
+        </ol>
+      </nav>
+      <h1 class="h3 mb-1">{{ lab.title }}</h1>
+      <p class="text-muted mb-0">{{ lab.description }}</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <span class="xp-reward">
+        <i class="bi bi-star-fill"></i> +{{ lab.xp_reward }} XP
+      </span>
+      {% if lab.mitre_technique %}
+      <span class="mitre-tag">
+        <i class="bi bi-shield-lock"></i>
+        MITRE: <a href="https://attack.mitre.org/techniques/{{ lab.mitre_technique.replace('.', '/') }}" target="_blank" rel="noopener">{{ lab.mitre_technique }}</a>
+      </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Prerequisites Warning -->
+  {% if lab.is_vm_exercise %}
+  <div class="prereq-warning" id="prereq-warning" style="display: none;">
+    <h5><i class="bi bi-exclamation-triangle-fill me-2"></i> VM Prerequisites Required</h5>
+    <p>This lab requires the following VMs to be running and networked. Please ensure they are set up before starting:</p>
+    <ul>
+      {% if lab.attacker_vm %}
+      <li><strong>Attacker VM:</strong> {{ lab.attacker_vm }}</li>
+      {% endif %}
+      {% if lab.target_vm %}
+      <li><strong>Target VM:</strong> {{ lab.target_vm }}</li>
+      {% endif %}
+      {% if lab.detection_vm %}
+      <li><strong>Detection VM:</strong> {{ lab.detection_vm }}</li>
+      {% endif %}
+    </ul>
+    <p class="mb-0 mt-2"><a href="{{ url_for('offline.lab_setup') }}" class="text-warning"><i class="bi bi-box-arrow-up-right me-1"></i> View VM Setup Guide & Checklist</a></p>
+  </div>
+  {% endif %}
+
+  <!-- VM Setup Panel -->
+  {% if lab.is_vm_exercise %}
+  <div class="vm-setup-panel">
+    <h5 class="mb-3"><i class="bi bi-diagram-3-fill me-2"></i>Lab Environment</h5>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      {% if lab.attacker_vm %}
+      <span class="vm-badge attacker">
+        <i class="bi bi-terminal-fill"></i> Attacker: {{ lab.attacker_vm }}
+      </span>
+      {% endif %}
+      {% if lab.target_vm %}
+      <span class="vm-badge target">
+        <i class="bi bi-hdd-network-fill"></i> Target: {{ lab.target_vm }}
+      </span>
+      {% endif %}
+      {% if lab.detection_vm %}
+      <span class="vm-badge detection">
+        <i class="bi bi-shield-fill-check"></i> Detection: {{ lab.detection_vm }}
+      </span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Attack Instructions -->
+  {% if lab.instructions_md %}
+  <div class="card mb-4">
+    <div class="card-header bg-dark border-secondary">
+      <h5 class="mb-0"><i class="bi bi-lightning-charge-fill me-2 text-danger"></i>Attack Instructions</h5>
+    </div>
+    <div class="card-body markdown-content">
+      {{ lab.instructions_md | markdown | safe }}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Detection Task -->
+  {% if lab.detection_task_md %}
+  <div class="card mb-4">
+    <div class="card-header bg-dark border-secondary">
+      <h5 class="mb-0"><i class="bi bi-shield-fill-check me-2 text-success"></i>Detection Task</h5>
+    </div>
+    <div class="card-body markdown-content">
+      {{ lab.detection_task_md | markdown | safe }}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Completion Form -->
+  <div class="card">
+    <div class="card-header bg-dark border-secondary">
+      <h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Mark Complete & Log Exercise</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('labs.submit', lab_id=lab.id) }}" id="completion-form">
+        <input type="hidden" name="proof" id="proof-field" value="">
+
+        {% if lab.is_vm_exercise %}
+        <!-- VM Exercise Checklist -->
+        <div class="form-section">
+          <h4>Attack Phase</h4>
+          <div class="checklist-item">
+            <input type="checkbox" name="attack_succeeded" id="attack_succeeded" value="1">
+            <label class="checklist-label" for="attack_succeeded">
+              <span class="checklist-label-text">Attack executed successfully</span>
+              <span class="checklist-label-desc">The attack commands ran without errors and achieved the intended effect on the target</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4>Detection Phase</h4>
+          <div class="checklist-item">
+            <input type="checkbox" name="detected" id="detected" value="1">
+            <label class="checklist-label" for="detected">
+              <span class="checklist-label-text">Attack was detected</span>
+              <span class="checklist-label-desc">Wazuh (or your SIEM) generated an alert for this activity</span>
+            </label>
+          </div>
+          <div class="checklist-item">
+            <input type="checkbox" name="rule_written" id="rule_written" value="1">
+            <label class="checklist-label" for="rule_written">
+              <span class="checklist-label-text">Detection rule written/updated</span>
+              <span class="checklist-label-desc">You created or modified a Sigma/Wazuh rule to detect this technique</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4>Documentation</h4>
+          <div class="mb-3">
+            <label for="notes" class="form-label">Exercise Notes / Write-up <span class="text-muted">(markdown supported)</span></label>
+            <textarea class="form-control bg-dark text-light border-secondary" id="notes" name="notes" rows="6" placeholder="Document what you did, what you observed, the rule you wrote, any challenges, screenshots paths, etc."></textarea>
+          </div>
+        </div>
+        {% else %}
+        <!-- Legacy proof field for other lab types -->
+        <div class="mb-3">
+          <label for="proof" class="form-label">Proof of Completion</label>
+          <textarea class="form-control bg-dark text-light border-secondary" id="proof" name="proof" rows="3" placeholder="Enter flag, paste screenshot description, writeup URL, or notes..."></textarea>
+        </div>
+        {% endif %}
+
+        <div class="d-grid">
+          <button type="submit" class="btn-submit" id="submit-btn">
+            <i class="bi bi-check-lg me-2"></i>Submit & Log (+{{ lab.xp_reward }} XP)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="mt-4 d-flex justify-content-between">
+    <a href="{{ url_for('labs.browse') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back to Labs
+    </a>
+    {% if lab.topic %}
+    <a href="{{ url_for('roadmap.view') }}" class="btn btn-outline-primary">
+      <i class="bi bi-map me-1"></i> View Roadmap
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Simple markdown renderer (basic) - for preview if needed
+// The server-side rendering via | markdown filter handles the main content
+
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('completion-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const proofField = document.getElementById('proof-field');
+
+  {% if lab.is_vm_exercise %}
+  // Show prerequisites warning initially
+  document.getElementById('prereq-warning').style.display = 'block';
+
+  // Build proof JSON from checklist
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const attackSucceeded = document.getElementById('attack_succeeded').checked;
+    const detected = document.getElementById('detected').checked;
+    const ruleWritten = document.getElementById('rule_written').checked;
+    const notes = document.getElementById('notes').value;
+
+    if (!attackSucceeded && !detected && !ruleWritten && !notes.trim()) {
+      alert('Please check at least one item or add notes before submitting.');
+      return;
+    }
+
+    const proofData = {
+      attack_succeeded: attackSucceeded,
+      detected: detected,
+      rule_written: ruleWritten,
+      notes: notes
+    };
+
+    proofField.value = JSON.stringify(proofData);
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Submitting...';
+
+    form.submit();
+  });
+  {% else %}
+  form.addEventListener('submit', function(e) {
+    const proof = document.getElementById('proof').value.trim();
+    if (!proof) {
+      e.preventDefault();
+      alert('Please provide proof of completion.');
+      return;
+    }
+    proofField.value = proof;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Submitting...';
+  });
+  {% endif %}
+});
+</script>
+{% endblock %}

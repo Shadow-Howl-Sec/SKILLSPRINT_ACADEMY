@@ -7,11 +7,10 @@ own prefix so they don't collide with the existing eight blueprints.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from flask import (Blueprint, render_template, redirect, url_for, request,
-                   flash, current_app, jsonify, abort)
-from flask_login import login_required
-
+                   flash, current_app, jsonify, abort, g)
 from extensions import db
 from models import ContentItem, Lab
 
@@ -31,9 +30,35 @@ _KIND_TEMPLATE = {
     "binary_inspector":  "exercises/binary_inspector.html",
 }
 
+# VM prerequisite keys (stored in instance/vm_prereqs.json)
+_VM_PREREQ_FILE = Path("instance/vm_prereqs.json")
+_VM_LIST = [
+    ("kali", "Kali Linux (Attacker)", "Primary attack platform with tools: nmap, impacket, bloodhound.py, hashcat, sqlmap, metasploit"),
+    ("metasploitable2", "Metasploitable2 (Target)", "Intentionally vulnerable Linux for exploitation practice"),
+    ("dvwa", "DVWA / Juice Shop (Web Target)", "Damn Vulnerable Web App for OWASP Top 10 practice"),
+    ("goad_dc", "GOAD-DC01 (AD Target)", "Game of Active Directory Domain Controller"),
+    ("goad_win10", "GOAD-WIN10 (Windows Target)", "Windows 10 joined to GOAD domain for lateral movement"),
+    ("wazuh", "Wazuh Manager (Detection)", "SIEM/XDR for log collection and alerting"),
+]
+
+
+def _load_vm_prereqs() -> dict:
+    """Load VM prerequisite checkboxes from JSON file."""
+    if _VM_PREREQ_FILE.exists():
+        try:
+            return json.loads(_VM_PREREQ_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_vm_prereqs(data: dict) -> None:
+    """Save VM prerequisite checkboxes to JSON file."""
+    _VM_PREREQ_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _VM_PREREQ_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
 
 @offline_bp.route("/exercise/<int:exercise_id>")
-@login_required
 def view_exercise(exercise_id: int):
     """Render an `interactive_exercise` ContentItem (plan §4 / §11 Phase C)."""
     item = ContentItem.query.get_or_404(exercise_id)
@@ -61,10 +86,62 @@ def about():
                            offline=current_app.config.get("OFFLINE_MODE", False))
 
 
-@offline_bp.route("/lab-setup")
+@offline_bp.route("/lab-setup", methods=["GET", "POST"])
 def lab_setup():
-    """Lab setup guide — Kali VM + bundled challenges (plan §5, §10.2)."""
-    return render_template("offline/lab_setup.html")
+    """Lab setup guide & VM prerequisite checklist (Gap 1).
+
+    - Shows checklist of required VMs for vm_exercise labs
+    - User manually ticks off VMs they have running
+    - vm_exercise labs are greyed out until their prerequisites are met
+    """
+    if request.method == "POST":
+        # Save checklist state
+        prereqs = {}
+        for key, _, _ in _VM_LIST:
+            prereqs[key] = request.form.get(f"vm_{key}") == "on"
+        _save_vm_prereqs(prereqs)
+        flash("VM checklist saved.", "success")
+        return redirect(url_for("offline.lab_setup"))
+
+    # Load current state
+    prereqs = _load_vm_prereqs()
+
+    # Get all vm_exercise labs and their requirements
+    vm_labs = Lab.query.filter_by(provider="vm_exercise", is_active=True).all()
+    lab_requirements = {}
+    lab_all_ready = {}
+    for lab in vm_labs:
+        reqs = []
+        if lab.attacker_vm and lab.attacker_vm.lower() != "kali":
+            reqs.append(lab.attacker_vm.lower().replace(" ", "_"))
+        elif lab.attacker_vm:
+            reqs.append("kali")
+        if lab.target_vm:
+            # Map target VM names to our checklist keys
+            target_lower = lab.target_vm.lower()
+            if "metasploitable" in target_lower:
+                reqs.append("metasploitable2")
+            elif "dvwa" in target_lower or "juice shop" in target_lower:
+                reqs.append("dvwa")
+            elif "goad" in target_lower and "dc" in target_lower:
+                reqs.append("goad_dc")
+            elif "goad" in target_lower and "win" in target_lower:
+                reqs.append("goad_win10")
+            else:
+                reqs.append(target_lower.replace(" ", "_"))
+        if lab.detection_vm and "wazuh" in lab.detection_vm.lower():
+            reqs.append("wazuh")
+        lab_requirements[lab.id] = reqs
+        
+        # Pre-compute whether all prerequisites are met
+        lab_all_ready[lab.id] = all(prereqs.get(req, False) for req in reqs)
+
+    return render_template("offline/lab_setup.html",
+                           vm_list=_VM_LIST,
+                           prereqs=prereqs,
+                           vm_labs=vm_labs,
+                           lab_requirements=lab_requirements,
+                           lab_all_ready=lab_all_ready)
 
 
 @offline_bp.route("/resource-cache")
@@ -74,7 +151,6 @@ def resource_cache_info():
 
 
 @offline_bp.route("/settings/ai-tutor", methods=["GET", "POST"])
-@login_required
 def ai_tutor_settings():
     """Pick the Ollama model and test the connection (plan §7.1)."""
     cfg = current_app.config

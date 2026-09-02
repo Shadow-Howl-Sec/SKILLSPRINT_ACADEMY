@@ -1,37 +1,53 @@
 {% extends "base_cybersec.html" %}
-{% block title %}Weekly Availability — SkillSprint{% endblock %}
-{% block page_title %}When can you study?{% endblock %}
-{% block page_subtitle %}Step 3 of 3 — we'll fit your roadmap into your real schedule{% endblock %}
+{% block title %}Daily Schedule & Time Blocks — ZeroCipher{% endblock %}
+{% block page_title %}Configure Daily 2-3hr Schedule Blocks{% endblock %}
+{% block page_subtitle %}Set up your preferred daily study windows (e.g. Morning 09:00-11:30, Afternoon 14:00-16:30){% endblock %}
 
 {% block content %}
-<form method="post" action="{{ url_for('onboarding.availability') }}">
+<form method="post" action="{{ url_for('roadmap.availability') }}">
   <div class="admin-card p-4">
-    <p class="text-muted" style="font-size:.9rem;">Enter how many <strong>minutes per day</strong> you can realistically study on each day. We'll reserve ~20% for spaced-repetition review.</p>
-    <div class="row g-3">
-      {% for name, idx, default in days %}
+    <p class="text-muted" style="font-size:0.9rem;">
+      Configure 2-3 hour time blocks for each day of the week. ZeroCipher will automatically pack your roadmap lessons, purple team labs, and quizzes into these blocks.
+    </p>
+
+    <div class="row g-4">
+      {% set days = [("Monday", 0), ("Tuesday", 1), ("Wednesday", 2), ("Thursday", 3), ("Friday", 4), ("Saturday", 5), ("Sunday", 6)] %}
+      {% for name, idx in days %}
+      {% set blocks = availability[idx] if availability and idx in availability else [{"start":"09:00","end":"11:30"},{"start":"14:00","end":"16:30"}] %}
       <div class="col-md-6 col-xl-4">
-        <label class="form-label small fw-semibold">{{ name }}</label>
-        <div class="input-group">
-          <span class="input-group-text"><i class="bi bi-clock"></i></span>
-          <input type="number" min="0" max="720" step="15" class="form-control"
-                 name="day_{{ idx }}" value="{{ default }}">
-          <span class="input-group-text">min</span>
+        <div class="border rounded p-3 bg-light">
+          <h6 class="fw-bold mb-3"><i class="bi bi-calendar-day me-1 text-primary"></i> {{ name }}</h6>
+          
+          <!-- Block 1 -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Block 1 (Morning / 2.5hr)</label>
+            <div class="d-flex gap-2">
+              <input type="time" class="form-control form-control-sm" name="day_{{ idx }}_b1_start" value="{{ blocks[0].start if blocks|length > 0 else '09:00' }}">
+              <span class="align-self-center">-</span>
+              <input type="time" class="form-control form-control-sm" name="day_{{ idx }}_b1_end" value="{{ blocks[0].end if blocks|length > 0 else '11:30' }}">
+            </div>
+          </div>
+
+          <!-- Block 2 -->
+          <div>
+            <label class="form-label small fw-semibold">Block 2 (Afternoon/Evening / 2.5hr)</label>
+            <div class="d-flex gap-2">
+              <input type="time" class="form-control form-control-sm" name="day_{{ idx }}_b2_start" value="{{ blocks[1].start if blocks|length > 1 else '14:00' }}">
+              <span class="align-self-center">-</span>
+              <input type="time" class="form-control form-control-sm" name="day_{{ idx }}_b2_end" value="{{ blocks[1].end if blocks|length > 1 else '16:30' }}">
+            </div>
+          </div>
         </div>
       </div>
       {% endfor %}
     </div>
+
     <div class="mt-4 d-flex gap-2">
       <button type="submit" class="btn btn-primary">
-        <i class="bi bi-check2-circle me-1"></i> Save & Take Skill Assessment
+        <i class="bi bi-check2-circle me-1"></i> Save Schedule & Update Timetable
       </button>
-      <a href="{{ url_for('onboarding.goal') }}" class="btn btn-outline-secondary">Back</a>
+      <a href="{{ url_for('roadmap.calendar') }}" class="btn btn-outline-secondary">Cancel</a>
     </div>
   </div>
 </form>
-
-<div class="d-flex justify-content-center gap-2 mt-3">
-  <span style="width:8px;height:8px;border-radius:50%;background:var(--gray-300);"></span>
-  <span style="width:8px;height:8px;border-radius:50%;background:var(--gray-300);"></span>
-  <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);"></span>
-</div>
 {% endblock %}

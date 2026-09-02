@@ -9,8 +9,7 @@ from __future__ import annotations
 from datetime import datetime, date
 
 from flask import (Blueprint, render_template, redirect, url_for, request,
-                   flash, abort)
-from flask_login import login_required, current_user
+                   flash, abort, g)
 from extensions import db
 from models import (UserResource, SkillArea, Roadmap, RoadmapItem)
 
@@ -20,16 +19,14 @@ library_bp = Blueprint("library", __name__)
 
 
 @library_bp.route("/library")
-@login_required
 def list():
     resources = (UserResource.query
-                 .filter_by(user_id=current_user.id)
+                 .filter_by(user_id=g.user.id)
                  .order_by(UserResource.added_at.desc()).all())
     return render_template("library/list.html", resources=resources)
 
 
 @library_bp.route("/library/add", methods=["GET", "POST"])
-@login_required
 def add():
     areas = SkillArea.query.filter_by(is_active=True).order_by(SkillArea.order_index).all()
     if request.method == "POST":
@@ -40,7 +37,7 @@ def add():
         meta = fetch_metadata(url)
         title = request.form.get("title") or meta["title"]
         resource = UserResource(
-            user_id=current_user.id,
+            user_id=g.user.id,
             title=title[:300],
             url=url[:500],
             resource_type=request.form.get("resource_type") or meta["resource_type"],
@@ -57,14 +54,13 @@ def add():
 
 
 @library_bp.route("/library/<int:resource_id>/schedule", methods=["POST"])
-@login_required
 def schedule(resource_id: int):
     resource = UserResource.query.get_or_404(resource_id)
-    if resource.user_id != current_user.id:
+    if resource.user_id != g.user.id:
         abort(403)
 
     roadmap = Roadmap.query.filter_by(
-        user_id=current_user.id, status="active").first()
+        user_id=g.user.id, status="active").first()
     if roadmap is None:
         flash("Generate a roadmap first.", "info")
         return redirect(url_for("onboarding.domain"))

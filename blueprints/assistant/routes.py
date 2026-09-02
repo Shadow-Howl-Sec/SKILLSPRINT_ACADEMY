@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import uuid
 
-from flask import Blueprint, render_template, request, jsonify, current_app
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, request, jsonify, g
 from extensions import db
 from models import ChatMessage, Topic
 
@@ -23,11 +22,10 @@ def _session_id() -> str:
 
 
 @assistant_bp.route("/assistant")
-@login_required
 def chat():
     sid = _session_id()
     history = (ChatMessage.query
-               .filter_by(user_id=current_user.id, session_id=sid)
+               .filter_by(user_id=g.user.id, session_id=sid)
                .order_by(ChatMessage.created_at)
                .limit(50).all())
     topics = Topic.query.filter_by(is_active=True).order_by(Topic.title).all()
@@ -35,7 +33,6 @@ def chat():
 
 
 @assistant_bp.route("/api/assistant/chat", methods=["POST"])
-@login_required
 def chat_api():
     data = request.get_json(silent=True) or {}
     message = (data.get("message") or "").strip()
@@ -45,7 +42,7 @@ def chat_api():
 
     sid = _session_id()
     user_msg = ChatMessage(
-        user_id=current_user.id, session_id=sid,
+        user_id=g.user.id, session_id=sid,
         role="user", content=message,
         related_topic_id=topic_id,
     )
@@ -54,7 +51,7 @@ def chat_api():
 
     reply = answer(message, topic_id)
     ai_msg = ChatMessage(
-        user_id=current_user.id, session_id=sid,
+        user_id=g.user.id, session_id=sid,
         role="assistant", content=reply,
         related_topic_id=topic_id,
     )

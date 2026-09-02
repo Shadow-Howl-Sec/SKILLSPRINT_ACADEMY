@@ -52,7 +52,11 @@
 
 {% block scripts %}
 {% if radar %}
+{% if OFFLINE_MODE %}
+<script src="/static/vendor/chartjs/chart.min.js"></script>
+{% else %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endif %}
 <script>
 const labels = {{ radar | map(attribute='label') | list | tojson }};
 const scores = {{ radar | map(attribute='score') | list | tojson }};

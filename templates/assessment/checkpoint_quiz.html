@@ -1,0 +1,58 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Checkpoint Quiz: {{ topic.title }} — ZeroCipher{% endblock %}
+{% block page_title %}Topic Checkpoint Quiz{% endblock %}
+{% block page_subtitle %}{{ topic.title }} · Test your mastery before moving to the next topic{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="admin-card p-4">
+      <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-3">
+        <div style="width:48px;height:48px;background:rgba(99,102,241,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--accent);">
+          <i class="bi bi-patch-question-fill" style="font-size:1.5rem;"></i>
+        </div>
+        <div>
+          <h5 style="font-weight:700;margin:0;">{{ topic.title }}</h5>
+          <span class="text-muted small">Topic Checkpoint Quiz · {{ questions | length }} Questions</span>
+        </div>
+      </div>
+
+      <form method="post" action="{{ url_for('assessment.topic_quiz', topic_id=topic.id) }}">
+        {% for q in questions %}
+        <div class="mb-4 p-3 border rounded bg-light">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="badge bg-secondary" style="font-size:0.7rem;">Question {{ loop.index }} of {{ questions | length }}</span>
+            <span class="text-muted small">Difficulty: {{ q.difficulty }}/5</span>
+          </div>
+
+          <h6 style="font-weight:600;line-height:1.4;" class="mb-3">{{ q.question_text }}</h6>
+
+          {% set opts = (q.options | from_json) or [] %}
+          {% if q.question_type == "mcq" and opts %}
+            {% for opt in opts %}
+            <div class="form-check p-2 ps-4 mb-2 bg-white rounded border" style="cursor:pointer;" onclick="this.querySelector('input').checked=true;">
+              <input class="form-check-input" type="radio" name="q_{{ q.id }}" id="q_{{ q.id }}_{{ loop.index0 }}" value="{{ loop.index0 }}" required>
+              <label class="form-check-label w-100" for="q_{{ q.id }}_{{ loop.index0 }}" style="cursor:pointer;font-size:0.9rem;">
+                {{ opt }}
+              </label>
+            </div>
+            {% endfor %}
+          {% else %}
+            <textarea class="form-control" name="q_{{ q.id }}" rows="2" placeholder="Type your answer..." required></textarea>
+          {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <a href="{{ url_for('roadmap.view') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Roadmap
+          </a>
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-check2-circle me-1"></i> Submit & Grade Quiz
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

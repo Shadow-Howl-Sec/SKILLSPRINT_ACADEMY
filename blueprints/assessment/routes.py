@@ -1,133 +1,103 @@
-"""Adaptive Skill Assessment routes (plan §5.2, §9 API sketch).
+"""Checkpoint Quiz and Assessment Blueprint.
 
-Provides:
-  /assessment/start                 → create a session, redirect to take
-  /assessment/<int:session_id>      → take page (renders current question)
-  /assessment/<int:session_id>/answer  (POST) → record & advance
-  /assessment/<int:session_id>/result   → skill profile + Generate Roadmap
-  /assessment/<int:session_id>/generate (POST) → build a Roadmap & go to dashboard
+Routes:
+  GET/POST /topic/<int:topic_id>/quiz     - Take topic-specific checkpoint quiz
+  POST     /topic/<int:topic_id>/quiz/submit - Submit and grade topic quiz
+  GET      /assessment/start               - Start adaptive assessment
 """
 from __future__ import annotations
 
 import json
+from datetime import datetime, date
 
-from flask import (Blueprint, render_template, redirect, url_for, request,
-                   flash, jsonify, abort)
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, g
 from extensions import db
-from models import AssessmentQuestion, AssessmentSession, JobRole, SkillArea
+from models import Topic, AssessmentQuestion, RoadmapItem, Roadmap
+from services.xp_service import award_xp, touch_streak
 
-from services import assessment_engine
-from services.roadmap_engine import generate_roadmap
-
-assessment_bp = Blueprint("assessment", __name__, url_prefix="/assessment")
+assessment_bp = Blueprint("assessment", __name__)
 
 
-@assessment_bp.route("/start")
-@login_required
+@assessment_bp.route("/topic/<int:topic_id>/quiz", methods=["GET", "POST"])
+def topic_quiz(topic_id: int):
+    """Render and evaluate checkpoint quiz for a specific topic."""
+    topic = Topic.query.get_or_404(topic_id)
+    questions = AssessmentQuestion.query.filter_by(topic_id=topic.id, is_active=True).all()
+    
+    # Fallback to skill area questions if no topic questions exist
+    if not questions:
+        questions = AssessmentQuestion.query.filter_by(skill_area_id=topic.skill_area_id, is_active=True).limit(3).all()
+        
+    if not questions:
+        flash(f"No checkpoint questions available for {topic.title} yet.", "info")
+        return redirect(url_for("roadmap.view"))
+
+    if request.method == "POST":
+        score = 0
+        total = len(questions)
+        results = []
+
+        for q in questions:
+            user_ans = request.form.get(f"q_{q.id}", "").strip()
+            is_correct = False
+            
+            # MCQ indexing check
+            if q.question_type == "mcq":
+                is_correct = (user_ans == str(q.correct_answer).strip())
+            else:
+                is_correct = (user_ans.lower() in str(q.correct_answer).lower())
+
+            if is_correct:
+                score += 1
+
+            opts = json.loads(q.options) if q.options else []
+            correct_opt = opts[int(q.correct_answer)] if q.question_type == "mcq" and opts and q.correct_answer.isdigit() and int(q.correct_answer) < len(opts) else q.correct_answer
+
+            results.append({
+                "question": q.question_text,
+                "user_answer": opts[int(user_ans)] if q.question_type == "mcq" and opts and user_ans.isdigit() and int(user_ans) < len(opts) else user_ans,
+                "correct_answer": correct_opt,
+                "is_correct": is_correct,
+                "explanation": q.explanation
+            })
+
+        percent = int((score / total) * 100) if total > 0 else 0
+        passed = percent >= 60
+
+        # Mark RoadmapItem checkpoint_quiz for this topic as done
+        active_roadmap = Roadmap.query.filter_by(user_id=g.user.id, status="active").first()
+        if active_roadmap:
+            quiz_items = RoadmapItem.query.filter_by(
+                roadmap_id=active_roadmap.id,
+                topic_id=topic.id,
+                item_type="checkpoint_quiz"
+            ).all()
+            for item in quiz_items:
+                item.status = "done"
+                item.completed_at = datetime.utcnow()
+                
+        if passed:
+            xp = award_xp(g.user.id, "checkpoint_quiz", topic.id, xp_amount=25,
+                          description=f"Passed Checkpoint Quiz: {topic.title}")
+            touch_streak(g.user.id, date.today())
+            db.session.commit()
+            flash(f"Congratulations! You passed the {topic.title} Checkpoint Quiz with {percent}% (+25 XP).", "success")
+        else:
+            db.session.commit()
+            flash(f"You scored {percent}%. Review the material and try again to pass (60% required).", "warning")
+
+        return render_template("assessment/checkpoint_result.html",
+                               topic=topic,
+                               score=score,
+                               total=total,
+                               percent=percent,
+                               passed=passed,
+                               results=results)
+
+    return render_template("assessment/checkpoint_quiz.html", topic=topic, questions=questions)
+
+
+@assessment_bp.route("/assessment/start")
 def start():
-    track_type = request.args.get("track_type", "general")
-    job_role_id = request.args.get("job_role_id", type=int)
-
-    if track_type not in ("general", "job_role"):
-        track_type = "general"
-    if track_type == "job_role" and job_role_id is None:
-        flash("Pick a job role first.", "error")
-        return redirect(url_for("onboarding.goal"))
-
-    # Cancel any in-progress session for this user so we start fresh
-    stale = AssessmentSession.query.filter_by(
-        user_id=current_user.id, status="in_progress").all()
-    for s in stale:
-        s.status = "abandoned"
-
-    session = AssessmentSession(
-        user_id=current_user.id,
-        track_type=track_type,
-        job_role_id=job_role_id if track_type == "job_role" else None,
-        status="in_progress",
-    )
-    db.session.add(session)
-    db.session.commit()
-    return redirect(url_for("assessment.take", session_id=session.id))
-
-
-@assessment_bp.route("/<int:session_id>")
-@login_required
-def take(session_id: int):
-    session = AssessmentSession.query.get_or_404(session_id)
-    if session.user_id != current_user.id:
-        abort(403)
-    if session.status == "completed":
-        return redirect(url_for("assessment.result", session_id=session.id))
-
-    nxt = assessment_engine.next_question(session)
-    if nxt.is_complete:
-        # Auto-complete when the bank is exhausted
-        assessment_engine.complete_session(session)
-        db.session.commit()
-        return redirect(url_for("assessment.result", session_id=session.id))
-
-    answered, total = nxt.progress
-    return render_template("assessment/take.html", session=session,
-                           question=nxt.question,
-                           progress=(answered, total))
-
-
-@assessment_bp.route("/<int:session_id>/answer", methods=["POST"])
-@login_required
-def answer(session_id: int):
-    session = AssessmentSession.query.get_or_404(session_id)
-    if session.user_id != current_user.id:
-        abort(403)
-    if session.status != "in_progress":
-        return redirect(url_for("assessment.result", session_id=session.id))
-
-    question_id = request.form.get("question_id", type=int)
-    answer_value = request.form.get("answer")
-    if question_id is None or answer_value is None:
-        flash("Please answer the question.", "error")
-        return redirect(url_for("assessment.take", session_id=session.id))
-
-    question = db.session.get(AssessmentQuestion, question_id)
-    if question is None:
-        flash("Question not found.", "error")
-        return redirect(url_for("assessment.take", session_id=session.id))
-
-    assessment_engine.record_response(session, question, answer_value)
-    db.session.commit()
-    return redirect(url_for("assessment.take", session_id=session.id))
-
-
-@assessment_bp.route("/<int:session_id>/result")
-@login_required
-def result(session_id: int):
-    session = AssessmentSession.query.get_or_404(session_id)
-    if session.user_id != current_user.id:
-        abort(403)
-    if session.status != "completed":
-        assessment_engine.complete_session(session)
-        db.session.commit()
-
-    profile = json.loads(session.result_json or "{}")
-    return render_template("assessment/result.html", session=session,
-                           profile=profile)
-
-
-@assessment_bp.route("/<int:session_id>/generate", methods=["POST"])
-@login_required
-def generate(session_id: int):
-    session = AssessmentSession.query.get_or_404(session_id)
-    if session.user_id != current_user.id:
-        abort(403)
-    if session.status != "completed":
-        assessment_engine.complete_session(session)
-        db.session.commit()
-
-    roadmap = generate_roadmap(
-        current_user.id,
-        job_role_id=session.job_role_id if session.track_type == "job_role" else None,
-    )
-    db.session.commit()
-    flash("Your personalized roadmap is ready!", "success")
-    return redirect(url_for("dashboard.today"))
+    """Start assessment (redirect to roadmap view)."""
+    return redirect(url_for("roadmap.view"))
