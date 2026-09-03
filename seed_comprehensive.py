@@ -630,6 +630,12 @@ def main():
         # 6. Checkpoint Quiz Questions (Questions for ALL Topics)
         new_qs = seed_all_questions(topics, areas)
         print(f"[+] Seeded {new_qs} new AssessmentQuestions (total: {AssessmentQuestion.query.count()}).")
+
+        # 7. Free 5-track learning paths (theory / video / labs / automation / soft skills)
+        from seed_resources import seed_learning_paths, seed_professional_skills_area
+        seed_professional_skills_area(areas, topics)
+        n_path, n_path_labs = seed_learning_paths(topics)
+        print(f"[+] Seeded {n_path} learning-path ContentItems and {n_path_labs} extra labs.")
         
         db.session.commit()
         print("[SUCCESS] Comprehensive Purple Team curriculum data population complete!")

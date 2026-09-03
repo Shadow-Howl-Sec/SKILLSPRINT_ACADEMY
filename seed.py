@@ -365,20 +365,22 @@ ROLES = [
      "Combines red-team offense and blue-team detection — the default path for this platform. "
      "Interleaves attack labs with their detection counterparts across AD, Network, Web, and Cloud.",
      "₹10-30 LPA", ["OSCP", "GNFA", "GCFA", "GCIH"],
-     ["Networking Basics", "Linux Fundamentals", "Windows Fundamentals",
-      "Security Mindset & Ethics", "MITRE ATT&CK Overview",
-      "TCP/IP & Subnetting", "DNS & HTTP", "Packet Analysis & Wireshark",
-      "Web App Basics & HTTP", "OWASP Top 10 Overview", "SQL Injection",
-      "Cross-Site Scripting (XSS)", "Burp Suite Essentials",
-      "Active Directory Fundamentals", "Kerberos & BloodHound",
-      "Windows Internals", "Log Analysis & journald",
-      "Firewalls & Network Hardening", "Packet Forensics at Scale",
-      "SIEM Queries & Sigma Rules", "Threat Hunting at Scale", "SOC Playbooks",
-      "Linux Hardening & Audit", "Linux Disk & Memory Forensics",
-      "Malware Static Analysis", "Malware Dynamic Analysis & Sandboxing",
-      "YARA & AV Evasion (detect)", "Cloud IAM & S3 Security",
-      "Kubernetes Security Basics", "Cloud IAM Abuse",
-      "Kubernetes Attack Paths", "Terraform Misconfig Hunting"]),
+      ["Networking Basics", "Linux Fundamentals", "Windows Fundamentals",
+       "Security Mindset & Ethics", "MITRE ATT&CK Overview",
+       "TCP/IP & Subnetting", "DNS & HTTP", "Packet Analysis & Wireshark",
+       "Python for Security", "Parsing Logs & Automation",
+       "Building a Basic Port Scanner",
+       "Web App Basics & HTTP", "OWASP Top 10 Overview", "SQL Injection",
+       "Cross-Site Scripting (XSS)", "Burp Suite Essentials",
+       "Active Directory Fundamentals", "Kerberos & BloodHound",
+       "Windows Internals", "Log Analysis & journald",
+       "Firewalls & Network Hardening", "Packet Forensics at Scale",
+       "SIEM Queries & Sigma Rules", "Threat Hunting at Scale", "SOC Playbooks",
+       "Linux Hardening & Audit", "Linux Disk & Memory Forensics",
+       "Malware Static Analysis", "Malware Dynamic Analysis & Sandboxing",
+       "YARA & AV Evasion (detect)", "Cloud IAM & S3 Security",
+       "Kubernetes Security Basics", "Cloud IAM Abuse",
+       "Kubernetes Attack Paths", "Terraform Misconfig Hunting"]),
     ("SOC Analyst",      "soc-analyst",       "🛡️",
      "Blue-team detection & triage — SIEM, log analysis, incident triage.",
      "₹6-15 LPA", ["CompTIA Security+", "CompTIA CySA+"],
@@ -734,8 +736,9 @@ def seed_curriculum_weeks(topics_by_title: dict) -> None:
     # This is a simplified mapping - in production you'd have a more detailed config
     week_topic_map = {
         1: ["TCP/IP & Subnetting", "DNS & HTTP", "Packet Analysis & Wireshark", "Networking Basics"],
-        2: ["Linux Filesystem & Permissions", "Bash & Scripting Fundamentals", "Processes & Services", 
-            "Windows Fundamentals", "Windows Internals", "Security Mindset & Ethics"],
+        2: ["Linux Filesystem & Permissions", "Bash & Scripting Fundamentals", "Processes & Services",
+            "Windows Fundamentals", "Windows Internals", "Security Mindset & Ethics",
+            "Python for Security", "Parsing Logs & Automation"],
         3: ["Web App Basics & HTTP", "OWASP Top 10 Overview", "SQL Injection", "Cross-Site Scripting (XSS)", "Burp Suite Essentials"],
         4: ["Active Directory Fundamentals", "Kerberos & BloodHound", "Windows Internals"],
         5: ["Kerberos & BloodHound", "Active Directory Fundamentals"],
@@ -761,15 +764,18 @@ def seed_curriculum_weeks(topics_by_title: dict) -> None:
 
 
 def main() -> None:
-    from models import MiniProject
+    from models import MiniProject, ContentItem
+    from seed_resources import seed_learning_paths, seed_professional_skills_area
     with app.app_context():
         areas = seed_skill_areas()
         topics = seed_topics(areas)
+        seed_professional_skills_area(areas, topics)
         capstones = seed_capstones()
         seed_roles(topics, capstones)
         seed_questions(areas)
         seed_labs(topics)
         seed_curriculum_weeks(topics)
+        n_path, n_path_labs = seed_learning_paths(topics)
         db.session.commit()
         n_areas = SkillArea.query.count()
         n_topics = Topic.query.count()
@@ -777,9 +783,11 @@ def main() -> None:
         n_capstones = MiniProject.query.count()
         n_q = AssessmentQuestion.query.count()
         n_labs = Lab.query.count()
+        n_content = ContentItem.query.count()
     print(f"[OK] Seed complete: {n_areas} areas, {n_topics} topics, "
           f"{n_roles} roles, {n_capstones} capstone projects, "
-          f"{n_q} questions, {n_labs} labs.")
+          f"{n_q} questions, {n_labs} labs, {n_content} content items "
+          f"(+{n_path} path items, +{n_path_labs} path labs).")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# SkillSprint Academy
+# ZeroCipher
 
 A **fully offline-capable Flask learning platform** for cybersecurity education. Built around a personalized, assessment-driven curriculum with hands-on labs, AI tutoring, and gamified progress tracking.
 
@@ -19,7 +19,7 @@ A **fully offline-capable Flask learning platform** for cybersecurity education.
 
 ## Overview
 
-SkillSprint Academy is a **single-user, offline-first** Flask application designed to teach cybersecurity through a structured, personalized learning path. It combines:
+ZeroCipher is a **single-user, offline-first** Flask application designed to teach cybersecurity through a structured, personalized learning path. It combines:
 
 - **Adaptive skill assessment** (CAT-style) to determine starting proficiency
 - **AI-generated roadmaps** that respect prerequisites and user availability
@@ -244,8 +244,8 @@ Controlled by `OFFLINE_MODE` environment variable (default: `True`).
 | Feature | Implementation |
 |---------|----------------|
 | Web server | Binds to `127.0.0.1` (config `OFFLINE_BIND_HOST`) |
-| Database | SQLite (`sqlite:///skillsprint.db`) |
-| Authentication | Single local user (auto-created: `shubham` / `skillsprint`) |
+| Database | SQLite (`sqlite:///zerocipher.db`) |
+| Authentication | Single local user (auto-created: `operator` / `zerocipher`) |
 | Labs | Only `self_hosted_offline` labs visible; bundled files served locally |
 | AI Tutor | Ollama (local) → Rules fallback (zero external calls) |
 | Contact form | Stores to `LocalInbox` table |
@@ -283,7 +283,7 @@ force_https: False
 ### Installation
 ```powershell
 # 1. Clone & enter
-cd V:\Projects\SkillSprint_Academy\SKILLSPRINT_ACADEMY
+cd V:\Projects\ZeroCipher_Academy\ZEROCIPHER_ACADEMY
 
 # 2. Create venv
 python -m venv venv
@@ -300,9 +300,9 @@ python app.py
 ```
 
 The app will:
-1. Create `skillsprint.db` (SQLite)
+1. Create `zerocipher.db` (SQLite)
 2. Run `db.create_all()` → tables
-3. Seed the default user (`shubham` / `skillsprint`)
+3. Seed the default user (`operator` / `zerocipher`)
 4. Start on `http://127.0.0.1:5000`
 
 ### First Run — Seed Curriculum Data
@@ -334,7 +334,7 @@ All settings in `config.py` via environment variables (loaded from `.env`):
 | `OFFLINE_MODE` | `True` | **Master switch** — offline defaults to ON |
 | `OFFLINE_BIND_HOST` | `127.0.0.1` | Bind address in offline mode |
 | `OFFLINE_BIND_PORT` | `5000` | Port |
-| `DATABASE_URL` | `sqlite:///skillsprint.db` | SQLAlchemy URI |
+| `DATABASE_URL` | `sqlite:///zerocipher.db` | SQLAlchemy URI |
 | `AI_TUTOR_PROVIDER` | `auto` | `auto` \| `ollama` \| `anthropic` \| `rules` |
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Local Ollama endpoint |
 | `OLLAMA_MODEL` | `llama3.1:8b-instruct` | Model name |
@@ -374,7 +374,7 @@ Run once to download all CDN assets to `static/vendor/`:
 ## Project Structure
 
 ```
-SKILLSPRINT_ACADEMY/
+ZEROCIPHER_ACADEMY/
 ├── app.py                      # Flask factory, blueprint registration, global context
 ├── config.py                   # Config classes (Config, DevelopmentConfig, ProductionConfig)
 ├── extensions.py               # SQLAlchemy, Migrate, Limiter, Talisman, CSRF
@@ -389,7 +389,7 @@ SKILLSPRINT_ACADEMY/
 ├── .env                        # Local env (gitignored)
 ├── .gitignore
 ├── instance/
-│   ├── skillsprint.db          # SQLite database (gitignored)
+│   ├── zerocipher.db          # SQLite database (gitignored)
 │   ├── resource_cache/         # CachedResource files (gitignored)
 │   ├── user_uploads/           # User file uploads (gitignored)
 │   └── ollama_model.txt        # Persisted Ollama model override
@@ -435,16 +435,16 @@ SKILLSPRINT_ACADEMY/
 │   ├── job_roles/routes.py
 │   └── offline/routes.py
 ├── release/
-│   ├── SkillSprintAcademy.exe  # PyInstaller standalone executable
-│   ├── Start-SkillSprint.bat   # Windows launcher
+│   ├── ZeroCipher.exe  # PyInstaller standalone executable
+│   ├── Start-ZeroCipher.bat   # Windows launcher
 │   ├── scripts/
 │   │   ├── build_exe.ps1       # PyInstaller build script
-│   │   ├── start_skillsprint.ps1
+│   │   ├── start_zerocipher.ps1
 │   │   ├── setup_ollama.ps1
 │   │   ├── setup_kali_vm.ps1
 │   │   └── sync_resource_cache.ps1
 │   └── README.txt
-└── SkillSprint_Technical_Standard_and_EXE_Packaging.md  # Architecture & packaging docs
+└── ZeroCipher_Technical_Standard_and_EXE_Packaging.md  # Architecture & packaging docs
 ```
 
 ---
@@ -496,14 +496,14 @@ python seed_offline_labs.py # Bundled offline labs
 ```powershell
 cd release/scripts
 .\build_exe.ps1
-# Output: release/SkillSprintAcademy.exe (~150-200 MB)
+# Output: release/ZeroCipher.exe (~150-200 MB)
 ```
 
 The exe bundles:
 - Python interpreter + all dependencies
 - `static/`, `templates/`, `bundles/`
 - `instance/` (empty; DB created on first run)
-- Launcher script `Start-SkillSprint.bat`
+- Launcher script `Start-ZeroCipher.bat`
 
 ### Manual Production (Linux/WSL)
 ```bash
@@ -531,7 +531,7 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:app
 ```nginx
 server {
     listen 80;
-    server_name skillsprint.local;
+    server_name zerocipher.local;
 
     location / {
         proxy_pass http://127.0.0.1:8000;

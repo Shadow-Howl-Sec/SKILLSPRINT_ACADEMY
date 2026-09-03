@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-    SkillSprint Academy - one-time online sync of the external resource cache
+    ZeroCipher - one-time online sync of the external resource cache
     (plan §6.2).
 
     Reads ../resource_catalog.json (shipped) listing public-domain / CC-licensed

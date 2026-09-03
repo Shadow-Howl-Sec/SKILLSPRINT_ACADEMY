@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Build SkillSprint Academy as a standalone Windows executable (.exe)
+    Build ZeroCipher as a standalone Windows executable (.exe)
 
 .DESCRIPTION
     Uses PyInstaller with a .spec file to create a single-file executable that includes:
@@ -19,7 +19,7 @@
     pwsh scripts/build_exe.ps1
 
 .NOTES
-    Output: release/SkillSprintAcademy.exe
+    Output: release/ZeroCipher.exe
     The exe will create its own instance/ folder on first run for database and configs.
 #>
 
@@ -29,7 +29,7 @@ $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..") | Select-Object -Expa
 $distPath    = Join-Path $projectRoot "dist"
 $buildPath   = Join-Path $projectRoot "build"
 $releasePath = Join-Path $projectRoot "release"
-$specFile    = Join-Path $projectRoot "SkillSprintAcademy.spec"
+$specFile    = Join-Path $projectRoot "ZeroCipher.spec"
 
 function Write-Step($msg)  { Write-Host "== $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)    { Write-Host "   ok: $msg" -ForegroundColor Green }
@@ -79,8 +79,8 @@ Write-Step "Preparing release folder..."
 New-Item -ItemType Directory $releasePath | Out-Null
 
 # Copy executable
-$exeSrc = Join-Path $distPath "SkillSprintAcademy.exe"
-$exeDst = Join-Path $releasePath "SkillSprintAcademy.exe"
+$exeSrc = Join-Path $distPath "ZeroCipher.exe"
+$exeDst = Join-Path $releasePath "ZeroCipher.exe"
 Copy-Item $exeSrc $exeDst -Force
 Write-Ok "Executable copied to release/"
 
@@ -103,28 +103,28 @@ if (Test-Path $scriptsSrc) {
 # Create a simple launcher batch file for convenience
 $launcherBat = @"
 @echo off
-echo Starting SkillSprint Academy...
+echo Starting ZeroCipher...
 echo The app will open at http://127.0.0.1:5000
 echo Press Ctrl+C to stop the server
 echo.
-SkillSprintAcademy.exe
+ZeroCipher.exe
 pause
 "@
-$launcherBat | Out-File -FilePath (Join-Path $releasePath "Start-SkillSprint.bat") -Encoding ascii
+$launcherBat | Out-File -FilePath (Join-Path $releasePath "Start-ZeroCipher.bat") -Encoding ascii
 Write-Ok "Launcher batch file created"
 
 # Create README for release
 $readme = @"
-SkillSprint Academy - Offline Cybersecurity Learning Platform
+ZeroCipher - Offline Cybersecurity Learning Platform
 =============================================================
 
 Single-user, fully offline cybersecurity training application.
 Runs on Windows 10/11 with no internet required after first run.
 
 QUICK START:
-1. Double-click SkillSprintAcademy.exe
+1. Double-click ZeroCipher.exe
    OR
-2. Double-click Start-SkillSprint.bat
+2. Double-click Start-ZeroCipher.bat
 
 The app will start a local web server at http://127.0.0.1:5000
 and open it in your default browser.
@@ -171,12 +171,12 @@ Write-Host ""
 Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host " BUILD COMPLETE" -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
-Write-Host " Executable: release\SkillSprintAcademy.exe"
+Write-Host " Executable: release\ZeroCipher.exe"
 Write-Host " Bundles:    release\bundles\"
 Write-Host " Scripts:    release\scripts\"
-Write-Host " Launcher:   release\Start-SkillSprint.bat"
+Write-Host " Launcher:   release\Start-ZeroCipher.bat"
 Write-Host " README:     release\README.txt"
 Write-Host ""
-Write-Host " To run: Double-click SkillSprintAcademy.exe or Start-SkillSprint.bat"
+Write-Host " To run: Double-click ZeroCipher.exe or Start-ZeroCipher.bat"
 Write-Host " The app creates its own instance/ folder on first run."
 Write-Host "===================================================" -ForegroundColor Cyan

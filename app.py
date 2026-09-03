@@ -142,7 +142,7 @@ def inject_globals():
 
 @app.route('/')
 def index():
-    return redirect(url_for('roadmap.view'))
+    return render_template('index.html')
 
 
 @app.route('/health')

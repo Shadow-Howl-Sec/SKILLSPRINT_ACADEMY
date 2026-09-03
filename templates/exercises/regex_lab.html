@@ -24,7 +24,7 @@
 const SPEC = {{ spec_json|safe }};
 const $ = (s) => document.querySelector(s);
 $("#ss_check").addEventListener("click", () => {
-  const r = window.SkillSprintExercise.checkRegex(
+  const r = window.ZeroCipherExercise.checkRegex(
     $("#ss_pat").value, $("#ss_flags").value, SPEC.samples || []);
   const lis = document.querySelectorAll("ul#ss_results li");
   const n = (SPEC.samples || []).length;

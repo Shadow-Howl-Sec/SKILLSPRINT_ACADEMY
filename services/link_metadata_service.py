@@ -21,8 +21,8 @@ from bs4 import BeautifulSoup
 from flask import current_app
 
 
-_USER_AGENT = ("Mozilla/5.0 (compatible; SkillSprintLinkBot/1.0; "
-               "+https://skillsprint.academy/bot)")
+_USER_AGENT = ("Mozilla/5.0 (compatible; ZeroCipherLinkBot/1.0; "
+               "+https://zerocipher.local/bot)")
 
 
 def _classify(url: str) -> str:

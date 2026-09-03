@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-    SkillSprint Academy — one-command offline launcher (plan §10.1).
+    ZeroCipher — one-command offline launcher (plan §10.1).
 
     What it does:
       1. Verifies Python 3.11+ is on PATH.
@@ -11,7 +11,7 @@
       6. Opens the browser to that URL.
 
     Usage:
-        pwsh scripts/start_skillsprint.ps1
+        pwsh scripts/start_zerocipher.ps1
 #>
 
 [CmdletBinding()] param(
@@ -25,7 +25,7 @@ $envFile     = Join-Path $projectRoot ".env"
 $wheelsPath  = Join-Path $projectRoot "bundles\wheels"
 $reqPath     = Join-Path $projectRoot "requirements.txt"
 $appPy       = Join-Path $projectRoot "app.py"
-$dbPath      = Join-Path $projectRoot "instance\skillsprint.db"
+$dbPath      = Join-Path $projectRoot "instance\zerocipher.db"
 
 function Write-Step($msg)  { Write-Host "== $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)    { Write-Host "   ok: $msg" -ForegroundColor Green }

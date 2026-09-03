@@ -1,13 +1,13 @@
-﻿SkillSprint Academy - Offline Cybersecurity Learning Platform
+﻿ZeroCipher - Offline Cybersecurity Learning Platform
 =============================================================
 
 Single-user, fully offline cybersecurity training application.
 Runs on Windows 10/11 with no internet required after first run.
 
 QUICK START:
-1. Double-click SkillSprintAcademy.exe
+1. Double-click ZeroCipher.exe
    OR
-2. Double-click Start-SkillSprint.bat
+2. Double-click Start-ZeroCipher.bat
 
 The app will start a local web server at http://127.0.0.1:5000
 and open it in your default browser.

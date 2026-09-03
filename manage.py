@@ -1,4 +1,4 @@
-"""SkillSprint local management CLI (plan §9, §10).
+"""ZeroCipher local management CLI (plan §9, §10).
 
 Usage:
     python manage.py reset-password <email> <new_password>

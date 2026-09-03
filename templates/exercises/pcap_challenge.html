@@ -23,7 +23,7 @@ document.getElementById("ss_check").addEventListener("click", () => {
   const inputs = document.querySelectorAll("#ss_form input[data-expected]");
   let ok = 0, total = inputs.length;
   inputs.forEach((el) => {
-    const pass = window.SkillSprintExercise.equalsIgnoreCase(el.value, el.dataset.expected);
+    const pass = window.ZeroCipherExercise.equalsIgnoreCase(el.value, el.dataset.expected);
     el.style.borderColor = pass ? "var(--success)" : "var(--danger)";
     if (pass) ok++;
   });
