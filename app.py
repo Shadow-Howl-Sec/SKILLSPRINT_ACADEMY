@@ -63,6 +63,7 @@ from blueprints.job_roles.routes import job_roles_bp
 from blueprints.library.routes import library_bp
 from blueprints.assistant.routes import assistant_bp
 from blueprints.assessment.routes import assessment_bp
+from blueprints.settings.routes import settings_bp
 
 app.register_blueprint(roadmap_bp)
 app.register_blueprint(dashboard_bp)
@@ -73,9 +74,15 @@ app.register_blueprint(job_roles_bp)
 app.register_blueprint(library_bp)
 app.register_blueprint(assistant_bp)
 app.register_blueprint(assessment_bp)
+app.register_blueprint(settings_bp)
 
 from models import User
 
+# ---------------------------------------------------------------------------
+# Start background services
+# ---------------------------------------------------------------------------
+# Note: scheduler service is initialized lazily on first request to avoid
+# circular imports. Update checker is started after app creation.
 
 # ---------------------------------------------------------------------------
 # Single-user context
@@ -87,17 +94,32 @@ def load_default_user():
         if user is None:
             user = User(
                 username='operator',
-                email='operator@zerocipher.local',
+                email='operator@skillsprint.local',
                 first_name='Operator',
                 last_name='',
                 email_verified=True,
                 is_active=True,
                 is_admin=True,
             )
-            user.set_password('zerocipher')
+            user.set_password('skillsprint')
             db.session.add(user)
             db.session.commit()
         g.user = user
+
+
+# Start update checker after first request context is available
+_update_checker_started = False
+
+@app.before_request
+def start_background_services():
+    global _update_checker_started
+    if not _update_checker_started:
+        try:
+            from services.scheduler_service import start_update_checker
+            start_update_checker(app)
+            _update_checker_started = True
+        except Exception as e:
+            app.logger.warning(f"Failed to start update checker: {e}")
 
 
 @app.template_filter("from_json")
@@ -131,12 +153,20 @@ def markdown_filter(value):
 @app.context_processor
 def inject_globals():
     from datetime import date
+    update_info = None
+    try:
+        from services.scheduler_service import get_cached_update_info
+        update_info = get_cached_update_info()
+    except Exception:
+        pass
+    
     return {
         "now": date.today().isoformat(),
         "OFFLINE_MODE": True,
         "current_user": g.get('user'),
-        "APP_NAME": app.config.get('APP_NAME', 'ZeroCipher'),
+        "APP_NAME": app.config.get('APP_NAME', 'SkillSprint Academy'),
         "APP_TAGLINE": app.config.get('APP_TAGLINE', 'Zero to Purple Team Mastery — Fully Offline'),
+        "update_info": update_info,
     }
 
 

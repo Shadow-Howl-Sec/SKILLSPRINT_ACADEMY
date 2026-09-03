@@ -12,16 +12,16 @@ def _env_bool(name: str, default: bool = False) -> bool:
 
 
 class Config:
-    """ZeroCipher configuration — fully offline Purple Team mastery platform."""
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'zerocipher-dev-secret-change-in-prod')
-    APP_NAME = 'ZeroCipher'
+    """SkillSprint Academy configuration — fully offline Purple Team mastery platform."""
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'skillsprint-dev-secret-change-in-prod')
+    APP_NAME = 'SkillSprint Academy'
     APP_TAGLINE = 'Zero to Purple Team Mastery — Fully Offline'
 
     OFFLINE_MODE = True
     OFFLINE_BIND_HOST = os.environ.get('OFFLINE_BIND_HOST', '127.0.0.1')
     OFFLINE_BIND_PORT = int(os.environ.get('OFFLINE_BIND_PORT', 5000))
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///zerocipher.db')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///skillsprint.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     SESSION_COOKIE_HTTPONLY = True
@@ -29,7 +29,7 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
     PERMANENT_SESSION_LIFETIME = 86400  # 24 hours
 
-    AI_TUTOR_PROVIDER = 'rules'
+    AI_TUTOR_PROVIDER = 'auto'
     OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://127.0.0.1:11434')
     OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'llama3.1:8b-instruct')
 
@@ -50,10 +50,12 @@ class Config:
     # VM Connection Config (host-only IPs from VirtualBox setup)
     VM_KALI_IP = os.environ.get('VM_KALI_IP', '192.168.56.5')
     VM_DC01_IP = os.environ.get('VM_DC01_IP', '192.168.56.10')
+    VM_WIN10_IP = os.environ.get('VM_WIN10_IP', '192.168.56.11')
+    VM_DVWA_IP = os.environ.get('VM_DVWA_IP', '192.168.56.21')
     VM_METASPLOITABLE_IP = os.environ.get('VM_METASPLOITABLE_IP', '192.168.56.20')
     VM_WAZUH_IP = os.environ.get('VM_WAZUH_IP', '192.168.56.30')
     VM_SSH_USER = os.environ.get('VM_SSH_USER', 'kali')
-    VM_SSH_KEY = os.environ.get('VM_SSH_KEY', '')  # Path to SSH private key
+    VM_SSH_KEY = os.environ.get('VM_SSH_KEY', '')
     VM_WINRM_USER = os.environ.get('VM_WINRM_USER', 'Administrator')
     VM_WINRM_PASS = os.environ.get('VM_WINRM_PASS', '')
     WAZUH_API_URL = os.environ.get('WAZUH_API_URL', 'https://192.168.56.30:55000')

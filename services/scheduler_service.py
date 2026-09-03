@@ -2,10 +2,14 @@
 
 Greedy bin-packing of roadmap items into the user's daily time blocks (2-3 hours each),
 respecting topic DAG order. Reserves a configurable buffer for review / catch-up.
+
+Also provides periodic update checking for the application.
 """
 from __future__ import annotations
 
 import json
+import threading
+import time
 from collections import deque
 from datetime import datetime, timedelta, date
 
@@ -16,6 +20,14 @@ DEFAULT_TIME_BLOCKS = [
     {"name": "Morning Block", "start": "09:00", "end": "11:30", "duration_minutes": 150},
     {"name": "Afternoon Block", "start": "14:00", "end": "16:30", "duration_minutes": 150},
 ]
+
+# Update check interval (24 hours in seconds)
+UPDATE_CHECK_INTERVAL = 86400
+
+_update_check_thread = None
+_update_check_stop = threading.Event()
+_last_update_check = None
+_cached_update_info = None
 
 
 def _iso_weekday_to_index(d: int) -> int:
@@ -143,3 +155,79 @@ def schedule_items(items: list[dict], availability: dict[int, int],
 
     scheduled.sort(key=lambda x: (x["scheduled_date"], x["order_index"]))
     return scheduled
+
+
+def start_update_checker(app, interval=UPDATE_CHECK_INTERVAL):
+    """Start background thread to periodically check for updates.
+    
+    Args:
+        app: Flask app instance
+        interval: Check interval in seconds (default 24 hours)
+    """
+    global _update_check_thread, _update_check_stop
+    
+    if _update_check_thread and _update_check_thread.is_alive():
+        return  # Already running
+    
+    _update_check_stop.clear()
+    
+    def _run_update_check():
+        while not _update_check_stop.is_set():
+            try:
+                with app.app_context():
+                    check_for_updates(app)
+            except Exception as e:
+                app.logger.warning(f"Update check failed: {e}")
+            
+            # Wait for interval or stop signal
+            _update_check_stop.wait(interval)
+    
+    _update_check_thread = threading.Thread(target=_run_update_check, daemon=True)
+    _update_check_thread.start()
+    app.logger.info(f"Update checker started with interval {interval}s")
+
+
+def stop_update_checker():
+    """Stop the background update checker thread."""
+    global _update_check_thread, _update_check_stop
+    _update_check_stop.set()
+    if _update_check_thread:
+        _update_check_thread.join(timeout=5)
+        _update_check_thread = None
+
+
+def check_for_updates(app, force=False):
+    """Check for application updates.
+    
+    Returns update info dict or None.
+    """
+    global _last_update_check, _cached_update_info
+    
+    if not force and _last_update_check:
+        elapsed = time.time() - _last_update_check
+        if elapsed < UPDATE_CHECK_INTERVAL:
+            return _cached_update_info
+    
+    try:
+        # Import here to avoid circular imports
+        import os
+        from services.update_checker import check_for_update
+        
+        base_path = os.path.dirname(os.path.abspath(__file__ + "/.."))
+        update_info = check_for_update(base_path)
+        
+        _last_update_check = time.time()
+        _cached_update_info = update_info
+        
+        if update_info.get("update_available"):
+            app.logger.info(f"Update available: {update_info['current_version']} -> {update_info['latest_version']}")
+        
+        return update_info
+    except Exception as e:
+        app.logger.warning(f"Update check error: {e}")
+        return None
+
+
+def get_cached_update_info():
+    """Get the last cached update info."""
+    return _cached_update_info

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}ZeroCipher — Purple Team Mastery Platform{% endblock %}</title>
+  <title>{% block title %}SkillSprint Academy — Purple Team Mastery{% endblock %}</title>
   <link rel="icon" href="/static/img/skill_logo.png">
   {% if OFFLINE_MODE %}
     <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
@@ -21,15 +21,15 @@
 <div class="d-flex" style="min-height:100vh;">
   <!-- SIDEBAR -->
   <div class="dash-sidebar" style="width:250px;flex-shrink:0;">
-    <div class="dash-side-header">
-      <a href="{{ url_for('dashboard.today') }}" class="d-flex align-items-center gap-2" style="text-decoration:none;">
-        <img src="/static/img/skill_logo.png" alt="ZeroCipher" width="34">
-        <div>
-          <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1rem;color:#fff;letter-spacing:0.5px;">ZeroCipher</div>
-          <div style="font-size:0.65rem;color:var(--primary);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Purple Team Mastery</div>
-        </div>
-      </a>
-    </div>
+<div class="dash-side-header">
+    <a href="{{ url_for('dashboard.today') }}" class="d-flex align-items-center gap-2" style="text-decoration:none;">
+      <img src="/static/img/skill_logo.png" alt="SkillSprint Academy" width="34">
+      <div>
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1rem;color:#fff;letter-spacing:0.5px;">SkillSprint Academy</div>
+        <div style="font-size:0.65rem;color:var(--primary);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Purple Team Mastery</div>
+      </div>
+    </a>
+  </div>
     <div class="pt-3 pb-4 px-1" style="overflow-y:auto;">
       <div style="padding:.5rem 1.25rem .25rem;font-size:.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Learning Path</div>
       <a href="{{ url_for('dashboard.today') }}" class="dash-nav-link {% if active == 'today' %}active{% endif %}"><i class="bi bi-speedometer2"></i> Today's Schedule</a>
@@ -103,6 +103,21 @@
         {% endif %}
       {% endwith %}
 
+      <!-- Update Notification Banner -->
+      <div id="update-banner" class="alert alert-info alert-dismissible fade show mb-4" style="display:none;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <strong><i class="bi bi-arrow-repeat me-2"></i>Update Available</strong>
+            <span id="update-version-text" class="ms-2"></span>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm" onclick="applyUpdate()"><i class="bi bi-download me-1"></i>Install Now</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="dismissUpdateBanner()"><i class="bi bi-x me-1"></i>Later</button>
+          </div>
+        </div>
+        <div id="update-release-notes" class="mt-2 small" style="display:none;"></div>
+      </div>
+
       {% block content %}{% endblock %}
     </div>
   </div>
@@ -123,6 +138,7 @@
 {% else %}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endif %}
+<script src="/static/js/update_checker.js"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

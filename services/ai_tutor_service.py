@@ -44,7 +44,7 @@ def _retrieve_context(topic_id: Optional[int], query: str, k: int = 4) -> str:
 
 
 def _build_system_prompt(topic: Optional[Topic]) -> str:
-    role_line = "You are ZeroCipher's AI cybersecurity tutor. "
+    role_line = "You are SkillSprint Academy's AI cybersecurity tutor. "
     if topic is not None:
         role_line += f"The student is currently studying '{topic.title}'. "
     role_line += (

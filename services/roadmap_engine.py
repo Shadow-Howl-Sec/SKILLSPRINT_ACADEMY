@@ -1,8 +1,8 @@
-"""Roadmap generation / re-planning engine — ZeroCipher Purple Team Mastery Path.
+"""Roadmap generation / re-planning engine — SkillSprint Academy Purple Team Mastery Path.
 
 Two-phase design:
-  Phase 1 (Months 1-3): Job-Ready Track — Core purple team skills to be employable
-  Phase 2 (Month 4+): Mastery Track — Advanced topics, capstones, continuous practice
+  Stage 1 (Months 1-3, Weeks 1-12): Job-Ready Track — core purple team skills to be employable
+  Stage 2 (Month 4+, Week 13+): Mastery Track — advanced topics, capstones, continuous practice
 
 No assessment — everyone starts at zero. The roadmap is a fixed, comprehensive
 purple team curriculum with every topic having labs. No skipping allowed.

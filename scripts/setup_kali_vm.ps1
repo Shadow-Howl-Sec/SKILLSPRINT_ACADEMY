@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-    ZeroCipher - Kali VirtualBox VM setup (plan §5.1, §10.2).
+    SkillSprint Academy - Kali VirtualBox VM setup (plan §5.1, §10.2).
 
     Walks the user through provisioning a local Kali VM for offline lab work.
     Does NOT silently install anything. After one run, the VM lives locally
@@ -20,7 +20,7 @@
         pwsh scripts/setup_kali_vm.ps1 -Download          # one-time, online
 #>
 [CmdletBinding()] param(
-    [string]$VmName      = "ZeroCipher-Kali",
+    [string]$VmName      = "SkillSprintAcademy-Kali",
     [string]$OvaPath,
     [switch]$Download,
     [int]$HostMemoryMB   = 4096,
@@ -56,7 +56,7 @@ Write-Ok "VBoxManage at $vboxManage"
 $exists = (& $vboxManage list vms) -match ('"' + $VmName + '"')
 if ($exists) {
     Write-Step "VM '$VmName' already exists - snapshotting a clean state"
-    & $vboxManage snapshot $VmName take "zerocipher-clean-state" --description "Baseline after first boot" 2>$null | Out-Null
+    & $vboxManage snapshot $VmName take "skillsprint-clean-state" --description "Baseline after first boot" 2>$null | Out-Null
     Write-Ok "snapshot ok (or already existed)"
     Write-Host "VM '$VmName' is ready. To start it:"
     Write-Host "    VBoxManage startvm $VmName --type headless"
@@ -109,7 +109,7 @@ Write-Ok "adapters configured (host-only + NAT)"
 # ---------------------------------------------------------------------------
 if (Test-Path $SharedFolder) {
     Write-Step "Mounting bundled labs at $SharedFolder into the guest"
-    & $vboxManage sharedfolder add $VmName --name "zerocipher-labs" `
+    & $vboxManage sharedfolder add $VmName --name "skillsprint-labs" `
         --hostpath $SharedFolder --automount
     Write-Ok "shared folder attached"
 }
@@ -123,7 +123,7 @@ Write-Host "Waiting 60s for first boot..."
 Start-Sleep -Seconds 60
 
 & $vboxManage controlvm $VmName savestate | Out-Null
-& $vboxManage snapshot $VmName take "zerocipher-clean-state" | Out-Null
+& $vboxManage snapshot $VmName take "skillsprint-clean-state" | Out-Null
 Write-Ok "clean-state snapshot saved"
 
 # ---------------------------------------------------------------------------
@@ -138,5 +138,5 @@ Write-Host "===================================================" -ForegroundColo
 Write-Host " Start (headless):  VBoxManage startvm $VmName --type headless"
 Write-Host " SSH (default):     ssh ${GuestUser}@127.0.0.1 -p 2222"
 if ($guestIp) { Write-Host " Host-only IP:       ssh ${GuestUser}@$guestIp" }
-Write-Host " Bundled labs:       mounted at /media/sf_zerocipher-labs inside the guest"
-Write-Host " Reset to clean:     VBoxManage snapshot $VmName restore zerocipher-clean-state"
+Write-Host " Bundled labs:       mounted at /media/sf_skillsprint-labs inside the guest"
+Write-Host " Reset to clean:     VBoxManage snapshot $VmName restore skillsprint-clean-state"

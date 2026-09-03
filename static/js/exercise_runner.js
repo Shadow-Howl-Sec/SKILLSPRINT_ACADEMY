@@ -1,5 +1,5 @@
 /*
- * ZeroCipher — interactive exercise runner (plan §4).
+ * SkillSprint Academy — interactive exercise runner (plan §4).
  *
  * Boots vendored Pyodide on demand and exposes `window.runPython(code)` to
  * the per-kind exercise templates. Also provides small framework helpers

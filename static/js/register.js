@@ -32,7 +32,7 @@ $(document).ready(function() {
                     key: orderData.key_id,
                     amount: orderData.amount,
                     currency: 'INR',
-                    name: 'ZeroCipher',
+                    name: 'SkillSprint Academy',
                     description: 'Training Registration',
                     order_id: orderData.order_id,
                     handler: function (response) {

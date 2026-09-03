@@ -15,4 +15,4 @@ These are placeholder files. Replace with actual PCAP files from:
 
 ## Usage
 
-In the Kali VM, access via the shared folder at `/media/sf_zerocipher-labs/networking/`
+In the Kali VM, access via the shared folder at `/media/sf_skillsprint-labs/networking/`

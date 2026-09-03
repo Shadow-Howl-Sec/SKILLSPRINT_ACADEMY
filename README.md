@@ -488,6 +488,60 @@ python seed_offline_labs.py # Bundled offline labs
 # - Complete onboarding → assessment → roadmap → dashboard flow
 ```
 
+### API Endpoints
+
+The application exposes several JSON APIs for frontend integration and automation:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check — returns DB status and offline mode |
+| `/api/assistant/chat` | POST | AI tutor chat — `{message, context_topic_id?}` → `{reply}` |
+| `/api/update/check` | GET/POST | Check for application updates — returns `{update_available, current_version, latest_version, download_url, release_notes}` |
+| `/api/update/status` | GET | Get cached update status without network check |
+| `/settings/apply-update` | POST | Apply downloaded update — `{download_url}` → spawns updater.exe |
+
+**Example: Check for updates**
+```powershell
+# Force check
+curl -X POST http://127.0.0.1:5000/api/update/check?force=1 -H "Content-Type: application/json" -d "{}"
+
+# Or with JSON body
+curl -X POST http://127.0.0.1:5000/api/update/check -H "Content-Type: application/json" -d '{"force": true}'
+```
+
+**Example: Get cached status**
+```powershell
+curl http://127.0.0.1:5000/api/update/status
+```
+
+### Automated Update Mechanism
+
+The platform includes a robust, minimal-intervention update system:
+
+1. **Background Update Checker** — Runs every 24 hours (configurable via `UPDATE_CHECK_INTERVAL` in `services/scheduler_service.py`). Checks GitHub releases for new versions.
+2. **Smart Offline Detection** — Respects `OFFLINE_MODE=true`; skips network checks entirely when offline.
+3. **Version Tracking** — Reads local version from `VERSION` file; compares semantically (e.g., `1.2.10` > `1.2.9`).
+4. **User Notification** — Non-intrusive banner appears in the UI when an update is available, with "Install Now" / "Later" options.
+5. **One-Click Install** — Downloads the release ZIP, extracts to a temp folder, atomically replaces the app directory, and relaunches the new version.
+6. **Dismissible** — Users can dismiss the banner for 7 days per version via cookie.
+
+**Configuration (via `.env`):**
+```ini
+# GitHub repository to check for releases (format: owner/repo)
+UPDATE_GITHUB_REPO=your-org/SKILLSPRINT_ACADEMY
+
+# Optional: GitHub token for higher rate limits
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+
+# Update check interval (seconds) — default 86400 (24h)
+UPDATE_CHECK_INTERVAL=86400
+```
+
+**To deploy updates:**
+1. Create a GitHub Release with tag `vX.Y.Z`
+2. Attach a `.zip` asset containing the new application files
+3. The update checker will detect it automatically within 24h (or immediately if user clicks "Check Now")
+
 ---
 
 ## Deployment

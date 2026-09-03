@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-    ZeroCipher - Ollama setup (plan §7, §10.4).
+    SkillSprint Academy - Ollama setup (plan §7, §10.4).
 
     Detects Ollama on PATH (or via OllamaSetup.exe in bundles\installers);
     if absent, prints a download link / pulls the bundled installer. Then
