@@ -262,7 +262,8 @@ def create_tables():
 
 
 if __name__ == '__main__':
-    sys.stdout.reconfigure(encoding='utf-8')
+    if sys.stdout is not None:
+        sys.stdout.reconfigure(encoding='utf-8')
     try:
         create_tables()
         bind_host = app.config.get('OFFLINE_BIND_HOST', '127.0.0.1')
