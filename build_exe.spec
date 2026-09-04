@@ -14,62 +14,62 @@
 # Output appears at: dist/SkillSprintAcademy/
 
 import os
+import sys
 from PyInstaller.utils.hooks import collect_all
 
 block_cipher = None
 
-# ---------------------------------------------------------------------------
-# pywebview on Windows uses the WebView2/edgechromium backend, which pulls in
-# some dynamic imports PyInstaller's static analysis can miss on its own.
-# collect_all() grabs its submodules, data files, and binaries automatically.
-# ---------------------------------------------------------------------------
-webview_datas, webview_binaries, webview_hidden = collect_all('webview')
+# Get the directory containing this spec file
+# In PyInstaller spec context, __file__ is not available, use sys.argv[0] or cwd
+SPEC_DIR = os.path.dirname(os.path.abspath(sys.argv[0])) if '__file__' not in globals() else os.path.dirname(os.path.abspath(__file__))
+# Fallback to current working directory
+if not SPEC_DIR or SPEC_DIR == os.path.dirname(os.path.abspath(sys.executable)):
+    SPEC_DIR = os.getcwd()
 
-# ---------------------------------------------------------------------------
 # Non-Python assets that must be bundled alongside the code.
 # Format: (source_path_relative_to_this_spec_file, destination_folder_in_bundle)
 # Directories are copied recursively, preserving their internal structure.
-# ---------------------------------------------------------------------------
 project_datas = [
-    ('app/templates', 'app/templates'),
-    ('app/static', 'app/static'),
-    ('content', 'content'),
+    ('templates', 'templates'),
+    ('static', 'static'),
+    ('bundles', 'bundles'),
     ('migrations', 'migrations'),
     ('VERSION', '.'),
+    ('seed.py', '.'),
+    ('seed_comprehensive.py', '.'),
+    ('seed_resources.py', '.'),
+    ('config.py', '.'),
+    ('models.py', '.'),
+    ('extensions.py', '.'),
+    ('paths.py', '.'),
+    ('updater.py', '.'),
+    ('version_info.txt', '.'),
+    ('requirements.txt', '.'),
+    ('.env', '.'),
 ]
 
 # Only include files/folders that actually exist, so a missing optional
-# folder (e.g. you haven't created migrations/ yet) doesn't break the build.
-project_datas = [(src, dst) for src, dst in project_datas if os.path.exists(src)]
+# folder doesn't break the build.
+project_datas = [(src, dst) for src, dst in project_datas if os.path.exists(os.path.join(SPEC_DIR, src))]
 
-# ---------------------------------------------------------------------------
 # Flask registers blueprints dynamically (imported inside create_app()),
 # so PyInstaller's static import scanner can miss them entirely — the build
 # would succeed but every route would 404 at runtime. List every blueprint
-# module explicitly here.
-# ---------------------------------------------------------------------------
+# module explicitly here (only those that EXIST in the codebase).
 blueprint_hidden_imports = [
-    'app.blueprints.onboarding',
-    'app.blueprints.onboarding.routes',
-    'app.blueprints.assessment',
-    'app.blueprints.assessment.routes',
-    'app.blueprints.roadmap',
-    'app.blueprints.roadmap.routes',
-    'app.blueprints.dashboard',
-    'app.blueprints.dashboard.routes',
-    'app.blueprints.labs',
-    'app.blueprints.labs.routes',
-    'app.blueprints.library',
-    'app.blueprints.library.routes',
-    'app.blueprints.progress',
-    'app.blueprints.progress.routes',
-    'app.blueprints.settings',
-    'app.blueprints.settings.routes',
-    'app.blueprints.purple_team',
-    'app.blueprints.purple_team.routes',
+    'blueprints.roadmap.routes',
+    'blueprints.dashboard.routes',
+    'blueprints.labs.routes',
+    'blueprints.purple_team.routes',
+    'blueprints.offline.routes',
+    'blueprints.job_roles.routes',
+    'blueprints.library.routes',
+    'blueprints.assistant.routes',
+    'blueprints.assessment.routes',
+    'blueprints.settings.routes',
 ]
 
-# SQLAlchemy/Flask-Migrate/APScheduler also sometimes need a nudge —
+# SQLAlchemy/Flask-Migrate/APScheduler/Markdown also sometimes need a nudge —
 # these are common misses for this exact stack.
 misc_hidden_imports = [
     'sqlalchemy.sql.default_comparator',
@@ -80,16 +80,27 @@ misc_hidden_imports = [
     'apscheduler.executors.pool',
     'apscheduler.jobstores.sqlalchemy',
     'markdown',
+    'markdown.extensions.fenced_code',
+    'markdown.extensions.tables',
+    'markdown.extensions.codehilite',
     'waitress',
+    'jinja2',
+    'jinja2.ext',
+    'sqlite3',
+    'werkzeug.security',
+    'cryptography.fernet',
+    'cryptography.hazmat.primitives',
+    'cryptography.hazmat.primitives.kdf.pbkdf2',
+    'email_validator',
 ]
 
-all_hidden_imports = blueprint_hidden_imports + misc_hidden_imports + webview_hidden
+all_hidden_imports = blueprint_hidden_imports + misc_hidden_imports
 
 a = Analysis(
-    ['desktop_launcher.py'],
-    pathex=[],
-    binaries=webview_binaries,
-    datas=project_datas + webview_datas,
+    ['app.py'],
+    pathex=[SPEC_DIR],
+    binaries=[],
+    datas=project_datas,
     hiddenimports=all_hidden_imports,
     hookspath=[],
     hooksconfig={},
@@ -97,6 +108,15 @@ a = Analysis(
     excludes=[
         'matplotlib',   # not used — excluding trims build size if pulled in
         'tkinter',      # incidentally by some other dependency
+        'test', 'pytest', 'unittest',
+        'notebook', 'jupyter', 'IPython',
+        'webview',      # pywebview NOT used — exclude to save 50MB
+        'oracledb',     # unused Oracle driver
+        'razorpay',     # unused payment gateway
+        'flask_dance',  # unused OAuth
+        'oauthlib',     # unused OAuth
+        'flask_mail',   # unused SMTP
+        'dnspython',    # only if DNS tools used in labs
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
@@ -122,7 +142,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='app_icon.ico',    # place an .ico file at the repo root, or remove this line
+    icon='static/img/skill_logo.ico' if os.path.exists('static/img/skill_logo.ico') else None,
     version='version_info.txt',   # see companion file below; remove this line if skipping it
 )
 

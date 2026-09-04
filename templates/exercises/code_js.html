@@ -1,9 +1,9 @@
-<!-- code_py.html - Python Code Exercise -->
+<!-- code_js.html - JavaScript Code Exercise -->
 <div class="mb-3">
-    <label class="form-label">Python Code</label>
+    <label class="form-label">JavaScript Code</label>
     <textarea id="code-editor" class="form-control font-monospace" rows="20" spellcheck="false"
-              placeholder="# Write your Python solution here&#10;def solve():&#10;    pass"></textarea>
-    <div class="form-text">Python {{ exerciseSpec.python_version or '3.11' }} • Available: {{ exerciseSpec.allowed_modules|join(', ') if exerciseSpec.allowed_modules else 'stdlib only' }}</div>
+              placeholder="// Write your JavaScript solution here&#10;function solve() {&#10;    return 'Hello, World!';&#10;}"></textarea>
+    <div class="form-text">Node.js environment • ES2022+</div>
 </div>
 
 <div class="d-flex gap-2 mb-3">
@@ -23,7 +23,6 @@
 </div>
 
 <script>
-// Pyodide-based Python execution (if available)
 async function runCode() {
     const code = document.getElementById('code-editor').value;
     const output = document.getElementById('codeOutput');
@@ -32,14 +31,10 @@ async function runCode() {
     output.textContent = 'Running...';
 
     try {
-        if (typeof pyodide !== 'undefined') {
-            // Use Pyodide if loaded
-            const result = await pyodide.runPythonAsync(code);
-            output.textContent = result !== undefined ? String(result) : '(no output)';
-        } else {
-            // Fallback: show code (server-side execution would be needed)
-            output.textContent = '# Pyodide not loaded. Code:\n' + code;
-        }
+        // Use Function constructor for safe JS execution
+        const fn = new Function(code);
+        const result = fn();
+        output.textContent = result !== undefined ? String(result) : '(no output)';
     } catch (e) {
         output.textContent = 'Error: ' + e.message;
         output.style.color = '#ff6b6b';
@@ -52,14 +47,12 @@ function runTests() {
         alert('No tests defined for this exercise.');
         return;
     }
-    // Run each test case
-    let allPassed = true;
     let output = 'Running tests...\n\n';
     for (const test of tests) {
         output += `Test: ${test.description || 'unnamed'}\n`;
         output += `Input: ${JSON.stringify(test.input)}\n`;
         output += `Expected: ${JSON.stringify(test.expected)}\n`;
-        output += `--- \n`;
+        output += `---\n`;
     }
     document.getElementById('codeOutput').textContent = output;
     document.getElementById('outputPanel').style.display = 'block';

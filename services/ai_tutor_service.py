@@ -14,12 +14,17 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Optional
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Optional
 
 import requests
 from flask import current_app
 
 from models import ContentItem, Topic, TopicHint
+
+
+# Thread pool for async AI tutor calls (non-blocking)
+_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="ai_tutor")
 
 
 # ---------------------------------------------------------------------------
@@ -216,10 +221,10 @@ def _stub_reply(query: str, topic: Optional[Topic]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Public entry point
+# Public entry points
 # ---------------------------------------------------------------------------
 def answer(query: str, topic_id: Optional[int] = None) -> str:
-    """Return the assistant's reply to a user message (plan §7.1)."""
+    """Return the assistant's reply to a user message (plan §7.1) — SYNCHRONOUS."""
     topic = db_get_topic(topic_id) if topic_id else None
     context = _retrieve_context(topic_id, query)
     system = _build_system_prompt(topic)
@@ -236,3 +241,31 @@ def answer(query: str, topic_id: Optional[int] = None) -> str:
             return out
         # fall through to rules if Anthropic blew up
     return _rules_reply(query, topic)
+
+
+def answer_async(query: str, topic_id: Optional[int] = None, 
+                 callback: Optional[Callable[[str], None]] = None):
+    """Non-blocking AI tutor call — returns a Future.
+    
+    Usage:
+        future = answer_async("How do I kerberoast?", topic_id=123)
+        # ... do other work ...
+        reply = future.result()  # blocks until ready
+        
+    Or with callback:
+        answer_async("How do I kerberoast?", topic_id=123, 
+                     callback=lambda reply: socketio.emit('ai_reply', reply))
+    """
+    def _run():
+        with current_app.app_context():
+            return answer(query, topic_id)
+    
+    future = _executor.submit(_run)
+    if callback:
+        future.add_done_callback(lambda f: callback(f.result()))
+    return future
+
+
+def shutdown_executor():
+    """Shutdown the thread pool on app teardown."""
+    _executor.shutdown(wait=True)

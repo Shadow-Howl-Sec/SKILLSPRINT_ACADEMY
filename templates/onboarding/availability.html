@@ -1,53 +1,73 @@
-{% extends "base_cybersec.html" %}
-{% block title %}Daily Schedule & Time Blocks — SkillSprint Academy{% endblock %}
-{% block page_title %}Configure Daily 2-3hr Schedule Blocks{% endblock %}
-{% block page_subtitle %}Set up your preferred daily study windows (e.g. Morning 09:00-11:30, Afternoon 14:00-16:30){% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Schedule Availability{% endblock %}
 
 {% block content %}
-<form method="post" action="{{ url_for('roadmap.availability') }}">
-  <div class="admin-card p-4">
-    <p class="text-muted" style="font-size:0.9rem;">
-      Configure 2-3 hour time blocks for each day of the week. SkillSprint Academy will automatically pack your roadmap lessons, purple team labs, and quizzes into these blocks.
-    </p>
-
-    <div class="row g-4">
-      {% set days = [("Monday", 0), ("Tuesday", 1), ("Wednesday", 2), ("Thursday", 3), ("Friday", 4), ("Saturday", 5), ("Sunday", 6)] %}
-      {% for name, idx in days %}
-      {% set blocks = availability[idx] if availability and idx in availability else [{"start":"09:00","end":"11:30"},{"start":"14:00","end":"16:30"}] %}
-      <div class="col-md-6 col-xl-4">
-        <div class="border rounded p-3 bg-light">
-          <h6 class="fw-bold mb-3"><i class="bi bi-calendar-day me-1 text-primary"></i> {{ name }}</h6>
-          
-          <!-- Block 1 -->
-          <div class="mb-3">
-            <label class="form-label small fw-semibold" for="day_{{ idx }}_b1_start">Block 1 (Morning / 2.5hr)</label>
-            <div class="d-flex gap-2">
-              <input type="time" id="day_{{ idx }}_b1_start" class="form-control form-control-sm" name="day_{{ idx }}_b1_start" value="{{ blocks[0].start if blocks|length > 0 else '09:00' }}" aria-label="{{ name }} Block 1 Start Time" title="{{ name }} Block 1 Start Time">
-              <span class="align-self-center">-</span>
-              <input type="time" id="day_{{ idx }}_b1_end" class="form-control form-control-sm" name="day_{{ idx }}_b1_end" value="{{ blocks[0].end if blocks|length > 0 else '11:30' }}" aria-label="{{ name }} Block 1 End Time" title="{{ name }} Block 1 End Time">
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-calendar-week me-2"></i>Daily Schedule Blocks</h2>
+                <a href="{{ url_for('roadmap.calendar') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Calendar
+                </a>
             </div>
-          </div>
 
-          <!-- Block 2 -->
-          <div>
-            <label class="form-label small fw-semibold" for="day_{{ idx }}_b2_start">Block 2 (Afternoon/Evening / 2.5hr)</label>
-            <div class="d-flex gap-2">
-              <input type="time" id="day_{{ idx }}_b2_start" class="form-control form-control-sm" name="day_{{ idx }}_b2_start" value="{{ blocks[1].start if blocks|length > 1 else '14:00' }}" aria-label="{{ name }} Block 2 Start Time" title="{{ name }} Block 2 Start Time">
-              <span class="align-self-center">-</span>
-              <input type="time" id="day_{{ idx }}_b2_end" class="form-control form-control-sm" name="day_{{ idx }}_b2_end" value="{{ blocks[1].end if blocks|length > 1 else '16:30' }}" aria-label="{{ name }} Block 2 End Time" title="{{ name }} Block 2 End Time">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Configure Your Study Time Blocks (2-3 hours each)</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <p class="text-muted small mb-4">
+                            Define 2-3 hour blocks for each day. The roadmap engine will pack your learning items
+                            into these blocks respecting topic prerequisites and a 15% buffer for review.
+                        </p>
+
+                        {% for day_idx in range(7) %}
+                        <div class="card mb-3 border-0 bg-light">
+                            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">{{ days_names[day_idx] }}</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="day_{{ day_idx }}_enabled" checked disabled>
+                                    <label class="form-check-label small text-muted" for="day_{{ day_idx }}_enabled">Active</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Morning Block</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                            <input type="time" class="form-control" name="day_{{ day_idx }}_b1_start" value="{{ availability[day_idx][0].start if availability[day_idx] else '09:00' }}">
+                                            <span class="input-group-text">to</span>
+                                            <input type="time" class="form-control" name="day_{{ day_idx }}_b1_end" value="{{ availability[day_idx][0].end if availability[day_idx] else '11:30' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Afternoon Block</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                            <input type="time" class="form-control" name="day_{{ day_idx }}_b2_start" value="{{ availability[day_idx][1].start if availability[day_idx]|length > 1 else '14:00' }}">
+                                            <span class="input-group-text">to</span>
+                                            <input type="time" class="form-control" name="day_{{ day_idx }}_b2_end" value="{{ availability[day_idx][1].end if availability[day_idx]|length > 1 else '16:30' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('roadmap.calendar') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Save & Recalculate Roadmap
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-      {% endfor %}
     </div>
-
-    <div class="mt-4 d-flex gap-2">
-      <button type="submit" class="btn btn-primary">
-        <i class="bi bi-check2-circle me-1"></i> Save Schedule & Update Timetable
-      </button>
-      <a href="{{ url_for('roadmap.calendar') }}" class="btn btn-outline-secondary">Cancel</a>
-    </div>
-  </div>
-</form>
+</div>
 {% endblock %}

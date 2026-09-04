@@ -1,44 +1,116 @@
-{% extends "base_cybersec.html" %}
-{% block title %}Offline Mode — SkillSprint Academy{% endblock %}
-{% set active = "offline" %}
-{% block page_title %}About Offline Mode{% endblock %}
-{% block page_subtitle %}How SkillSprint Academy runs without internet{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}About Offline Mode{% endblock %}
 
 {% block content %}
-<div class="admin-card p-4">
-  <p class="text-muted">
-    SkillSprint Academy is configured to run entirely locally on your machine — no cloud services,
-    no telemetry, no payment gateway, no external AI API calls.
-  </p>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-wifi-off me-2"></i>Offline Mode</h2>
+                <a href="{{ url_for('dashboard.today') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-house-door me-1"></i>Dashboard
+                </a>
+            </div>
 
-  <h6 style="font-weight:700;">What's enabled locally</h6>
-  <ul>
-    <li><i class="bi bi-hdd-network me-1"></i> Full curriculum (Tier 0 → Tier 4) seeded into a local SQLite database.</li>
-    <li><i class="bi bi-box-seam me-1"></i> Bundled challenge artifacts under <code>bundles/labs/</code> — lab flag hashing works fully offline.</li>
-    <li><i class="bi bi-robot me-1"></i> AI tutor routes to a local <a href="{{ url_for('offline.ai_tutor_settings') }}">Ollama</a> instance when running; otherwise deterministic topic-specific hints.</li>
-    <li><i class="bi bi-code me-1"></i> Interactive in-browser exercises (Python via Pyodide, regex / cipher / quiz widgets) — vendored under <code>static/vendor/</code>.</li>
-    <li><i class="bi bi-inbox me-1"></i> Contact form messages are stored in a local inbox instead of being emailed.</li>
-  </ul>
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>What Works Fully Offline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-book me-2"></i>Complete Curriculum</h6>
+                            <ul class="small text-muted">
+                                <li>68+ topics with theory lessons (Markdown)</li>
+                                <li>Prerequisite DAG — no skipping allowed</li>
+                                <li>Checkpoint quizzes per topic</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-terminal me-2"></i>VM-Based Labs</h6>
+                            <ul class="small text-muted">
+                                <li>Kali Linux (attacker)</li>
+                                <li>GOAD Domain Controller + Windows 10</li>
+                                <li>Metasploitable2, DVWA/Juice Shop</li>
+                                <li>Wazuh SIEM for detection</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-robot me-2"></i>AI Tutor</h6>
+                            <ul class="small text-muted">
+                                <li>Ollama local LLM (llama3.1:8b-instruct)</li>
+                                <li>Rules-based fallback (always works)</li>
+                                <li>Progressive hints without flag leaks</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-graph-up me-2"></i>Progress Tracking</h6>
+                            <ul class="small text-muted">
+                                <li>XP, streaks, skill radar</li>
+                                <li>ATT&CK coverage matrix</li>
+                                <li>Purple team exercise log</li>
+                                <li>Markdown portfolio export</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-download me-2"></i>Resource Cache</h6>
+                            <ul class="small text-muted">
+                                <li>One-time sync of external docs</li>
+                                <li>Stored locally in instance/resource_cache</li>
+                                <li>Referenced by curriculum automatically</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-shield-check me-2"></i>Auto-Updates</h6>
+                            <ul class="small text-muted">
+                                <li>Checks GitHub Releases (when online)</li>
+                                <li>Atomic folder swap via updater.exe</li>
+                                <li>User data never touched</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-  <h6 style="font-weight:700;">What's disabled in offline mode</h6>
-  <ul>
-    <li><i class="bi bi-credit-card me-1"></i> Razorpay payments — <code>/create_order</code> returns 404.</li>
-    <li><i class="bi bi-google me-1"></i> Google OAuth login — the route is not registered.</li>
-    <li><i class="bi bi-people me-1"></i> Community / leaderboard sharing — out of scope offline.</li>
-    <li><i class="bi bi-envelope me-1"></i> Email verification — emails are auto-verified on registration.</li>
-    <li><i class="bi bi-key me-1"></i> Password-reset email flow — use <code>python manage.py reset-password <email></code> instead.</li>
-  </ul>
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>What Requires Internet (One-Time)</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li><strong>Initial VM setup:</strong> Download Kali OVA, Windows Server ISO, Wazuh OVA</li>
+                        <li><strong>Ollama model pull:</strong> <code>ollama pull llama3.1:8b-instruct</code> (run once)</li>
+                        <li><strong>Resource cache sync:</strong> Run <code>scripts/sync_resource_cache.ps1</code> to fetch external docs</li>
+                        <li><strong>Application updates:</strong> GitHub Releases check (optional, can skip)</li>
+                    </ul>
+                    <p class="small text-muted mt-2 mb-0">After these one-time steps, the platform runs 100% offline — no external connections ever required.</p>
+                </div>
+            </div>
 
-  <h6 style="font-weight:700;">Setup guides</h6>
-  <ul>
-    <li><a href="{{ url_for('offline.lab_setup') }}">Lab setup guide</a> — provision a local Kali VirtualBox VM.</li>
-    <li><a href="{{ url_for('offline.ai_tutor_settings') }}">AI tutor setup</a> — install / pick an Ollama model.</li>
-    <li><a href="{{ url_for('offline.resource_cache_info') }}">External resource cache</a> — one-time online sync of public CS articles.</li>
-  </ul>
-
-  <p class="small text-muted mt-3">
-    Status indicator — <strong>{% if offline %}<span class="text-success">offline</span>{% else %}<span class="text-warning">online</span>{% endif %}</strong>.
-    Set <code>OFFLINE_MODE=true</code> in <code>.env</code> to force offline behaviour.
-  </p>
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Network Architecture</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small">All VMs connect via VirtualBox <strong>Host-Only Adapter</strong> on <code>192.168.56.0/24</code>:</p>
+                    <table class="table table-sm table-bordered small">
+                        <thead>
+                            <tr><th>VM</th><th>IP</th><th>Role</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Kali Linux</td><td>192.168.56.5</td><td>Attacker platform</td></tr>
+                            <tr><td>GOAD-DC01</td><td>192.168.56.10</td><td>Domain Controller</td></tr>
+                            <tr><td>GOAD-WIN10</td><td>192.168.56.11</td><td>Windows target</td></tr>
+                            <tr><td>Metasploitable2</td><td>192.168.56.20</td><td>Linux target</td></tr>
+                            <tr><td>DVWA/Juice Shop</td><td>192.168.56.21</td><td>Web targets (Docker on Kali)</td></tr>
+                            <tr><td>Wazuh Manager</td><td>192.168.56.30</td><td>SIEM / Detection</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="small text-muted mb-0">Your host machine accesses VMs directly via these IPs. No NAT, no internet routing.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

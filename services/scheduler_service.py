@@ -8,6 +8,7 @@ Also provides periodic update checking for the application.
 from __future__ import annotations
 
 import json
+import random
 import threading
 import time
 from collections import deque
@@ -23,11 +24,14 @@ DEFAULT_TIME_BLOCKS = [
 
 # Update check interval (24 hours in seconds)
 UPDATE_CHECK_INTERVAL = 86400
+# Jitter range (±2 hours) to prevent thundering herd
+UPDATE_CHECK_JITTER = 7200
 
 _update_check_thread = None
 _update_check_stop = threading.Event()
 _last_update_check = None
 _cached_update_info = None
+_thread_lock = threading.Lock()
 
 
 def _iso_weekday_to_index(d: int) -> int:
@@ -166,34 +170,37 @@ def start_update_checker(app, interval=UPDATE_CHECK_INTERVAL):
     """
     global _update_check_thread, _update_check_stop
     
-    if _update_check_thread and _update_check_thread.is_alive():
-        return  # Already running
-    
-    _update_check_stop.clear()
-    
-    def _run_update_check():
-        while not _update_check_stop.is_set():
-            try:
-                with app.app_context():
-                    check_for_updates(app)
-            except Exception as e:
-                app.logger.warning(f"Update check failed: {e}")
-            
-            # Wait for interval or stop signal
-            _update_check_stop.wait(interval)
-    
-    _update_check_thread = threading.Thread(target=_run_update_check, daemon=True)
-    _update_check_thread.start()
-    app.logger.info(f"Update checker started with interval {interval}s")
+    with _thread_lock:
+        if _update_check_thread and _update_check_thread.is_alive():
+            return  # Already running
+        
+        _update_check_stop.clear()
+        
+        def _run_update_check():
+            while not _update_check_stop.is_set():
+                try:
+                    with app.app_context():
+                        check_for_updates(app)
+                except Exception as e:
+                    app.logger.warning(f"Update check failed: {e}")
+                
+                # Wait for interval (with jitter) or stop signal
+                jittered_interval = interval + random.randint(-UPDATE_CHECK_JITTER, UPDATE_CHECK_JITTER)
+                _update_check_stop.wait(max(60, jittered_interval))  # Min 60s
+        
+        _update_check_thread = threading.Thread(target=_run_update_check, daemon=True, name="update_checker")
+        _update_check_thread.start()
+        app.logger.info(f"Update checker started with interval {interval}s (±{UPDATE_CHECK_JITTER}s jitter)")
 
 
 def stop_update_checker():
     """Stop the background update checker thread."""
     global _update_check_thread, _update_check_stop
-    _update_check_stop.set()
-    if _update_check_thread:
-        _update_check_thread.join(timeout=5)
-        _update_check_thread = None
+    with _thread_lock:
+        _update_check_stop.set()
+        if _update_check_thread:
+            _update_check_thread.join(timeout=10)
+            _update_check_thread = None
 
 
 def check_for_updates(app, force=False):
@@ -205,7 +212,9 @@ def check_for_updates(app, force=False):
     
     if not force and _last_update_check:
         elapsed = time.time() - _last_update_check
-        if elapsed < UPDATE_CHECK_INTERVAL:
+        # Apply jitter to the cached interval check too
+        jittered_interval = UPDATE_CHECK_INTERVAL + random.randint(-UPDATE_CHECK_JITTER, UPDATE_CHECK_JITTER)
+        if elapsed < jittered_interval:
             return _cached_update_info
     
     try:

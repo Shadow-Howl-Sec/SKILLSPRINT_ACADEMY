@@ -1,11 +1,11 @@
 """Virtual labs (plan §5.5; offline plan §5).
 
   /labs            browse all labs (filterable by SkillArea / provider)
-                   Offline-mode: greys out link-out labs and shows only
-                   self_hosted_offline / vm_exercise ones unless the user explicitly asks.
+                    Offline-mode: greys out link-out labs and shows only
+                    self_hosted_offline / vm_exercise ones unless the user explicitly asks.
   /lab/<id>        lab launcher — renders bundled-challenge buttons +
-                   proof submission UI for offline labs.
-                   For vm_exercise: renders attack/detection instructions + checklist.
+                    proof submission UI for offline labs.
+                    For vm_exercise: renders attack/detection instructions + checklist.
   /lab/<id>/submit (POST) validate flag (self-hosted) or store self-report/checklist.
   /lab/<id>/file/<path> serve a bundled challenge artifact (read-only).
 """
@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import socket
 from datetime import date, datetime
 
 from flask import (Blueprint, render_template, redirect, url_for, request,
@@ -21,11 +22,11 @@ from flask import (Blueprint, render_template, redirect, url_for, request,
 from werkzeug.utils import safe_join
 
 from extensions import db
-from models import Lab, RoadmapItem, PurpleTeamExerciseLog, AttackCoverage
+from models import Lab, RoadmapItem, PurpleTeamExerciseLog, AttackCoverage, VMConfig
 
 from services.xp_service import award_xp, touch_streak
 
-labs_bp =Blueprint("labs", __name__)
+labs_bp = Blueprint("labs", __name__)
 
 
 # Providers that require the public internet — hidden in OFFLINE_MODE (plan §5.4).
@@ -34,6 +35,72 @@ _ONLINE_PROVIDERS = {"tryhackme", "htb", "portswigger", "overthewire", "picoctf"
 
 def _offline_mode() -> bool:
     return bool(current_app.config.get("OFFLINE_MODE", False))
+
+
+def _check_vm_prerequisites(lab: Lab) -> tuple[bool, list[str]]:
+    """Check if required VMs are configured and reachable for a vm_exercise lab.
+    
+    Returns: (all_ok, missing_vms_list)
+    """
+    vm = VMConfig.query.filter_by(user_id=g.user.id).first()
+    if not vm:
+        return False, ["No VM configuration found"]
+    
+    missing = []
+    vm_dict = vm.get_vm_dict()
+    
+    # Check attacker VM
+    if lab.attacker_vm:
+        attacker_key = 'kali' if 'kali' in lab.attacker_vm.lower() else None
+        if attacker_key and not vm_dict.get(attacker_key, {}).get('ip'):
+            missing.append(f"Attacker VM ({lab.attacker_vm}) not configured")
+        elif attacker_key:
+            # Test connectivity
+            cfg = vm_dict[attacker_key]
+            try:
+                sock = socket.create_connection((cfg['ip'], cfg.get('ssh_port', 22)), timeout=2)
+                sock.close()
+            except Exception:
+                missing.append(f"Attacker VM ({lab.attacker_vm}) unreachable at {cfg['ip']}")
+    
+    # Check target VM
+    if lab.target_vm:
+        target_lower = lab.target_vm.lower()
+        target_key = None
+        if 'metasploitable' in target_lower:
+            target_key = 'metasploitable'
+        elif 'dvwa' in target_lower or 'juice shop' in target_lower:
+            target_key = 'dvwa'
+        elif 'goad' in target_lower and 'dc' in target_lower:
+            target_key = 'goad_dc'
+        elif 'goad' in target_lower and 'win' in target_lower:
+            target_key = 'goad_win10'
+        
+        if target_key and not vm_dict.get(target_key, {}).get('ip'):
+            missing.append(f"Target VM ({lab.target_vm}) not configured")
+        elif target_key:
+            cfg = vm_dict[target_key]
+            port = cfg.get('winrm_port') or cfg.get('ssh_port') or cfg.get('port') or 22
+            try:
+                sock = socket.create_connection((cfg['ip'], port), timeout=2)
+                sock.close()
+            except Exception:
+                missing.append(f"Target VM ({lab.target_vm}) unreachable at {cfg['ip']}:{port}")
+    
+    # Check detection VM
+    if lab.detection_vm and 'wazuh' in lab.detection_vm.lower():
+        if not vm_dict.get('wazuh', {}).get('ip'):
+            missing.append(f"Detection VM ({lab.detection_vm}) not configured")
+        else:
+            cfg = vm_dict['wazuh']
+            # Wazuh API typically on 55000
+            try:
+                sock = socket.create_connection((cfg['ip'], 55000), timeout=2)
+                sock.close()
+            except Exception:
+                missing.append(f"Detection VM ({lab.detection_vm}) unreachable at {cfg['ip']}")
+    
+    return len(missing) == 0, missing
 
 
 @labs_bp.route("/labs")
@@ -71,6 +138,13 @@ def detail(lab_id: int):
         # Link-out labs are disabled in offline mode (plan §5.4 / §9).
         flash("This lab requires internet and is disabled in offline mode.", "info")
         return redirect(url_for("labs.browse"))
+    
+    # VM pre-flight check for vm_exercise labs
+    if lab.is_vm_exercise:
+        vm_ok, missing = _check_vm_prerequisites(lab)
+        if not vm_ok:
+            flash(f"VM prerequisites not met: {', '.join(missing)}. Configure at <a href='{url_for('offline.lab_setup')}'>Lab Setup</a>.", "warning")
+            return redirect(url_for("offline.lab_setup"))
     
     # Use different template for vm_exercise labs
     if lab.is_vm_exercise:

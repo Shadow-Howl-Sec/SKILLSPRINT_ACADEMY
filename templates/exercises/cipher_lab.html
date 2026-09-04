@@ -1,61 +1,154 @@
-{# cipher_lab: interactive Caesar / Vigenere widget #}
-<div class="mb-2 small text-muted">{{ spec.prompt|default("Try encrypting and decrypting using the cipher.") }}</div>
-<div class="row g-2 mb-2">
-  <div class="col-sm-9">
-    <input id="ss_text" class="form-control" placeholder="plaintext or ciphertext" value="{{ spec.starter|default('HELLO') }}">
-  </div>
-  <div class="col-sm-3">
-    <input id="ss_key" class="form-control" placeholder="key (ROT13 / number / word)" value="{{ spec.key|default('13') }}">
-  </div>
+<!-- cipher_lab.html - Cipher Lab Exercise -->
+<div class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label">Ciphertext</label>
+        <textarea id="cipher-input" class="form-control font-monospace" rows="6" 
+                  placeholder="Paste ciphertext here...">{{ exerciseSpec.ciphertext or '' }}</textarea>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Key / Parameters</label>
+        <div class="mb-2">
+            <label class="form-label small">Algorithm</label>
+            <select id="cipher-algo" class="form-select form-select-sm">
+                <option value="caesar">Caesar Shift</option>
+                <option value="vigenere">Vigenère</option>
+                <option value="xor">XOR</option>
+                <option value="base64">Base64</option>
+                <option value="rot13">ROT13</option>
+                <option value="custom">{{ exerciseSpec.algorithm or 'Custom' }}</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <label class="form-label small">Key</label>
+            <input type="text" id="cipher-key" class="form-control form-control-sm font-monospace" 
+                   placeholder="Shift value, keyword, or XOR key" 
+                   value="{{ exerciseSpec.key or '' }}">
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="cipher-brute" checked>
+            <label class="form-check-label small" for="cipher-brute">Try all shifts (Caesar only)</label>
+        </div>
+    </div>
 </div>
-<div class="btn-group mb-3">
-  <button class="btn btn-outline-primary" id="ss_enc">Encrypt</button>
-  <button class="btn btn-outline-primary" id="ss_dec">Decrypt</button>
+
+<div class="d-flex gap-2 mb-3">
+    <button class="btn btn-outline-primary btn-sm" onclick="decrypt()">
+        <i class="bi bi-unlock me-1"></i>Decrypt
+    </button>
+    <button class="btn btn-outline-secondary btn-sm" onclick="encrypt()">
+        <i class="bi bi-lock me-1"></i>Encrypt
+    </button>
+    <button class="btn btn-outline-info btn-sm" onclick="analyze()">
+        <i class="bi bi-graph-up me-1"></i>Frequency Analysis
+    </button>
 </div>
-<pre class="bg-dark text-light p-3 rounded small" id="ss_out">(result)</pre>
+
+<div class="card" id="cipherOutput" style="display: none;">
+    <div class="card-header bg-dark text-white"><i class="bi bi-terminal me-1"></i>Result</div>
+    <div class="card-body p-0">
+        <pre id="cipherResult" class="mb-0 p-3 bg-dark text-light" style="max-height: 300px; overflow: auto;"></pre>
+    </div>
+</div>
+
+<div class="card mt-3" id="freqAnalysis" style="display: none;">
+    <div class="card-header bg-info text-white"><i class="bi bi-bar-chart me-1"></i>Frequency Analysis</div>
+    <div class="card-body">
+        <div id="freqChart" style="height: 200px;"></div>
+    </div>
+</div>
 
 <script>
-const SPEC = {{ spec_json|safe }};
+function decrypt() {
+    const ciphertext = document.getElementById('cipher-input').value;
+    const key = document.getElementById('cipher-key').value;
+    const algo = document.getElementById('cipher-algo').value;
+    const brute = document.getElementById('cipher-brute').checked;
+    const resultEl = document.getElementById('cipherResult');
+    const panel = document.getElementById('cipherOutput');
+    
+    if (!ciphertext) { alert('Enter ciphertext first.'); return; }
+    
+    panel.style.display = 'block';
+    let output = '';
+    
+    if (algo === 'caesar') {
+        const shift = parseInt(key) || 0;
+        if (brute) {
+            output = 'BRUTE FORCE RESULTS:\n\n';
+            for (let s = 1; s <= 25; s++) {
+                output += `Shift ${s.toString().padStart(2)}: ${caesar(ciphertext, s)}\n`;
+            }
+        } else {
+            output = `Shift ${shift}: ${caesar(ciphertext, shift)}`;
+        }
+    } else if (algo === 'rot13') {
+        output = caesar(ciphertext, 13);
+    } else if (algo === 'base64') {
+        try { output = atob(ciphertext); } catch { output = 'Invalid Base64'; }
+    } else if (algo === 'xor') {
+        output = xorDecrypt(ciphertext, key);
+    } else if (algo === 'vigenere') {
+        output = vigenereDecrypt(ciphertext, key);
+    } else {
+        output = 'Algorithm not implemented in browser. Use Python for custom ciphers.';
+    }
+    
+    resultEl.textContent = output;
+}
 
-function rot(s, k) {
-  k = ((k % 26) + 26) % 26;
-  return s.split("").map((c) => {
-    const code = c.charCodeAt(0);
-    if (code >= 65 && code <= 90)  return String.fromCharCode((code - 65 + k) % 26 + 65);
-    if (code >= 97 && code <= 122) return String.fromCharCode((code - 97 + k) % 26 + 97);
-    return c;
-  }).join("");
-}
-function vigenere(s, key, decrypt) {
-  const sign = decrypt ? -1 : 1;
-  key = key.toUpperCase().replace(/[^A-Z]/g, "");
-  let ki = 0;
-  return s.split("").map((c) => {
-    const code = c.charCodeAt(0);
-    const isUpper = code >= 65 && code <= 90;
-    const isLower = code >= 97 && code <= 122;
-    if (!isUpper && !isLower) return c;
-    const base = isUpper ? 65 : 97;
-    const k = (key.charCodeAt(ki % key.length) - 65) * sign;
-    ki++;
-    return String.fromCharCode(((code - base + k + 26) % 26) + base);
-  }).join("");
+function encrypt() {
+    // Similar to decrypt but reverse
+    alert('Encryption not implemented in this demo. Use the Python exercise for full implementation.');
 }
 
-const $ = (s) => document.querySelector(s);
-function compute(decrypt) {
-  const txt = $("#ss_text").value;
-  const key = $("#ss_key").value;
-  if (/^\d+$/.test(key)) {
-    $("#ss_out").textContent = rot(txt, parseInt(key, 10) * (decrypt ? -1 : 1));
-  } else {
-    $("#ss_out").textContent = vigenere(txt, key, !!decrypt);
-  }
+function analyze() {
+    const ciphertext = document.getElementById('cipher-input').value;
+    if (!ciphertext) { alert('Enter ciphertext first.'); return; }
+    
+    const freq = {};
+    for (const c of ciphertext.toUpperCase()) {
+        if (/[A-Z]/.test(c)) freq[c] = (freq[c] || 0) + 1;
+    }
+    
+    const sorted = Object.entries(freq).sort((a,b) => b[1] - a[1]);
+    const chart = document.getElementById('freqChart');
+    chart.innerHTML = sorted.map(([c, n]) => 
+        `<div class="d-flex align-items-center mb-1"><span class="me-2 fw-bold" style="width: 30px;">${c}</span><div class="flex-grow-1 bg-primary" style="height: 20px; width: ${n/sorted[0][1]*100}%"></div><span class="ms-2 text-muted small">${n}</span></div>`
+    ).join('');
+    document.getElementById('freqAnalysis').style.display = 'block';
 }
-$("#ss_enc").addEventListener("click", () => compute(false));
-$("#ss_dec").addEventListener("click", () => compute(true));
-if (SPEC.expected) {
-  // If the spec pins an expected ciphertext, mark pass/fail after each compute.
-  document.getElementById("ss_enc").click();
+
+function caesar(text, shift) {
+    return text.split('').map(c => {
+        if (/[A-Z]/.test(c)) return String.fromCharCode((c.charCodeAt(0) - 65 + shift) % 26 + 65);
+        if (/[a-z]/.test(c)) return String.fromCharCode((c.charCodeAt(0) - 97 + shift) % 26 + 97);
+        return c;
+    }).join('');
+}
+
+function xorDecrypt(text, key) {
+    if (!key) return 'Enter XOR key';
+    return text.split('').map((c, i) => 
+        String.fromCharCode(c.charCodeAt(0) ^ key.charCodeAt(i % key.length))
+    ).join('');
+}
+
+function vigenereDecrypt(text, key) {
+    if (!key) return 'Enter Vigenère keyword';
+    key = key.toUpperCase();
+    let ki = 0;
+    return text.split('').map(c => {
+        if (/[A-Z]/.test(c)) {
+            const shift = key.charCodeAt(ki % key.length) - 65;
+            ki++;
+            return String.fromCharCode((c.charCodeAt(0) - 65 - shift + 26) % 26 + 65);
+        }
+        if (/[a-z]/.test(c)) {
+            const shift = key.charCodeAt(ki % key.length) - 65;
+            ki++;
+            return String.fromCharCode((c.charCodeAt(0) - 97 - shift + 26) % 26 + 97);
+        }
+        return c;
+    }).join('');
 }
 </script>

@@ -1,174 +1,118 @@
-{% extends "base_cybersec.html" %}
-{% block title %}Lab Setup — SkillSprint Academy{% endblock %}
-{% set active = "labs" %}
-{% block page_title %}Lab Setup & VM Prerequisites{% endblock %}
-{% block page_subtitle %}Configure your Kali VM + target infrastructure for vm_exercise labs{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Lab Setup & VM Prerequisites{% endblock %}
 
 {% block content %}
-<!-- VM Prerequisite Checklist -->
-<div class="admin-card p-4 mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0"><i class="bi bi-checklist me-2"></i>VM Prerequisite Checklist</h5>
-    <span class="badge bg-primary fs-6">{{ prereqs | select('value') | list | length }}/{{ vm_list | length }} Ready</span>
-  </div>
-  <p class="text-muted mb-4">Tick off each VM once it's running and networked. <strong>vm_exercise labs require their prerequisite VMs to be checked</strong> before they become available in the lab browser.</p>
-  
-  <form method="POST" id="vm-checklist-form">
-    <div class="row g-3">
-      {% for key, label, desc in vm_list %}
-      <div class="col-md-6 col-lg-4">
-        <div class="card h-100 {% if prereqs.get(key) %}border-success{% else %}border-secondary{% endif %}">
-          <div class="card-body">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" role="switch" id="vm_{{ key }}" name="vm_{{ key }}" 
-                     {% if prereqs.get(key) %}checked{% endif %} onchange="this.form.submit()">
-              <label class="form-check-label fw-bold" for="vm_{{ key }}">{{ label }}</label>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-server me-2"></i>Lab Setup & VM Prerequisites</h2>
+                <a href="{{ url_for('dashboard.today') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-house-door me-1"></i>Dashboard
+                </a>
             </div>
-            <p class="text-muted small mt-2 mb-0">{{ desc }}</p>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </form>
-</div>
 
-<!-- VM Exercise Labs Status -->
-<div class="admin-card p-4 mb-4">
-  <h5 class="mb-3"><i class="bi bi-diagram-3 me-2"></i>VM Exercise Labs</h5>
-  <p class="text-muted mb-4">These labs run on your own VM infrastructure. They are <strong>greyed out</strong> in the lab browser until all their prerequisite VMs are checked above.</p>
-  
-  {% if vm_labs %}
-  <div class="table-responsive">
-    <table class="table table-dark table-hover align-middle">
-      <thead>
-        <tr>
-          <th>Lab</th>
-          <th>Skill Area</th>
-          <th>MITRE</th>
-          <th>Prerequisites</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for lab in vm_labs %}
-        <tr>
-          <td>
-            <a href="{{ url_for('labs.detail', lab_id=lab.id) }}" class="text-decoration-none">{{ lab.title }}</a>
-            <br><small class="text-muted">{{ lab.estimated_minutes }} min • +{{ lab.xp_reward }} XP</small>
-          </td>
-          <td>{{ lab.topic.skill_area.name if lab.topic and lab.topic.skill_area else '—' }}</td>
-          <td>
-            {% if lab.mitre_technique %}
-            <code class="text-info">{{ lab.mitre_technique }}</code>
-            {% else %}—{% endif %}
-          </td>
-          <td>
-            <div class="d-flex flex-wrap gap-1">
-              {% for req in lab_requirements.get(lab.id, []) %}
-                {% set is_ready = prereqs.get(req, false) %}
-                <span class="badge {% if is_ready %}bg-success{% else %}bg-danger{% endif %} fs-6">
-                  {{ req.replace('_', ' ').title() }} {% if is_ready %}<i class="bi bi-check-lg"></i>{% else %}<i class="bi bi-x-lg"></i>{% endif %}
-                </span>
-              {% endfor %}
+            <div class="alert alert-info">
+                <h6><i class="bi bi-info-circle me-2"></i>How This Works</h6>
+                <p class="mb-0 small">Purple Team labs run on local VirtualBox VMs connected via a host-only network (192.168.56.0/24).
+                Check off the VMs you have running below. Labs requiring unchecked VMs will be greyed out until prerequisites are met.</p>
             </div>
-          </td>
-          <td>
-            {% if lab_all_ready.get(lab.id, false) %}
-            <span class="badge bg-success">Ready</span>
-            {% else %}
-            <span class="badge bg-warning text-dark">Missing VMs</span>
+
+            <form method="POST">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">VM Prerequisite Checklist</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            {% for key, name, desc in vm_list %}
+                            <div class="col-md-6">
+                                <div class="card h-100 border-{{ 'success' if prereqs.get(key) else 'secondary' }}">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-start">
+                                            <div class="form-check form-check-lg me-3 mt-1">
+                                                <input class="form-check-input" type="checkbox" name="vm_{{ key }}" id="vm_{{ key }}"
+                                                       {% if prereqs.get(key) %}checked{% endif %}>
+                                                <label class="form-check-label fw-bold" for="vm_{{ key }}">{{ name }}</label>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <small class="text-muted">{{ desc }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>Save VM Checklist
+                    </button>
+                </div>
+            </form>
+
+            <hr class="my-4">
+
+            <h4 class="mb-3"><i class="bi bi-list-check me-2"></i>VM Exercise Labs & Requirements</h4>
+            <p class="text-muted small mb-4">Each lab shows which VMs are required. All prerequisites must be checked above for the lab to be available.</p>
+
+            <div class="row g-3">
+                {% for lab in vm_labs %}
+                <div class="col-md-6">
+                    <div class="card h-100 {{ 'border-success' if lab_all_ready.get(lab.id) else 'border-secondary' }}">
+                        <div class="card-header bg-{{ 'success' if lab_all_ready.get(lab.id) else 'light' }} text-{{ 'white' if lab_all_ready.get(lab.id) else 'dark' }} d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">{{ lab.title }}</h6>
+                            <span class="badge bg-{{ 'light text-dark' if lab_all_ready.get(lab.id) else 'secondary' }}">
+                                {% if lab_all_ready.get(lab.id) %}<i class="bi bi-check-circle me-1"></i>Ready{% else %}<i class="bi bi-x-circle me-1"></i>Missing VMs{% endif %}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <small class="text-muted">MITRE:</small>
+                                <code class="ms-1">{{ lab.mitre_technique or 'N/A' }}</code>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">Attacker:</small>
+                                <span class="ms-1 badge bg-{{ 'success' if prereqs.get(lab_requirements[lab.id]|select('equalto','kali')|list|first|default(false)) else 'secondary' }}">
+                                    {{ lab.attacker_vm or '—' }}
+                                </span>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">Target:</small>
+                                <span class="ms-1 badge bg-{{ 'success' if prereqs.get(lab_requirements[lab.id]|select('equalto','goad_dc')|list|first|default(false)) else 'secondary' }}">
+                                    {{ lab.target_vm or '—' }}
+                                </span>
+                            </div>
+                            {% if lab.detection_vm %}
+                            <div class="mb-2">
+                                <small class="text-muted">Detection:</small>
+                                <span class="ms-1 badge bg-{{ 'success' if prereqs.get(lab_requirements[lab.id]|select('equalto','wazuh')|list|first|default(false)) else 'secondary' }}">
+                                    {{ lab.detection_vm }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="{{ url_for('labs.detail', lab_id=lab.id) }}" class="btn btn-sm btn-{{ 'primary' if lab_all_ready.get(lab.id) else 'outline-secondary' }}" {% if not lab_all_ready.get(lab.id) %}disabled{% endif %}>
+                                {% if lab_all_ready.get(lab.id) %}Start Lab{% else %}Prerequisites Not Met{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if not vm_labs %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-info-circle display-1"></i>
+                <p class="mt-3">No vm_exercise labs found. Run the comprehensive seed to populate labs.</p>
+            </div>
             {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div class="text-center py-4 text-muted">
-    <i class="bi bi-box-seam fs-1"></i>
-    <p class="mt-2">No vm_exercise labs seeded yet. Run <code>py seed_vm_labs.py</code> to add them.</p>
-  </div>
-  {% endif %}
-</div>
-
-<!-- Kali VM Setup Guide (Legacy) -->
-<div class="admin-card p-4">
-  <h5 class="mb-3"><i class="bi bi-terminal me-2"></i>Kali VM Quick Start (for bundled self_hosted_offline labs)</h5>
-  <div class="row g-3">
-    <div class="col-md-6">
-      <h6 class="fw-bold">1. Install VirtualBox</h6>
-      <p class="text-muted small">Download from <code>virtualbox.org</code>. No reboot needed for host-only adapter on Windows 10/11.</p>
-      
-      <h6 class="fw-bold">2. Provision Kali VM</h6>
-      <pre class="bg-dark text-light p-3 rounded small"><code># Option A — import existing .ova:
-pwsh scripts\setup_kali_vm.ps1 -OvaPath C:\iso\kali.ova
-
-# Option B — download (~3GB):
-pwsh scripts\setup_kali_vm.ps1 -Download</code></pre>
-      <p class="text-muted small">Script imports appliance, adds host-only adapter, mounts <code>bundles\labs</code> as shared folder, snapshots clean state.</p>
-    </div>
-    <div class="col-md-6">
-      <h6 class="fw-bold">3. Access Bundled Labs</h6>
-      <p class="text-muted small">Labs under <code>bundles\labs\</code> mount at <code>/media/sf_skillsprint-labs</code> inside Kali.</p>
-      <ol class="text-muted small">
-        <li>Go to <a href="{{ url_for('labs.browse') }}">/labs</a> → open a <strong>self_hosted_offline</strong> lab</li>
-        <li>Click "Open challenge files" or access from Kali at <code>/media/sf_skillsprint-labs/...</code></li>
-        <li>Analyze / solve the challenge</li>
-        <li>Submit flag/write-up for XP</li>
-      </ol>
-      
-      <h6 class="fw-bold">4. Reset VM to Clean State</h6>
-      <pre class="bg-dark text-light p-3 rounded small"><code>VBoxManage snapshot "Skillsprint-Kali" restore skillsprint-clean-state</code></pre>
-    </div>
-  </div>
-</div>
-
-<!-- Target VM Setup References -->
-<div class="admin-card p-4 mt-4">
-  <h5 class="mb-3"><i class="bi bi-hdd-network me-2"></i>Target VM Setup References</h5>
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h6 class="card-title"><i class="bi bi-shield-lock text-danger me-1"></i>Metasploitable2</h6>
-          <p class="card-text small text-muted">Download from SourceForge/Rapid7. Import .ova, attach to same host-only network as Kali. Default creds: <code>msfadmin/msfadmin</code></p>
         </div>
-      </div>
     </div>
-    <div class="col-md-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h6 class="card-title"><i class="bi bi-globe text-warning me-1"></i>DVWA / Juice Shop</h6>
-          <p class="card-text small text-muted">Docker: <code>docker run -d -p 80:80 vulnerables/web-dvwa</code> or <code>docker run -d -p 3000:3000 bkimminich/juice-shop</code>. Attach to host-only network.</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h6 class="card-title"><i class="bi bi-diagram-3 text-info me-1"></i>GOAD (Game of AD)</h6>
-          <p class="card-text small text-muted">GitHub: <code>Orange-Cyberdefense/GOAD</code>. Deploy via Vagrant/VirtualBox. Creates DC01 + WIN10 joined to GOAD.LOCAL. Creds in repo docs.</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h6 class="card-title"><i class="bi bi-shield-check text-success me-1"></i>Wazuh Manager</h6>
-          <p class="card-text small text-muted">Deploy via <code>docker-compose</code> from Wazuh docs. Enroll agents on Metasploitable2, GOAD-DC01, GOAD-WIN10. Configure Sysmon on Windows.</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h6 class="card-title"><i class="bi bi-cpu text-primary me-1"></i>Network Config</h6>
-          <p class="card-text small text-muted">All VMs on same host-only network (e.g., 192.168.56.0/24). Kali needs promiscuous mode: VM Settings → Network → Adapter 2 → Promiscuous Mode: Allow All.</p>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 {% endblock %}

@@ -1,66 +1,136 @@
-{% extends "base_cybersec.html" %}
-{% block title %}AI Tutor Setup — SkillSprint Academy{% endblock %}
-{% set active = "assistant" %}
-{% block page_title %}AI Tutor Setup{% endblock %}
-{% block page_subtitle %}Pick a local Ollama model and test the connection{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}AI Tutor Settings{% endblock %}
 
 {% block content %}
-<div class="admin-card p-4">
-  <p class="text-muted">
-    In offline mode the tutor autoswitches: if <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>
-    is running on <code>{{ base_url }}</code>, chat uses it. Otherwise it falls back to deterministic
-    topic-specific hints. Set up Ollama once with the helper script:
-  </p>
-  <pre class="bg-dark text-light p-3 rounded small">pwsh scripts\setup_ollama.ps1                     # auto-picks by RAM
-pwsh scripts\setup_ollama.ps1 -Model mistral:7b-instruct</pre>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-robot me-2"></i>AI Tutor Settings</h2>
+                <a href="{{ url_for('dashboard.today') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-house-door me-1"></i>Dashboard
+                </a>
+            </div>
 
-  <div class="mb-3">
-    <span class="badge {% if ollama_alive %}bg-success{% else %}bg-secondary{% endif %} p-2 me-2">
-      Ollama {% if ollama_alive %}reachable{% else %}not reachable{% endif %}
-    </span>
-    <span class="small text-muted">Current model: <code>{{ current_model }}</code></span>
-  </div>
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Ollama Local LLM Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Ollama Base URL</label>
+                            <input type="url" class="form-control" value="{{ base_url }}" readonly>
+                            <div class="form-text">Default: <code>http://127.0.0.1:11434</code>. Change in <code>.env</code> if needed.</div>
+                        </div>
 
-  <form method="post" action="{{ url_for('offline.ai_tutor_settings') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label">Model</label>
+                            <div class="input-group">
+                                <select class="form-select" name="model" id="modelSelect">
+                                    <option value="" {% if not current_model %}selected{% endif %}>Select a model...</option>
+                                    <option value="llama3.1:8b-instruct" {% if current_model == 'llama3.1:8b-instruct' %}selected{% endif %}>llama3.1:8b-instruct (Recommended)</option>
+                                    <option value="llama3.2:3b-instruct" {% if current_model == 'llama3.2:3b-instruct' %}selected{% endif %}>llama3.2:3b-instruct (Faster, less capable)</option>
+                                    <option value="codellama:7b-instruct" {% if current_model == 'codellama:7b-instruct' %}selected{% endif %}>codellama:7b-instruct (Code-focused)</option>
+                                    <option value="mistral:7b-instruct" {% if current_model == 'mistral:7b-instruct' %}selected{% endif %}>mistral:7b-instruct</option>
+                                    {% for m in models %}
+                                    {% if m not in ['llama3.1:8b-instruct', 'llama3.2:3b-instruct', 'codellama:7b-instruct', 'mistral:7b-instruct'] %}
+                                    <option value="{{ m }}" {% if current_model == m %}selected{% endif %}>{{ m }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" onclick="refreshModels()">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Current: <strong>{{ current_model }}</strong></div>
+                        </div>
 
-    <h6 style="font-weight:700;">Select model</h6>
-    <div class="row g-2 mb-3">
-      <div class="col-sm-8">
-        <input class="form-control" name="model" value="{{ current_model }}"
-               placeholder="e.g. llama3.1:8b-instruct">
-      </div>
-      <div class="col-sm-4">
-        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save me-1"></i>Save choice</button>
-      </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Save Model
+                            </button>
+                            <a href="{{ url_for('offline.ai_tutor_settings', test=1) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-wifi me-1"></i>Test Connection
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if ollama_alive is not none %}
+            <div class="alert alert-{{ 'success' if ollama_alive else 'warning' }} mb-4">
+                <h6 class="alert-heading">
+                    {% if ollama_alive %}<i class="bi bi-check-circle me-1"></i>Ollama is Reachable{% else %}<i class="bi bi-x-circle me-1"></i>Ollama Not Reachable{% endif %}
+                </h6>
+                <p class="mb-0 small">
+                    {% if ollama_alive %}
+                    Connection successful. Found {{ models|length }} model(s).
+                    {% else %}
+                    Start Ollama with <code>ollama serve</code> or run the setup script: <code>scripts/setup_ollama.ps1</code>
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Available Models</h5>
+                </div>
+                <div class="card-body">
+                    {% if models %}
+                    <div class="list-group">
+                        {% for m in models %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <code>{{ m }}</code>
+                            <form method="POST" class="mb-0">
+                                <input type="hidden" name="model" value="{{ m }}">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Use This</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted small mb-0">No models found. Pull a model first:</p>
+                    <pre class="bg-dark text-light p-3 rounded small mt-2"><code>ollama pull llama3.1:8b-instruct</code></pre>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Fallback Mode</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">If Ollama is unavailable, the AI tutor automatically falls back to a <strong>rules-based mode</strong> that:</p>
+                    <ul class="small text-muted mb-0">
+                        <li>Uses topic-specific hints from the curriculum (never leaks flags)</li>
+                        <li>Provides progressive hints when you ask for "help", "hint", or "stuck"</li>
+                        <li>Shows lesson summaries and next steps</li>
+                        <li>Works 100% offline with zero dependencies</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
-
-    {% if models %}
-    <p class="small text-muted">Detected models on this Ollama instance:</p>
-    <ul class="list-inline small">
-      {% for m in models %}<li class="list-inline-item"><span class="badge bg-light text-secondary me-1">{{ m }}</span></li>{% endfor %}
-    </ul>
-    {% endif %}
-
-    <a href="{{ url_for('offline.ai_tutor_settings', test=1) }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-repeat me-1"></i> Test connection
-    </a>
-  </form>
-
-  <hr class="my-4">
-  <h6 style="font-weight:700;">Recommended models</h6>
-  <div class="table-responsive">
-    <table class="table table-sm table-bordered small mb-0">
-      <thead class="table-light"><tr>
-        <th>Model</th><th>Size</th><th>Min RAM</th><th>Best for</th>
-      </tr></thead>
-      <tbody>
-        <tr><td><code>phi3:mini</code></td>           <td>~2.3 GB</td><td>8 GB</td>  <td>Low-RAM machines, decent explanations</td></tr>
-        <tr><td><code>llama3.1:8b-instruct</code></td><td>~4.7 GB</td><td>16 GB</td><td>Default — best quality/size balance</td></tr>
-        <tr><td><code>mistral:7b-instruct</code></td> <td>~4.1 GB</td><td>16 GB</td><td>Good alternative default</td></tr>
-        <tr><td><code>qwen2.5-coder:7b</code></td>    <td>~4.7 GB</td><td>16 GB</td><td>Scripting / exploit-dev tier</td></tr>
-      </tbody>
-    </table>
-  </div>
 </div>
+
+<script>
+function refreshModels() {
+    const btn = document.querySelector('button[onclick="refreshModels()"]');
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
+    btn.disabled = true;
+    fetch('{{ url_for("offline.ai_tutor_settings", test=1) }}', { method: 'GET' })
+        .then(() => location.reload())
+        .catch(() => {
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            btn.disabled = false;
+        });
+}
+</script>
+<style>
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
 {% endblock %}

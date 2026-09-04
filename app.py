@@ -3,6 +3,7 @@ import sys
 import json
 import webbrowser
 import threading
+import atexit
 from datetime import datetime, timezone
 from flask import (Flask, render_template, request, jsonify, redirect,
                    url_for, flash, abort, g)
@@ -184,6 +185,39 @@ def health_check():
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
 
 
+@app.route('/health/vm')
+def vm_health_check():
+    """Verify VM connectivity for labs."""
+    from models import VMConfig
+    import socket
+    
+    vm = VMConfig.query.filter_by(user_id=g.user.id).first()
+    if not vm:
+        return jsonify({'status': 'no_config', 'vms': {}})
+    
+    results = {}
+    vm_dict = vm.get_vm_dict()
+    for name, config in vm_dict.items():
+        ip = config.get('ip')
+        port = config.get('ssh_port') or config.get('winrm_port') or config.get('port') or 22
+        if ip:
+            try:
+                sock = socket.create_connection((ip, port), timeout=2)
+                sock.close()
+                results[name] = {'status': 'reachable', 'ip': ip, 'port': port}
+            except Exception as e:
+                results[name] = {'status': 'unreachable', 'ip': ip, 'port': port, 'error': str(e)}
+        else:
+            results[name] = {'status': 'not_configured'}
+    
+    all_ok = all(r['status'] == 'reachable' for r in results.values() if r['status'] != 'not_configured')
+    return jsonify({
+        'status': 'healthy' if all_ok else 'degraded', 
+        'vms': results,
+        'validated': vm.is_validated
+    })
+
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('errors/404.html'), 404
@@ -196,6 +230,24 @@ def internal_error(error):
     except Exception:
         pass
     return render_template('errors/500.html'), 500
+
+
+# ---------------------------------------------------------------------------
+# Shutdown handlers
+# ---------------------------------------------------------------------------
+@app.teardown_appcontext
+def shutdown_background_services(exception=None):
+    """Clean up background threads on app context teardown."""
+    try:
+        from services.scheduler_service import stop_update_checker
+        stop_update_checker()
+    except Exception:
+        pass
+    try:
+        from services.ai_tutor_service import shutdown_executor
+        shutdown_executor()
+    except Exception:
+        pass
 
 
 def create_tables():

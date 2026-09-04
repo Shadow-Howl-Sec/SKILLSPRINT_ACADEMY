@@ -1,35 +1,61 @@
-{# quiz_interactive: branching-scenario quiz — outcome depends on choices #}
-<div class="mb-3 small text-muted">{{ spec.prompt }}</div>
-<div id="ss_scene"></div>
-<div class="mt-3">
-  <button class="btn btn-outline-secondary btn-sm" id="ss_restart"><i class="bi bi-arrow-counterclockwise"></i> Restart</button>
+<!-- quiz_interactive.html - Interactive Quiz Exercise -->
+<div class="card">
+    <div class="card-body">
+        {% if exerciseSpec.questions %}
+        <form id="quizForm">
+            {% for q in exerciseSpec.questions %}
+            <div class="mb-4 p-3 border rounded">
+                <h6 class="mb-3">{{ loop.index }}. {{ q.question }}</h6>
+                {% if q.type === 'mcq' %}
+                <div class="ms-3">
+                    {% for opt in q.options %}
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}" id="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}_opt{{ loop.index }}" value="{{ loop.index0 }}">
+                        <label class="form-check-label" for="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}_opt{{ loop.index }}">{{ opt }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif q.type === 'true_false' %}
+                <div class="form-check form-switch ms-3">
+                    <input class="form-check-input" type="checkbox" name="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}" id="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}" value="true">
+                    <label class="form-check-label" for="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}">True</label>
+                </div>
+                <div class="form-check form-switch ms-3">
+                    <input class="form-check-input" type="checkbox" name="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}" id="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}_false" value="false">
+                    <label class="form-check-label" for="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}_false">False</label>
+                </div>
+                {% elif q.type === 'short_answer' %}
+                <input type="text" class="form-control w-50" name="quiz_{{ loop.parent.loop.index }}_{{ loop.index }}" placeholder="Your answer...">
+                {% endif %}
+            </div>
+            {% endfor %}
+        </form>
+        {% else %}
+        <p class="text-muted">No questions defined for this quiz.</p>
+        {% endif %}
+    </div>
 </div>
 
 <script>
-const SPEC = {{ spec_json|safe }};
-const START = SPEC.start_scene || (SPEC.scenes && SPEC.scenes[0] && SPEC.scenes[0].id);
-let history = [];
-
-function renderScene(id) {
-  const sc = (SPEC.scenes || []).find((s) => s.id === id);
-  if (!sc) { return; }
-  if (sc.outcome) {
-    document.getElementById("ss_scene").innerHTML =
-      "<div class='alert alert-" + (sc.outcome === "pass" ? "success" : "danger") + "'>" +
-      "<strong>" + (sc.outcome === "pass" ? "Pass" : "Try again") + "</strong><br>" +
-      sc.text + "</div>";
-    return;
-  }
-  document.getElementById("ss_scene").innerHTML =
-    "<div class='card bg-light mb-2'><div class='card-body'>" + sc.text + "</div></div>" +
-    (sc.choices || []).map((c, i) =>
-      "<button class='btn btn-outline-primary btn-sm me-2 ss-choice' data-next='" + c.next + "'>" +
-      c.label + "</button>").join("");
-  document.querySelectorAll(".ss-choice").forEach((b) => {
-    b.addEventListener("click", () => { history.push({from: id, to: b.dataset.next}); renderScene(b.dataset.next); });
-  });
+function runTests() {
+    const form = document.getElementById('quizForm');
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    let score = 0, total = 0;
+    const results = [];
+    
+    {% if exerciseSpec.questions %}
+    {% for q in exerciseSpec.questions %}
+    total++;
+    const answer = formData.get('quiz_{{ loop.index }}_{{ loop.index }}') || formData.get('quiz_{{ loop.index }}_{{ loop.index }}_false');
+    const correct = '{{ q.correct_answer }}';
+    const isCorrect = answer == correct;
+    if (isCorrect) score++;
+    results.push({ question: '{{ q.question|escapejs }}', yourAnswer: answer, correctAnswer: correct, correct: isCorrect });
+    {% endfor %}
+    {% endif %}
+    
+    alert(`Quiz Complete!\nScore: ${score}/${total}\n\n${results.map(r => r.correct ? '✅' : '❌' + ' ' + r.question).join('\n')}`);
 }
-
-document.getElementById("ss_restart").addEventListener("click", () => { history = []; renderScene(START); });
-renderScene(START);
 </script>

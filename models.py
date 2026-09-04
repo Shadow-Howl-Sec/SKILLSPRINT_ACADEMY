@@ -21,7 +21,7 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     
     # VM Configuration (stored per user for multi-VM setups)
-    vm_config = db.relationship('VMConfig', backref='user', uselist=False, lazy=True)
+    vm_config = db.relationship('VMConfig', backref='user', uselist=False, lazy=True, cascade='all, delete-orphan')
     
     # Relationships — Purple Team platform
     skill_profiles = db.relationship('SkillProfile', backref='user', lazy=True)
@@ -501,18 +501,18 @@ class RoadmapItem(db.Model):
     """One scheduled item on a user's roadmap (content, lab, quiz, or review)."""
     __tablename__ = 'roadmap_item'
     id = db.Column(db.Integer, primary_key=True)
-    roadmap_id = db.Column(db.Integer, db.ForeignKey('roadmap.id'), nullable=False)
+    roadmap_id = db.Column(db.Integer, db.ForeignKey('roadmap.id'), nullable=False, index=True)
     # item_type: content_item | lab | checkpoint_quiz | review | external_resource
     item_type = db.Column(db.String(20), nullable=False)
     content_item_id = db.Column(db.Integer, db.ForeignKey('content_item.id'), nullable=True)
     lab_id = db.Column(db.Integer, db.ForeignKey('lab.id'), nullable=True)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=True)
     user_resource_id = db.Column(db.Integer, db.ForeignKey('user_resource.id'), nullable=True)
-    scheduled_date = db.Column(db.DateTime)
+    scheduled_date = db.Column(db.DateTime, index=True)
     time_slot = db.Column(db.String(100), nullable=True)  # e.g. "09:00-11:00 (Block 1)"
     order_index = db.Column(db.Integer, default=0)
     # status: pending | in_progress | done | skipped
-    status = db.Column(db.String(20), default='pending')
+    status = db.Column(db.String(20), default='pending', index=True)
     estimated_minutes = db.Column(db.Integer, default=30)
     actual_minutes = db.Column(db.Integer)
     completed_at = db.Column(db.DateTime)
@@ -574,13 +574,13 @@ class XPLog(db.Model):
     """Audit log of all XP earned by a user."""
     __tablename__ = 'xp_log'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     # source_type: roadmap_item | lab | streak_bonus | badge | purple_team_exercise
     source_type = db.Column(db.String(30), nullable=False)
     source_id = db.Column(db.Integer)              # FK to relevant record
     xp_amount = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     def __repr__(self):
         return f"<XPLog user={self.user_id} +{self.xp_amount}xp [{self.source_type}]>"
@@ -629,13 +629,13 @@ class ChatMessage(db.Model):
     """AI tutor conversation history."""
     __tablename__ = 'chat_message'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    session_id = db.Column(db.String(36), nullable=False)   # UUID grouping messages into one chat session
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    session_id = db.Column(db.String(36), nullable=False, index=True)   # UUID grouping messages into one chat session
     # role: user | assistant
     role = db.Column(db.String(10), nullable=False)
     content = db.Column(db.Text, nullable=False)
     related_topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     # Relationships
     related_topic = db.relationship('Topic', backref='chat_messages', lazy=True)
@@ -656,11 +656,11 @@ class PurpleTeamExerciseLog(db.Model):
     """
     __tablename__ = 'purple_team_exercise_log'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     lab_id = db.Column(db.Integer, db.ForeignKey('lab.id'), nullable=True)
     technique_title = db.Column(db.String(200), nullable=False)
-    mitre_id = db.Column(db.String(20), nullable=True)
-    date_completed = db.Column(db.DateTime, default=datetime.utcnow)
+    mitre_id = db.Column(db.String(20), nullable=True, index=True)
+    date_completed = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     attack_succeeded = db.Column(db.Boolean, default=False)
     detected = db.Column(db.Boolean, default=False)
     rule_written = db.Column(db.Boolean, default=False)
