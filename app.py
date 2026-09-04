@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import secrets
 import webbrowser
 import threading
 import atexit
@@ -26,20 +27,19 @@ OFFLINE_MODE = True
 
 
 # ---------------------------------------------------------------------------
-# Extensions
+# CSP — Hardened for offline operation with nonce-based script/style
 # ---------------------------------------------------------------------------
-db.init_app(app)
-migrate.init_app(app, db)
-
-
-# CSP — 'self' only for fully offline operation
+# Generate a nonce for each request (Talisman will inject it)
 _csp = {
     'default-src': ["'self'"],
-    'script-src': ["'self'", "'unsafe-inline'"],
-    'style-src': ["'self'", "'unsafe-inline'"],
+    'script-src': ["'self'", "'strict-dynamic'"],
+    'style-src': ["'self'"],
     'font-src': ["'self'", 'data:'],
     'img-src': ["'self'", 'data:'],
-    'connect-src': ["'self'", app.config.get('OLLAMA_BASE_URL', 'http://127.0.0.1:11434')],
+    'connect-src': ["'self'", 'http://127.0.0.1:11434'],
+    'base-uri': ["'self'"],
+    'form-action': ["'self'"],
+    'frame-ancestors': ["'none'"],
 }
 
 from flask_talisman import Talisman
@@ -48,9 +48,22 @@ talisman = Talisman(
     content_security_policy=_csp,
     force_https=False,
     strict_transport_security=False,
+    content_security_policy_nonce_in=['script-src', 'style-src'],
 )
 
+# ---------------------------------------------------------------------------
+# Extensions
+# ---------------------------------------------------------------------------
+db.init_app(app)
+migrate.init_app(app, db)
 csrf = CSRFProtect(app)
+
+# ---------------------------------------------------------------------------
+# Nonce for CSP — expose to templates
+# ---------------------------------------------------------------------------
+@app.context_processor
+def inject_nonce():
+    return {'csp_nonce': getattr(g, 'csp_nonce', None)}
 
 # ---------------------------------------------------------------------------
 # Blueprints — ZeroCipher Purple Team only
@@ -259,6 +272,16 @@ def create_tables():
             print(f"[ERR] Error creating database tables: {e}")
             return
         print("Database initialized successfully!")
+        # Seed reference data if empty
+        try:
+            from models import JobRole
+            if JobRole.query.count() == 0:
+                print("Seeding reference data...")
+                import seed_comprehensive
+                seed_comprehensive.main()
+                print("Reference data seeded successfully!")
+        except Exception as e:
+            print(f"[WARN] Seeding failed: {e}")
 
 
 if __name__ == '__main__':

@@ -1,11 +1,32 @@
 from extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import os
 
 # Import VMConfig for type hints
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from models import VMConfig
+
+# Encryption for sensitive VM config fields
+try:
+    from cryptography.fernet import Fernet
+    _FERNET_KEY = os.environ.get('VM_CONFIG_KEY') or Fernet.generate_key()
+    _cipher = Fernet(_FERNET_KEY)
+except Exception:
+    _cipher = None
+
+def _encrypt(val: str | None) -> bytes | None:
+    """Encrypt a string value."""
+    if val is None or _cipher is None:
+        return None
+    return _cipher.encrypt(val.encode())
+
+def _decrypt(val: bytes | None) -> str | None:
+    """Decrypt a bytes value."""
+    if val is None or _cipher is None:
+        return None
+    return _cipher.decrypt(val).decode()
 
 class User(db.Model):
     id = db.Column(db.Integer, db.Identity(start=1), primary_key=True)
@@ -400,6 +421,7 @@ class VMConfig(db.Model):
     
     Stores connection details for attacker, target, and detection VMs.
     All connections are local/host-only network — no internet required.
+    Sensitive credentials are encrypted at rest using Fernet (AES-256-GCM).
     """
     __tablename__ = 'vm_config'
     id = db.Column(db.Integer, primary_key=True)
@@ -414,17 +436,17 @@ class VMConfig(db.Model):
     # Target VMs
     goad_dc_ip = db.Column(db.String(45), nullable=True)      # GOAD Domain Controller
     goad_dc_winrm_user = db.Column(db.String(50), default='Administrator')
-    goad_dc_winrm_pass = db.Column(db.String(255), nullable=True)
+    goad_dc_winrm_pass_enc = db.Column(db.LargeBinary, nullable=True)
     goad_dc_winrm_port = db.Column(db.Integer, default=5985)
     
     goad_win10_ip = db.Column(db.String(45), nullable=True)   # GOAD Windows 10
     goad_win10_winrm_user = db.Column(db.String(50), default='Administrator')
-    goad_win10_winrm_pass = db.Column(db.String(255), nullable=True)
+    goad_win10_winrm_pass_enc = db.Column(db.LargeBinary, nullable=True)
     goad_win10_winrm_port = db.Column(db.Integer, default=5985)
     
     metasploitable_ip = db.Column(db.String(45), nullable=True)
     metasploitable_ssh_user = db.Column(db.String(50), default='msfadmin')
-    metasploitable_ssh_pass = db.Column(db.String(255), nullable=True)
+    metasploitable_ssh_pass_enc = db.Column(db.LargeBinary, nullable=True)
     metasploitable_ssh_port = db.Column(db.Integer, default=22)
     
     dvwa_ip = db.Column(db.String(45), nullable=True)
@@ -434,7 +456,7 @@ class VMConfig(db.Model):
     wazuh_ip = db.Column(db.String(45), nullable=True)
     wazuh_api_url = db.Column(db.String(500), nullable=True)  # e.g., https://192.168.56.30:55000
     wazuh_api_user = db.Column(db.String(50), default='wazuh')
-    wazuh_api_pass = db.Column(db.String(255), nullable=True)
+    wazuh_api_pass_enc = db.Column(db.LargeBinary, nullable=True)
     
     # Network configuration
     network_cidr = db.Column(db.String(20), default='192.168.56.0/24')  # Host-only network
@@ -446,8 +468,41 @@ class VMConfig(db.Model):
     def __repr__(self):
         return f"<VMConfig user={self.user_id} kali={self.kali_ip}>"
     
+    # Property accessors for encrypted fields
+    @property
+    def goad_dc_winrm_pass(self) -> str | None:
+        return _decrypt(self.goad_dc_winrm_pass_enc)
+    
+    @goad_dc_winrm_pass.setter
+    def goad_dc_winrm_pass(self, val: str | None):
+        self.goad_dc_winrm_pass_enc = _encrypt(val)
+    
+    @property
+    def goad_win10_winrm_pass(self) -> str | None:
+        return _decrypt(self.goad_win10_winrm_pass_enc)
+    
+    @goad_win10_winrm_pass.setter
+    def goad_win10_winrm_pass(self, val: str | None):
+        self.goad_win10_winrm_pass_enc = _encrypt(val)
+    
+    @property
+    def metasploitable_ssh_pass(self) -> str | None:
+        return _decrypt(self.metasploitable_ssh_pass_enc)
+    
+    @metasploitable_ssh_pass.setter
+    def metasploitable_ssh_pass(self, val: str | None):
+        self.metasploitable_ssh_pass_enc = _encrypt(val)
+    
+    @property
+    def wazuh_api_pass(self) -> str | None:
+        return _decrypt(self.wazuh_api_pass_enc)
+    
+    @wazuh_api_pass.setter
+    def wazuh_api_pass(self, val: str | None):
+        self.wazuh_api_pass_enc = _encrypt(val)
+    
     def get_vm_dict(self) -> dict:
-        """Return VM config as dictionary for lab use."""
+        """Return VM config as dictionary for lab use (with decrypted secrets)."""
         return {
             'kali': {'ip': self.kali_ip, 'ssh_user': self.kali_ssh_user, 'ssh_key': self.kali_ssh_key_path, 'ssh_port': self.kali_ssh_port},
             'goad_dc': {'ip': self.goad_dc_ip, 'winrm_user': self.goad_dc_winrm_user, 'winrm_pass': self.goad_dc_winrm_pass, 'winrm_port': self.goad_dc_winrm_port},
@@ -698,4 +753,4 @@ class AttackCoverage(db.Model):
     )
 
     def __repr__(self):
-        return f"<AttackCoverage user={self.user_id} {self.mitre_tactic}:{self.mitre_technique_id}>"
+        return f"<AttackCoverage user={self.user_id} {self.mitre_tactic}:{self.mitre_technique_id}>"

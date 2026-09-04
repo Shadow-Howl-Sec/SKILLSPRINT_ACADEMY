@@ -2,6 +2,17 @@
    SKILLSPRINT ACADEMY PURPLE TEAM MASTERY — MODERN DARK CYBER SYSTEM
    ============================================================ */
 
+/* BOOTSTRAP ICONS FONT — Local woff2 for offline operation */
+@font-face {
+    font-family: 'bootstrap-icons';
+    src: url('../fonts/bootstrap-icons.woff2') format('woff2'),
+         url('../vendor/bootstrap-icons/bootstrap-icons.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+.bi::before { font-family: 'bootstrap-icons' !important; }
+
 /* CSS CUSTOM PROPERTIES */
 :root {
   /* Dark Cyber Palette */
@@ -302,6 +313,14 @@ a:hover {
    MODALS, ALERTS & BADGES
    ============================================================ */
 .modal-content {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-md);
+}
+
+.assistant{
   background: var(--bg-card) !important;
   border: 1px solid var(--border-light) !important;
   border-radius: var(--radius-md) !important;

@@ -41,6 +41,10 @@ class Config:
 
     ROADMAP_BUFFER_PERCENT = 0.15
 
+    UPDATE_HMAC_SECRET = os.environ.get('UPDATE_HMAC_SECRET', '')
+
+    VM_CONFIG_KEY = os.environ.get('VM_CONFIG_KEY', '')
+
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     BUNDLES_DIR = os.path.join(BASE_DIR, 'bundles')
     BUNDLES_LABS_DIR = os.path.join(BUNDLES_DIR, 'labs')

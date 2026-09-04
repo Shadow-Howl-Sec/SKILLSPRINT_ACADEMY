@@ -1,4 +1,7 @@
 # blueprints/settings/routes.py
+import os
+import hmac
+import hashlib
 from flask import Blueprint, request, jsonify, current_app
 from services.update_service import apply_update
 from services.scheduler_service import check_for_updates, get_cached_update_info
@@ -59,11 +62,35 @@ def update_status():
 
 @settings_bp.route("/settings/apply-update", methods=["POST"])
 def apply_update_route():
-    """Apply an update by downloading and installing it."""
+    """Apply an update by downloading and installing it.
+    
+    Requires HMAC-SHA256 signature verification to prevent unauthorized updates.
+    Signature is computed as: HMAC-SHA256(UPDATE_HMAC_SECRET, download_url)
+    """
     data = request.get_json(silent=True) or {}
     download_url = data.get("download_url")
+    signature = data.get("signature")  # hex-encoded HMAC-SHA256
+    
     if not download_url:
         return jsonify({"error": "download_url required"}), 400
+    if not signature:
+        return jsonify({"error": "signature required"}), 400
+    
+    # Verify HMAC signature
+    hmac_secret = current_app.config.get("UPDATE_HMAC_SECRET")
+    if not hmac_secret:
+        current_app.logger.error("UPDATE_HMAC_SECRET not configured")
+        return jsonify({"error": "server not configured for updates"}), 500
+    
+    expected_signature = hmac.new(
+        hmac_secret.encode('utf-8'),
+        download_url.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    
+    if not hmac.compare_digest(signature, expected_signature):
+        current_app.logger.warning("Invalid update signature from %s", request.remote_addr)
+        return jsonify({"error": "invalid signature"}), 403
     
     apply_update(download_url)
     # Process exits inside apply_update, no response sent

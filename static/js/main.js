@@ -1,24 +1,37 @@
-$(document).ready(function() {
-    $('#registrationForm').on('submit', function(e) {
-        e.preventDefault();
-        const formData = {
-            name: $('#name').val(),
-            email: $('#email').val(),
-            phone: $('#phone').val()
-        };
-        $.ajax({
-            url: '/register',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
-            success: function(response) {
-                $('#formAlert').removeClass('d-none alert-danger').addClass('alert-success').attr('aria-live', 'polite').text('Registration successful!');
-                document.getElementById('formAlert').scrollIntoView({behavior: 'smooth'});
-            },
-            error: function() {
-                $('#formAlert').removeClass('d-none alert-success').addClass('alert-danger').attr('aria-live', 'assertive').text('Registration failed. Please try again.');
-                document.getElementById('formAlert').scrollIntoView({behavior: 'smooth'});
-            }
-        });
-    });
-}); 
+// main.js — Shared UI logic (CSP-compliant, no inline handlers)
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Update banner handlers
+  const applyBtn = document.querySelector('[data-action="apply-update"]');
+  const dismissBtn = document.querySelector('[data-action="dismiss-update"]');
+
+  if (applyBtn) {
+    applyBtn.addEventListener('click', applyUpdate);
+  }
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', dismissUpdateBanner);
+  }
+});
+
+function applyUpdate() {
+  fetch('/settings/apply-update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ download_url: window.updateDownloadUrl || '' })
+  }).then(r => {
+    if (r.ok) {
+      dismissUpdateBanner();
+      // The server will exit and updater will restart
+      document.body.innerHTML = '<div class="container text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Applying update...</span></div><p class="mt-3">Applying update, please wait...</p></div>';
+    }
+  });
+}
+
+function dismissUpdateBanner() {
+  const banner = document.getElementById('update-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+// Expose for inline use in templates that need it
+window.applyUpdate = applyUpdate;
+window.dismissUpdateBanner = dismissUpdateBanner;

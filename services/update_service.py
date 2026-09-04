@@ -9,6 +9,9 @@ def apply_update(download_url):
     """
     Apply an update by launching the external updater process.
     This function exits the current process immediately after spawning the updater.
+    
+    The updater verifies Ed25519 signature of the zip before applying.
+    Signature URL is derived as: download_url + ".sig"
     """
     try:
         # Import paths lazily to avoid circular imports
@@ -26,6 +29,9 @@ def apply_update(download_url):
         logger.error(f"Updater not found at: {updater}")
         return False
 
+    # Signature URL for Ed25519 verification
+    sig_url = download_url + ".sig"
+
     logger.info(f"Launching updater: {updater} for {download_url}")
     
     try:
@@ -33,13 +39,13 @@ def apply_update(download_url):
         if sys.platform == "win32":
             creationflags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
             subprocess.Popen(
-                [updater, download_url, app_dir, "SkillSprintAcademy.exe", str(my_pid)],
+                [updater, download_url, app_dir, "SkillSprintAcademy.exe", str(my_pid), sig_url],
                 creationflags=creationflags,
                 close_fds=True
             )
         else:
             subprocess.Popen(
-                [updater, download_url, app_dir, "SkillSprintAcademy.exe", str(my_pid)],
+                [updater, download_url, app_dir, "SkillSprintAcademy.exe", str(my_pid), sig_url],
                 start_new_session=True,
                 close_fds=True
             )

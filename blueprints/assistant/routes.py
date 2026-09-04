@@ -8,7 +8,7 @@ from __future__ import annotations
 import uuid
 
 from flask import Blueprint, render_template, request, jsonify, g
-from extensions import db
+from extensions import db, limiter
 from models import ChatMessage, Topic
 
 from services.ai_tutor_service import answer
@@ -33,12 +33,17 @@ def chat():
 
 
 @assistant_bp.route("/api/assistant/chat", methods=["POST"])
+@limiter.limit("30 per minute")  # Rate limit to prevent Ollama resource exhaustion
 def chat_api():
     data = request.get_json(silent=True) or {}
     message = (data.get("message") or "").strip()
     topic_id = data.get("context_topic_id")
     if not message:
         return jsonify({"error": "empty message"}), 400
+    
+    # Limit message size to prevent memory exhaustion
+    if len(message) > 4000:
+        return jsonify({"error": "message too long (max 4000 chars)"}), 400
 
     sid = _session_id()
     user_msg = ChatMessage(
