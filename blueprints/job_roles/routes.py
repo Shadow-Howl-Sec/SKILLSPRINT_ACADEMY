@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import json
 
-from flask import Blueprint, render_template, redirect, url_for, jsonify
+from flask import Blueprint, render_template, redirect, url_for, jsonify, flash, g
 from models import JobRole, Topic
+from extensions import db
+from services.roadmap_engine import generate_roadmap
 
 job_roles_bp = Blueprint("job_roles", __name__)
 
@@ -38,9 +40,11 @@ def detail(role_id: int):
 
 @job_roles_bp.route("/job-roles/<int:role_id>/start")
 def start(role_id: int):
-    JobRole.query.get_or_404(role_id)
-    return redirect(url_for("assessment.start", track_type="job_role",
-                            job_role_id=role_id))
+    role = JobRole.query.get_or_404(role_id)
+    generate_roadmap(user_id=g.user.id, job_role_id=role.id)
+    db.session.commit()
+    flash(f"Roadmap generated for track: {role.name}!", "success")
+    return redirect(url_for("roadmap.view"))
 
 
 @job_roles_bp.route("/api/job-roles")

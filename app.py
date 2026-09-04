@@ -11,7 +11,7 @@ from flask import (Flask, render_template, request, jsonify, redirect,
 from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
 from sqlalchemy import text
-from extensions import db, migrate
+from extensions import db, migrate, limiter
 load_dotenv()
 
 if getattr(sys, 'frozen', False):
@@ -56,6 +56,7 @@ talisman = Talisman(
 # ---------------------------------------------------------------------------
 db.init_app(app)
 migrate.init_app(app, db)
+limiter.init_app(app)
 csrf = CSRFProtect(app)
 
 # ---------------------------------------------------------------------------
@@ -186,7 +187,11 @@ def inject_globals():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    from models import StreakRecord
+    user = g.get('user')
+    xp = user.total_xp if user else 0
+    streak = StreakRecord.query.filter_by(user_id=user.id).first() if user else None
+    return render_template('index.html', xp=xp, streak=streak)
 
 
 @app.route('/health')
@@ -211,6 +216,8 @@ def vm_health_check():
     results = {}
     vm_dict = vm.get_vm_dict()
     for name, config in vm_dict.items():
+        if not isinstance(config, dict):
+            continue
         ip = config.get('ip')
         port = config.get('ssh_port') or config.get('winrm_port') or config.get('port') or 22
         if ip:
@@ -248,9 +255,8 @@ def internal_error(error):
 # ---------------------------------------------------------------------------
 # Shutdown handlers
 # ---------------------------------------------------------------------------
-@app.teardown_appcontext
-def shutdown_background_services(exception=None):
-    """Clean up background threads on app context teardown."""
+def shutdown_background_services():
+    """Clean up background threads on process exit."""
     try:
         from services.scheduler_service import stop_update_checker
         stop_update_checker()
@@ -261,6 +267,8 @@ def shutdown_background_services(exception=None):
         shutdown_executor()
     except Exception:
         pass
+
+atexit.register(shutdown_background_services)
 
 
 def create_tables():

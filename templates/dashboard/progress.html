@@ -1,49 +1,95 @@
 {% extends "base_cybersec.html" %}
-{% block title %}Progress — SkillSprint Academy{% endblock %}
+{% block title %}Progress & Analytics — SkillSprint Academy{% endblock %}
 {% set active = "progress" %}
-{% block page_title %}Your Progress{% endblock %}
-{% block page_subtitle %}Skill profile by area, XP history & streak{% endblock %}
+{% block page_title %}Your Progress & Analytics{% endblock %}
+{% block page_subtitle %}Skill profile by area, MITRE ATT&CK proficiency, XP logs and streak status{% endblock %}
 
 {% block content %}
 <div class="row g-4">
+  <!-- Skill Radar -->
   <div class="col-lg-7">
-    <div class="admin-card p-4">
-      <h6 style="font-weight:700;margin:0 0 1rem;">Skill Radar</h6>
+    <div class="admin-card p-4 h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 style="font-weight:700;margin:0;color:var(--text-primary);">
+          <i class="bi bi-radar me-2 text-primary"></i>Purple Team Skill Radar
+        </h6>
+        <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--primary);border:1px solid rgba(99,102,241,0.3);">
+          Live Evaluation
+        </span>
+      </div>
       {% if radar %}
-      <canvas id="radarChart" height="280"></canvas>
+      <div style="position:relative; height:320px;">
+        <canvas id="radarChart"></canvas>
+      </div>
       {% else %}
       <div class="text-center text-muted py-5">
-        <i class="bi bi-radar" style="font-size:2.5rem;"></i>
-        <p class="mt-2">Take an assessment to generate your skill profile.</p>
-        <a href="{{ url_for('assessment.start', track_type='general') }}" class="btn btn-primary btn-sm">Start Assessment</a>
+        <div style="width:64px;height:64px;border-radius:16px;background:rgba(99,102,241,0.1);display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--primary);">
+          <i class="bi bi-radar" style="font-size:2rem;"></i>
+        </div>
+        <h6 style="color:var(--text-primary);font-weight:700;">No Skill Profile Generated Yet</h6>
+        <p class="small text-muted mb-3" style="max-width:360px;margin:0 auto;">Choose a job role track and complete checkpoint quizzes and labs to build your skill radar.</p>
+        <a href="{{ url_for('job_roles.browse') }}" class="btn btn-primary btn-sm">
+          <i class="bi bi-compass me-1"></i> Browse Job Roles
+        </a>
       </div>
       {% endif %}
     </div>
   </div>
 
+  <!-- Streak & Recent XP -->
   <div class="col-lg-5">
+    <!-- Streak Card -->
     <div class="admin-card p-4 mb-4">
-      <h6 style="font-weight:700;margin:0 0 .75rem;"><i class="bi bi-fire me-2 text-warning"></i>Streak</h6>
-      <div class="d-flex align-items-center gap-3">
-        <div style="font-size:2.5rem;font-weight:800;">{{ streak.current_streak if streak else 0 }}</div>
-        <div class="small text-muted">
-          day current streak<br>
-          Longest: {{ streak.longest_streak if streak else 0 }} days<br>
-          Freezes left: {{ streak.freezes_available if streak else 1 }}
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 style="font-weight:700;margin:0;color:var(--text-primary);">
+          <i class="bi bi-fire me-2 text-warning"></i>Training Streak
+        </h6>
+        <span class="badge badge-pink">Active Habit</span>
+      </div>
+      <div class="d-flex align-items-center gap-4">
+        <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,rgba(244,63,94,0.15),rgba(236,72,153,0.1));border:1px solid rgba(244,63,94,0.3);display:flex;align-items:center;justify-content:center;flex-direction:column;">
+          <span style="font-size:2rem;font-weight:800;line-height:1;color:#f43f5e;">{{ streak.current_streak if streak else 0 }}</span>
+          <span style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Days</span>
+        </div>
+        <div class="small">
+          <div style="color:var(--text-primary);font-weight:600;font-size:0.95rem;margin-bottom:0.25rem;">
+            {{ streak.current_streak if streak else 0 }}-Day Active Streak
+          </div>
+          <div class="text-muted">Personal Best: <strong class="text-white">{{ streak.longest_streak if streak else 0 }} days</strong></div>
+          <div class="text-muted">Streak Freezes: <strong class="text-white">{{ streak.freezes_available if streak else 1 }} remaining</strong></div>
         </div>
       </div>
     </div>
+
+    <!-- Recent XP History -->
     <div class="admin-card p-4">
-      <h6 style="font-weight:700;margin:0 0 .75rem;"><i class="bi bi-stars me-2 text-primary"></i>Recent XP</h6>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 style="font-weight:700;margin:0;color:var(--text-primary);">
+          <i class="bi bi-stars me-2 text-primary"></i>Recent XP Activity
+        </h6>
+        <span class="small text-muted">Last 20 Actions</span>
+      </div>
       {% if xp_history %}
+      <div style="max-height:300px;overflow-y:auto;padding-right:0.25rem;">
         {% for log in xp_history %}
-        <div class="d-flex justify-content-between align-items-center py-1 small border-bottom">
-          <span><i class="bi bi-{{ {'lab':'flag','roadmap_item':'book','checkpoint_quiz':'patch-question','streak_bonus':'fire','assessment':'patch-check','badge':'award'}[log.source_type] or 'circle' }}"></i> {{ log.description or log.source_type }}</span>
-          <span class="text-success fw-semibold">+{{ log.xp_amount }}</span>
+        <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-dark small" style="border-color:rgba(255,255,255,0.05) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge" style="background:rgba(255,255,255,0.05);color:var(--text-secondary);width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;">
+              <i class="bi bi-{{ {'lab':'flag-fill','roadmap_item':'book-fill','checkpoint_quiz':'patch-question-fill','streak_bonus':'fire','assessment':'patch-check-fill','badge':'award-fill'}[log.source_type] or 'circle-fill' }}"></i>
+            </span>
+            <span style="color:var(--text-secondary);font-weight:500;">
+              {{ log.description or log.source_type }}
+            </span>
+          </div>
+          <span class="fw-bold" style="color:var(--success);font-family:'JetBrains Mono',monospace;">+{{ log.xp_amount }} XP</span>
         </div>
         {% endfor %}
+      </div>
       {% else %}
-        <div class="text-muted small">No XP yet — complete today's tasks to start earning!</div>
+        <div class="text-muted small text-center py-4">
+          <i class="bi bi-clock-history d-block mb-2" style="font-size:1.5rem;"></i>
+          No XP logged yet — complete tasks on your dashboard to start earning!
+        </div>
       {% endif %}
     </div>
   </div>
@@ -53,26 +99,63 @@
 {% block scripts %}
 {% if radar %}
 {% if OFFLINE_MODE %}
-<script src="/static/vendor/chartjs/chart.min.js"></script>
+<script nonce="{{ csp_nonce }}" src="/static/vendor/chartjs/chart.min.js"></script>
 {% else %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% endif %}
-<script>
-const labels = {{ radar | map(attribute='label') | list | tojson }};
-const scores = {{ radar | map(attribute='score') | list | tojson }};
-new Chart(document.getElementById('radarChart').getContext('2d'), {
-  type: 'radar',
-  data: { labels: labels,
-    datasets: [{ label: 'Skill score', data: scores,
-      backgroundColor: 'rgba(99,102,241,.2)', borderColor: '#6366f1',
-      pointBackgroundColor: '#6366f1', borderWidth: 2 }] },
-  options: {
-    responsive: true,
-    scales: { r: { min: 0, max: 100,
-      ticks: { stepSize: 25, font:{size:10} },
-      pointLabels:{font:{size:11}} } },
-    plugins:{legend:{display:false}}
-  }
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('radarChart');
+  if (!canvas) return;
+  const labels = {{ radar | map(attribute='label') | list | tojson }};
+  const scores = {{ radar | map(attribute='score') | list | tojson }};
+  new Chart(canvas.getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Proficiency (%)',
+        data: scores,
+        backgroundColor: 'rgba(99, 102, 241, 0.25)',
+        borderColor: '#6366f1',
+        pointBackgroundColor: '#06b6d4',
+        pointBorderColor: '#ffffff',
+        pointHoverBackgroundColor: '#ffffff',
+        pointHoverBorderColor: '#6366f1',
+        borderWidth: 2,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: {
+            stepSize: 25,
+            color: '#64748b',
+            backdropColor: 'transparent',
+            font: { size: 10, family: 'JetBrains Mono' }
+          },
+          grid: {
+            color: 'rgba(255, 255, 255, 0.08)'
+          },
+          angleLines: {
+            color: 'rgba(255, 255, 255, 0.08)'
+          },
+          pointLabels: {
+            color: '#94a3b8',
+            font: { size: 11, weight: '600' }
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
 });
 </script>
 {% endif %}

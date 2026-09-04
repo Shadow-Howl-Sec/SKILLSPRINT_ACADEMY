@@ -112,7 +112,7 @@ def complete_item(item_id: int):
     xp = award_xp(g.user.id, source_type, item.id,
                   description=f"Completed: {item.item_type}")
     touch_streak(g.user.id, date.today())
-    if g.user.current_streak and g.user.current_streak % 7 == 0:
+    if g.user.streak_record and g.user.streak_record.current_streak and g.user.streak_record.current_streak % 7 == 0:
         award_xp(g.user.id, "streak_bonus", None)
     db.session.commit()
     flash(f"+{xp} XP — nice work!", "success")

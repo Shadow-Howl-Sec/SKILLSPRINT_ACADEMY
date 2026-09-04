@@ -3,120 +3,216 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SkillSprint Academy — Zero to Purple Team Mastery, Fully Offline">
   <title>{% block title %}SkillSprint Academy{% endblock %}</title>
   <link rel="icon" href="/static/img/skill_logo.png">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   {% if OFFLINE_MODE %}
-    <link nonce="{{ csp_nonce }}" href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link nonce="{{ csp_nonce }}" href="/static/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
-    <link nonce="{{ csp_nonce }}" href="/static/vendor/fonts/fonts.css" rel="stylesheet">
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/static/vendor/fonts/fonts.css" rel="stylesheet">
   {% else %}
-    <link nonce="{{ csp_nonce }}" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link nonce="{{ csp_nonce }}" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link nonce="{{ csp_nonce }}" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   {% endif %}
-  <link nonce="{{ csp_nonce }}" rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/style.css">
   {% block head_extra %}{% endblock %}
 </head>
-<body style="background:var(--bg-dark);">
-<div class="d-flex" style="min-height:100vh;">
-  <!-- SIDEBAR -->
-  <div class="dash-sidebar" style="width:250px;flex-shrink:0;">
-<div class="dash-side-header">
-    <a href="{{ url_for('dashboard.today') }}" class="d-flex align-items-center gap-2" style="text-decoration:none;">
-      <img src="/static/img/skill_logo.png" alt="SkillSprint Academy" width="34">
-      <div>
-        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1rem;color:#fff;letter-spacing:0.5px;">SkillSprint Academy</div>
-        <div style="font-size:0.65rem;color:var(--primary);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Purple Team Mastery</div>
-      </div>
-    </a>
-  </div>
-    <div class="pt-3 pb-4 px-1" style="overflow-y:auto;">
-      <div style="padding:.5rem 1.25rem .25rem;font-size:.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Learning Path</div>
-      <a href="{{ url_for('dashboard.today') }}" class="dash-nav-link {% if active == 'today' %}active{% endif %}"><i class="bi bi-speedometer2"></i> Today's Schedule</a>
-      <a href="{{ url_for('roadmap.view') }}" class="dash-nav-link {% if active == 'roadmap' %}active{% endif %}"><i class="bi bi-signpost-2"></i> Roadmap Overview</a>
-      <a href="{{ url_for('roadmap.calendar') }}" class="dash-nav-link {% if active == 'calendar' %}active{% endif %}"><i class="bi bi-calendar3"></i> Timetable & Calendar</a>
-      <a href="{{ url_for('labs.browse') }}" class="dash-nav-link {% if active == 'labs' %}active{% endif %}"><i class="bi bi-terminal-fill"></i> Purple Labs</a>
-      
-      <div style="padding:.75rem 1.25rem .25rem;font-size:.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Purple Team Ops</div>
-      <a href="{{ url_for('purple_team.coverage') }}" class="dash-nav-link {% if active == 'coverage' %}active{% endif %}"><i class="bi bi-grid-3x3-gap-fill"></i> ATT&CK Matrix</a>
-      <a href="{{ url_for('purple_team.log_list') }}" class="dash-nav-link {% if active == 'purple_team_log' %}active{% endif %}"><i class="bi bi-journal-code"></i> Exercise Log</a>
-      <a href="{{ url_for('purple_team.export') }}" class="dash-nav-link"><i class="bi bi-file-earmark-arrow-down"></i> Export Portfolio</a>
+<body>
+<div class="d-flex" style="min-height:100vh; background:var(--bg-dark);">
 
-      <div style="padding:.75rem 1.25rem .25rem;font-size:.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Resources & AI</div>
-      <a href="{{ url_for('job_roles.browse') }}" class="dash-nav-link {% if active == 'job_roles' %}active{% endif %}"><i class="bi bi-briefcase"></i> Job Tracks</a>
-      <a href="{{ url_for('library.list') }}" class="dash-nav-link {% if active == 'library' %}active{% endif %}"><i class="bi bi-collection"></i> My Library</a>
-      <a href="{{ url_for('assistant.chat') }}" class="dash-nav-link {% if active == 'assistant' %}active{% endif %}"><i class="bi bi-robot"></i> Local AI Mentor</a>
-      
-      <div style="padding:.75rem 1.25rem .25rem;font-size:.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Environment</div>
-      <a href="{{ url_for('offline.lab_setup') }}" class="dash-nav-link {% if active == 'lab_setup' %}active{% endif %}"><i class="bi bi-pc-display"></i> VirtualBox Setup</a>
-      <a href="{{ url_for('dashboard.progress') }}" class="dash-nav-link {% if active == 'progress' %}active{% endif %}"><i class="bi bi-graph-up-arrow"></i> Skill Radar</a>
-    </div>
-  </div>
-
-  <!-- MAIN AREA -->
-  <div class="flex-grow-1 d-flex flex-column" style="overflow:hidden;">
-    <!-- Topbar -->
-    <div class="dash-topbar">
-      <div class="d-flex align-items-center justify-content-between">
-        <div>
-          <h5 style="margin:0;font-family:'Outfit',sans-serif;font-weight:700;color:var(--text-primary);">{% block page_title %}{% endblock %}</h5>
-          <span style="font-size:.8rem;color:var(--text-muted);">{% block page_subtitle %}{% endblock %}</span>
+  <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+  <nav class="dash-sidebar">
+    <!-- Brand -->
+    <div class="dash-side-header">
+      <a href="/" class="d-flex align-items-center gap-2" style="text-decoration:none;">
+        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent-purple));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px var(--primary-glow);">
+          <img src="/static/img/skill_logo.png" alt="SkillSprint" width="22" style="filter:brightness(10);">
         </div>
-        <div class="d-flex align-items-center gap-3">
+        <div>
+          <div class="dash-side-brand-name">SkillSprint</div>
+          <div class="dash-side-brand-tag">Purple Team Mastery</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Nav items -->
+    <div style="overflow-y:auto; flex:1; padding:0.5rem 0;">
+      <div class="dash-nav-section">Learning Path</div>
+      <a href="{{ url_for('dashboard.today') }}" class="dash-nav-link {% if active == 'today' %}active{% endif %}">
+        <i class="bi bi-speedometer2"></i><span>Today's Schedule</span>
+      </a>
+      <a href="{{ url_for('roadmap.view') }}" class="dash-nav-link {% if active == 'roadmap' %}active{% endif %}">
+        <i class="bi bi-signpost-2"></i><span>Roadmap Overview</span>
+      </a>
+      <a href="{{ url_for('roadmap.calendar') }}" class="dash-nav-link {% if active == 'calendar' %}active{% endif %}">
+        <i class="bi bi-calendar3"></i><span>Timetable</span>
+      </a>
+      <a href="{{ url_for('labs.browse') }}" class="dash-nav-link {% if active == 'labs' %}active{% endif %}">
+        <i class="bi bi-terminal-fill"></i><span>Purple Labs</span>
+      </a>
+
+      <div class="dash-nav-section">Purple Team Ops</div>
+      <a href="{{ url_for('purple_team.coverage') }}" class="dash-nav-link {% if active == 'coverage' %}active{% endif %}">
+        <i class="bi bi-grid-3x3-gap-fill"></i><span>ATT&CK Matrix</span>
+      </a>
+      <a href="{{ url_for('purple_team.log_list') }}" class="dash-nav-link {% if active == 'purple_team_log' %}active{% endif %}">
+        <i class="bi bi-journal-code"></i><span>Exercise Log</span>
+      </a>
+      <a href="{{ url_for('purple_team.log_new') }}" class="dash-nav-link {% if active == 'log_new' %}active{% endif %}">
+        <i class="bi bi-journal-plus"></i><span>Log Exercise</span>
+      </a>
+      <a href="{{ url_for('purple_team.export') }}" class="dash-nav-link">
+        <i class="bi bi-file-earmark-arrow-down"></i><span>Export Portfolio</span>
+      </a>
+
+      <div class="dash-nav-section">Resources & AI</div>
+      <a href="{{ url_for('job_roles.browse') }}" class="dash-nav-link {% if active == 'job_roles' %}active{% endif %}">
+        <i class="bi bi-briefcase"></i><span>Job Tracks</span>
+      </a>
+      <a href="{{ url_for('library.list') }}" class="dash-nav-link {% if active == 'library' %}active{% endif %}">
+        <i class="bi bi-collection"></i><span>My Library</span>
+      </a>
+      <a href="{{ url_for('assistant.chat') }}" class="dash-nav-link {% if active == 'assistant' %}active{% endif %}">
+        <i class="bi bi-robot"></i><span>AI Mentor</span>
+      </a>
+
+      <div class="dash-nav-section">Environment</div>
+      <a href="{{ url_for('offline.lab_setup') }}" class="dash-nav-link {% if active == 'lab_setup' %}active{% endif %}">
+        <i class="bi bi-pc-display"></i><span>VirtualBox Setup</span>
+      </a>
+      <a href="{{ url_for('dashboard.progress') }}" class="dash-nav-link {% if active == 'progress' %}active{% endif %}">
+        <i class="bi bi-graph-up-arrow"></i><span>Skill Radar</span>
+      </a>
+      <a href="{{ url_for('offline.ai_tutor_settings') }}" class="dash-nav-link {% if active == 'ai_settings' %}active{% endif %}">
+        <i class="bi bi-cpu"></i><span>AI Settings</span>
+      </a>
+    </div>
+
+    <!-- Sidebar footer — user info -->
+    <div class="dash-side-footer">
+      <div class="d-flex align-items-center gap-2">
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;">
+          {{ current_user.first_name[0] if current_user and current_user.first_name else 'O' }}
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:0.8rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {{ current_user.first_name if current_user and current_user.first_name else 'Operator' }}
+          </div>
+          <div style="font-size:0.65rem;color:var(--text-dim);">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--success);margin-right:4px;vertical-align:middle;box-shadow:0 0 6px var(--success-glow);"></span>Offline · Secure
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════ MAIN AREA ═══════════════════ -->
+  <div class="flex-grow-1 d-flex flex-column" style="min-width:0; overflow:hidden;">
+
+    <!-- Topbar -->
+    <header class="dash-topbar">
+      <div class="d-flex align-items-center justify-content-between gap-3">
+        <div style="min-width:0;">
+          <h5 style="margin:0;font-family:'Outfit',sans-serif;font-weight:700;color:var(--text-primary);font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {% block page_title %}{% endblock %}
+          </h5>
+          <span style="font-size:0.775rem;color:var(--text-muted);">{% block page_subtitle %}{% endblock %}</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 flex-shrink-0">
           {% if streak is defined and streak and streak.current_streak %}
-          <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);border-radius:20px;padding:.4rem .85rem;font-size:.78rem;font-weight:600;">
-            <i class="bi bi-fire me-1 text-warning"></i>{{ streak.current_streak }}-day streak
+          <span class="pill pill-warning" style="font-size:0.72rem;">
+            <i class="bi bi-fire streak-fire"></i>{{ streak.current_streak }}d streak
           </span>
           {% endif %}
-          {% if xp is defined %}
-          <span class="badge" style="background:linear-gradient(135deg, var(--primary) 0%, var(--accent-purple) 100%);color:#fff;border-radius:20px;padding:.4rem .85rem;font-size:.78rem;font-weight:600;box-shadow:0 0 12px rgba(99,102,241,0.3);">
-            <i class="bi bi-stars me-1 text-warning"></i>{{ xp }} XP
+
+          {% if xp is defined and xp %}
+          <span class="pill pill-primary">
+            <i class="bi bi-stars"></i>{{ xp }} XP
           </span>
           {% endif %}
+
+          {% if update_info and update_info.update_available %}
+          <span class="pill pill-warning" title="Update available">
+            <i class="bi bi-arrow-up-circle"></i>Update
+          </span>
+          {% endif %}
+
           <div class="dropdown">
-            <button class="btn btn-sm dropdown-toggle d-flex align-items-center gap-2" style="border:1px solid var(--border);border-radius:20px;padding:.3rem .85rem;background:rgba(255,255,255,0.04);" type="button" data-bs-toggle="dropdown">
-              <div style="width:28px;height:28px;background:linear-gradient(135deg, var(--primary) 0%, var(--accent-purple) 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#fff;font-weight:700;">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2"
+                    type="button" data-bs-toggle="dropdown" id="userMenuBtn">
+              <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;font-weight:700;">
                 {{ current_user.first_name[0] if current_user and current_user.first_name else 'O' }}
               </div>
-              <span style="font-size:.85rem;font-weight:600;color:var(--text-primary);">{{ current_user.first_name if current_user and current_user.first_name else 'Operator' }}</span>
+              <span style="font-size:0.82rem;font-weight:600;">{{ current_user.first_name if current_user and current_user.first_name else 'Operator' }}</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius:12px;min-width:180px;">
-              <li><a class="dropdown-item" href="{{ url_for('dashboard.progress') }}"><i class="bi bi-person me-2"></i>Skill Progress</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('offline.ai_tutor_settings') }}"><i class="bi bi-gear me-2"></i>AI Settings</a></li>
-              <li><hr class="dropdown-divider" style="border-color:var(--border);"></li>
-              <li><a class="dropdown-item" href="{{ url_for('offline.about') }}"><i class="bi bi-info-circle me-2"></i>Offline Info</a></li>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <a class="dropdown-item" href="{{ url_for('dashboard.progress') }}">
+                  <i class="bi bi-person me-2" style="color:var(--primary-light);"></i>Skill Progress
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('offline.ai_tutor_settings') }}">
+                  <i class="bi bi-cpu me-2" style="color:var(--accent-cyan);"></i>AI Settings
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('offline.lab_setup') }}">
+                  <i class="bi bi-pc-display me-2" style="color:var(--accent-purple);"></i>Lab Setup
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('offline.about') }}">
+                  <i class="bi bi-info-circle me-2" style="color:var(--text-muted);"></i>Offline Info
+                </a>
+              </li>
             </ul>
           </div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- Main Content Area -->
-    <div style="flex:1;overflow-y:auto;padding:1.75rem;">
+    <!-- Main Content -->
+    <div style="flex:1;overflow-y:auto;padding:1.75rem;" class="dash-content">
+
+      <!-- Update banner -->
+      <div id="update-banner" class="alert alert-info alert-dismissible fade show mb-4" style="display:none;" role="alert">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div>
+            <strong><i class="bi bi-arrow-up-circle me-2"></i>Update Available</strong>
+            <span id="update-version-text" class="ms-2" style="font-size:0.85rem;"></span>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm" data-action="apply-update">
+              <i class="bi bi-download me-1"></i>Install Now
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" data-action="dismiss-update">
+              <i class="bi bi-x me-1"></i>Later
+            </button>
+          </div>
+        </div>
+        <div id="update-release-notes" class="mt-2" style="display:none;font-size:0.8rem;opacity:0.8;"></div>
+      </div>
+
+      <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
-            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-4" role="alert">
-              {{ message }}<button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close" title="Close"></button>
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-3" role="alert">
+              {% if category == 'success' %}<i class="bi bi-check-circle me-2"></i>
+              {% elif category == 'error' or category == 'danger' %}<i class="bi bi-exclamation-triangle me-2"></i>
+              {% elif category == 'warning' %}<i class="bi bi-exclamation-circle me-2"></i>
+              {% else %}<i class="bi bi-info-circle me-2"></i>{% endif %}
+              {{ message | safe }}
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
           {% endfor %}
         {% endif %}
       {% endwith %}
-
-      <!-- Update Notification Banner -->
-      <div id="update-banner" class="alert alert-info alert-dismissible fade show mb-4" style="display:none;">
-        <div class="d-flex align-items-center justify-content-between">
-          <div>
-            <strong><i class="bi bi-arrow-repeat me-2"></i>Update Available</strong>
-            <span id="update-version-text" class="ms-2"></span>
-          </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-primary btn-sm" data-action="apply-update"><i class="bi bi-download me-1"></i>Install Now</button>
-            <button class="btn btn-outline-secondary btn-sm" data-action="dismiss-update"><i class="bi bi-x me-1"></i>Later</button>
-          </div>
-        </div>
-        <div id="update-release-notes" class="mt-2 small" style="display:none;"></div>
-      </div>
 
       {% block content %}{% endblock %}
     </div>
@@ -124,14 +220,13 @@
 </div>
 
 <!-- Floating AI Mentor Button -->
-<a href="{{ url_for('assistant.chat') }}" class="btn btn-primary"
-   style="position:fixed;right:24px;bottom:24px;z-index:1030;border-radius:50%;
-           width:56px;height:56px;display:flex;align-items:center;justify-content:center;
-           box-shadow:0 8px 25px rgba(99,102,241,0.5);border:1px solid rgba(255,255,255,0.2);"
-   title="Ask the AI Tutor">
-  <i class="bi bi-robot" style="font-size:1.4rem;"></i>
+{% if active != 'assistant' %}
+<a href="{{ url_for('assistant.chat') }}" class="ai-float-btn" title="Ask the AI Mentor" id="aiFloatBtn">
+  <i class="bi bi-robot"></i>
 </a>
+{% endif %}
 
+<!-- Scripts -->
 {% if OFFLINE_MODE %}
   <script nonce="{{ csp_nonce }}" src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
   <script nonce="{{ csp_nonce }}" src="/static/vendor/chartjs/chart.min.js"></script>

@@ -62,8 +62,8 @@ def schedule(resource_id: int):
     roadmap = Roadmap.query.filter_by(
         user_id=g.user.id, status="active").first()
     if roadmap is None:
-        flash("Generate a roadmap first.", "info")
-        return redirect(url_for("onboarding.domain"))
+        flash("Choose a job role to generate your roadmap first.", "info")
+        return redirect(url_for("job_roles.browse"))
 
     when = request.form.get("date") or date.today().isoformat()
     try:

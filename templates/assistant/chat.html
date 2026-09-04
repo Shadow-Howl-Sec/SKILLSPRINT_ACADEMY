@@ -1,182 +1,607 @@
 {% extends "base_cybersec.html" %}
+{% set active = "assistant" %}
+{% block title %}AI Mentor — SkillSprint Academy{% endblock %}
+{% block page_title %}Local AI Mentor{% endblock %}
+{% block page_subtitle %}Context-aware cybersecurity guidance · Powered by local Ollama{% endblock %}
 
-{% block title %}AI Assistant{% endblock %}
+{% block head_extra %}
+<style nonce="{{ csp_nonce }}">
+  .chat-layout {
+    display: flex;
+    gap: 1rem;
+    height: calc(100vh - 130px);
+    min-height: 500px;
+  }
+
+  /* Topic Sidebar */
+  .chat-topics {
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .chat-topics-header {
+    padding: 1rem 1.1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(99,102,241,0.05);
+  }
+
+  .chat-topics-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .topic-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    transition: var(--t-fast);
+  }
+
+  .topic-btn:hover {
+    background: rgba(99,102,241,0.1);
+    color: var(--text-primary);
+  }
+
+  .topic-btn.active {
+    background: rgba(99,102,241,0.15);
+    color: var(--primary-light);
+    font-weight: 600;
+  }
+
+  .topic-btn i { font-size: 0.85rem; flex-shrink: 0; }
+
+  .chat-topics-footer {
+    padding: 0.75rem 0.85rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Main Chat Area */
+  .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .chat-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(99,102,241,0.04);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .chat-header-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: #fff;
+    box-shadow: 0 4px 12px var(--primary-glow);
+    flex-shrink: 0;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* Message bubbles */
+  .msg-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    animation: fade-up 0.2s ease;
+  }
+
+  .msg-row.user-row { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .msg-avatar.ai-avatar {
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+    color: #fff;
+    box-shadow: 0 2px 8px var(--primary-glow);
+  }
+
+  .msg-avatar.user-avatar {
+    background: linear-gradient(135deg, var(--success), #059669);
+    color: #fff;
+  }
+
+  .msg-bubble {
+    max-width: 80%;
+    padding: 0.8rem 1.1rem;
+    border-radius: 14px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  .msg-bubble.ai-bubble {
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.15);
+    color: var(--text-secondary);
+    border-top-left-radius: 4px;
+  }
+
+  .msg-bubble.user-bubble {
+    background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.15));
+    border: 1px solid rgba(99,102,241,0.25);
+    color: var(--text-primary);
+    border-top-right-radius: 4px;
+  }
+
+  .msg-meta {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
+    display: flex; align-items: center; gap: 0.35rem;
+  }
+
+  .msg-bubble.user-bubble .msg-meta { justify-content: flex-end; }
+
+  /* Code in messages */
+  .msg-bubble pre {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.7rem;
+    margin: 0.5rem 0;
+    overflow-x: auto;
+    font-size: 0.78rem;
+  }
+
+  .msg-bubble code { font-size: 0.82em; }
+
+  /* Topic badge on message */
+  .msg-topic-badge {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-size: 0.65rem; font-weight: 600;
+    background: rgba(99,102,241,0.12);
+    color: var(--primary-light);
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: var(--radius-full);
+    padding: 0.1rem 0.5rem;
+    margin-left: 0.4rem;
+  }
+
+  /* Typing indicator */
+  .typing-indicator {
+    display: flex; align-items: center; gap: 4px;
+    padding: 0.7rem 1rem;
+    background: rgba(99,102,241,0.06);
+    border: 1px solid rgba(99,102,241,0.12);
+    border-radius: 14px; border-top-left-radius: 4px;
+    width: fit-content;
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--primary-light);
+    animation: typing-bounce 1.4s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing-bounce {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Empty state */
+  .chat-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .chat-empty-icon {
+    width: 72px; height: 72px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.1));
+    border: 1px solid rgba(99,102,241,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1.25rem;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+
+  /* Suggestion chips */
+  .suggestion-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; justify-content: center; }
+  .suggestion-chip {
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(99,102,241,0.2);
+    background: rgba(99,102,241,0.07);
+    color: var(--primary-light);
+    font-size: 0.78rem; font-weight: 500;
+    cursor: pointer;
+    transition: var(--t-fast);
+  }
+  .suggestion-chip:hover {
+    background: rgba(99,102,241,0.15);
+    border-color: rgba(99,102,241,0.4);
+    color: #fff;
+  }
+
+  /* Chat input area */
+  .chat-input-area {
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .chat-input-wrap {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-end;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 0.65rem 0.75rem;
+    transition: var(--t);
+  }
+
+  .chat-input-wrap:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+
+  #messageInput {
+    flex: 1;
+    background: transparent !important;
+    border: none !important;
+    outline: none;
+    color: var(--text-primary) !important;
+    font-size: 0.88rem;
+    resize: none;
+    min-height: 24px;
+    max-height: 120px;
+    line-height: 1.55;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  #messageInput::placeholder { color: var(--text-dim) !important; }
+
+  #sendBtn {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border: none; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: var(--t);
+    box-shadow: 0 2px 8px var(--primary-glow);
+  }
+  #sendBtn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 4px 14px var(--primary-glow); }
+  #sendBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .chat-hint {
+    font-size: 0.7rem; color: var(--text-dim);
+    margin-top: 0.4rem; padding: 0 0.25rem;
+  }
+
+  @media (max-width: 768px) {
+    .chat-layout { flex-direction: column; height: auto; }
+    .chat-topics { width: 100%; max-height: 200px; }
+    .chat-main { height: 60vh; }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid h-100">
-    <div class="row h-100">
-        <!-- Sidebar: Topic Selector -->
-        <div class="col-md-3 border-end bg-light d-flex flex-column" id="assistantSidebar">
-            <div class="p-3 border-bottom">
-                <h5 class="mb-0"><i class="bi bi-robot me-2"></i>AI Tutor</h5>
-                <small class="text-muted">Select a topic for context-aware help</small>
-            </div>
-            <div class="flex-grow-1 overflow-auto p-2">
-                <div class="mb-2">
-                    <button class="btn btn-outline-primary w-100 text-start" onclick="setTopicContext(null)">
-                        <i class="bi bi-chat-square me-2"></i>General Chat (No Topic)
-                    </button>
-                </div>
-                <hr class="my-2">
-                {% for topic in topics %}
-                <button class="btn btn-outline-secondary w-100 text-start mb-1 topic-btn" data-topic-id="{{ topic.id }}" onclick="setTopicContext({{ topic.id }})">
-                    <i class="bi bi-book me-2"></i>{{ topic.title }}
-                </button>
-                {% endfor %}
-            </div>
-            <div class="p-3 border-top">
-                <a href="{{ url_for('offline.ai_tutor_settings') }}" class="btn btn-sm btn-outline-secondary w-100">
-                    <i class="bi bi-gear me-1"></i>Settings
-                </a>
-            </div>
-        </div>
-
-        <!-- Main Chat Area -->
-        <div class="col-md-9 d-flex flex-column" id="assistantMain">
-            <div class="p-3 border-bottom bg-white">
-                <h5 class="mb-1" id="currentTopicTitle">General Chat</h5>
-                <small class="text-muted" id="currentTopicDesc">Ask anything about cybersecurity</small>
-            </div>
-
-            <div class="flex-grow-1 overflow-auto p-3" id="chatMessages">
-                {% for msg in history %}
-                <div class="message mb-3 {{ 'text-end' if msg.role == 'user' else '' }}">
-                    <div class="d-inline-block p-3 rounded-3 {{ 'bg-primary text-white' if msg.role == 'user' else 'bg-light' }}" style="max-width: 80%;">
-                        <div class="small mb-1 {{ 'text-white-50' if msg.role == 'user' else 'text-muted' }}">
-                            <i class="bi bi-{{ 'person' if msg.role == 'user' else 'robot' }} me-1"></i>
-                            {{ 'You' if msg.role == 'user' else 'AI Tutor' }}
-                            {% if msg.related_topic %}
-                            <span class="badge bg-{{ 'light text-dark' if msg.role == 'user' else 'secondary' }} ms-1">{{ msg.related_topic.title }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="{{ 'text-white' if msg.role == 'user' else '' }}">
-                            {{ msg.content | markdown | safe }}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-                {% if not history %}
-                <div class="text-center text-muted py-5">
-                    <i class="bi bi-robot display-1"></i>
-                    <p class="mt-3">Welcome! Ask me anything about your current topic or cybersecurity in general.</p>
-                    <p class="small">Select a topic from the sidebar for context-aware answers.</p>
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="p-3 border-top bg-white">
-                <form id="chatForm" class="d-flex gap-2">
-                    <input type="hidden" name="context_topic_id" id="contextTopicId" value="">
-                    <input type="text" name="message" id="messageInput" class="form-control form-control-lg" placeholder="Type your question..." autocomplete="off" required>
-                    <button type="submit" class="btn btn-primary btn-lg" id="sendBtn">
-                        <i class="bi bi-send"></i>
-                    </button>
-                </form>
-                <div class="form-text text-end">
-                    <kbd>Enter</kbd> to send &nbsp;|&nbsp; <kbd>Shift</kbd>+<kbd>Enter</kbd> for new line
-                </div>
-            </div>
-        </div>
+<div class="chat-layout">
+  <!-- ── Topic Selector Sidebar ── -->
+  <aside class="chat-topics">
+    <div class="chat-topics-header">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--text-primary);margin-bottom:0.2rem;">
+        <i class="bi bi-book me-1" style="color:var(--primary-light);"></i>Topics
+      </div>
+      <div style="font-size:0.7rem;color:var(--text-dim);">Select for context-aware answers</div>
     </div>
+
+    <div class="chat-topics-list">
+      <button class="topic-btn active" id="generalTopicBtn" onclick="setTopicContext(null)">
+        <i class="bi bi-chat-square-dots" style="color:var(--accent-cyan);"></i>
+        <span>General Chat</span>
+      </button>
+      {% if topics %}
+        <div style="height:1px;background:var(--border);margin:0.3rem 0.5rem;"></div>
+        {% for topic in topics %}
+        <button class="topic-btn" data-topic-id="{{ topic.id }}" onclick="setTopicContext({{ topic.id }})">
+          <i class="bi bi-book" style="color:var(--text-dim);"></i>
+          <span>{{ topic.title }}</span>
+        </button>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <div class="chat-topics-footer">
+      <a href="{{ url_for('offline.ai_tutor_settings') }}" class="btn btn-outline-secondary btn-sm w-100">
+        <i class="bi bi-gear me-1"></i>AI Settings
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main Chat Area ── -->
+  <main class="chat-main">
+    <!-- Chat header -->
+    <div class="chat-header">
+      <div class="chat-header-icon"><i class="bi bi-robot"></i></div>
+      <div>
+        <div style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--text-primary);font-size:0.95rem;" id="currentTopicTitle">General Chat</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);" id="currentTopicDesc">Ask anything about cybersecurity · No internet required</div>
+      </div>
+      <div class="ms-auto">
+        <span class="pill pill-success" style="font-size:0.68rem;">
+          <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--success);box-shadow:0 0 5px var(--success-glow);"></span>
+          Online
+        </span>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chatMessages">
+      {% for msg in history %}
+      <div class="msg-row {{ 'user-row' if msg.role == 'user' else '' }}">
+        <div class="msg-avatar {{ 'user-avatar' if msg.role == 'user' else 'ai-avatar' }}">
+          <i class="bi bi-{{ 'person-fill' if msg.role == 'user' else 'robot' }}"></i>
+        </div>
+        <div>
+          <div class="msg-meta">
+            <span>{{ 'You' if msg.role == 'user' else 'AI Mentor' }}</span>
+            {% if msg.related_topic %}
+            <span class="msg-topic-badge"><i class="bi bi-book"></i>{{ msg.related_topic.title }}</span>
+            {% endif %}
+          </div>
+          <div class="msg-bubble {{ 'user-bubble' if msg.role == 'user' else 'ai-bubble' }}">
+            {{ msg.content | markdown | safe }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if not history %}
+      <div class="chat-empty">
+        <div class="chat-empty-icon"><i class="bi bi-robot"></i></div>
+        <h5 style="color:var(--text-primary);margin-bottom:0.5rem;font-size:1rem;">Ready to Help</h5>
+        <p style="font-size:0.83rem;max-width:340px;line-height:1.6;">Ask me anything about cybersecurity, your current topic, or Purple Team techniques. Works 100% offline.</p>
+        <div class="suggestion-chips">
+          <span class="suggestion-chip" onclick="fillQuestion('Explain Kerberoasting and how to detect it')">Explain Kerberoasting</span>
+          <span class="suggestion-chip" onclick="fillQuestion('What is a Sigma rule and how do I write one?')">Write Sigma rules</span>
+          <span class="suggestion-chip" onclick="fillQuestion('How does Pass-the-Hash work?')">Pass-the-Hash</span>
+          <span class="suggestion-chip" onclick="fillQuestion('What is MITRE ATT&CK and how is it used?')">MITRE ATT&CK</span>
+          <span class="suggestion-chip" onclick="fillQuestion('Explain BloodHound for AD enumeration')">BloodHound</span>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-area">
+      <form id="chatForm">
+        <input type="hidden" id="contextTopicId" value="">
+        <div class="chat-input-wrap">
+          <textarea id="messageInput" rows="1"
+            placeholder="Ask about cybersecurity, your current topic, ATT&CK techniques…"
+            autocomplete="off"></textarea>
+          <button type="submit" id="sendBtn" title="Send message">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </div>
+      </form>
+      <div class="chat-hint">
+        <kbd style="background:rgba(255,255,255,0.08);border:1px solid var(--border);border-radius:3px;padding:0.1em 0.4em;font-size:0.7rem;">Enter</kbd> to send &nbsp;·&nbsp;
+        <kbd style="background:rgba(255,255,255,0.08);border:1px solid var(--border);border-radius:3px;padding:0.1em 0.4em;font-size:0.7rem;">Shift+Enter</kbd> for new line
+      </div>
+    </div>
+  </main>
 </div>
+{% endblock %}
 
-<script>
-let currentTopicId = null;
-const messageInput = document.getElementById('messageInput');
-const chatForm = document.getElementById('chatForm');
-const chatMessages = document.getElementById('chatMessages');
-const sendBtn = document.getElementById('sendBtn');
-const contextTopicIdInput = document.getElementById('contextTopicId');
-const currentTopicTitle = document.getElementById('currentTopicTitle');
-const currentTopicDesc = document.getElementById('currentTopicDesc');
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  let currentTopicId = null;
+  const messageInput  = document.getElementById('messageInput');
+  const chatForm      = document.getElementById('chatForm');
+  const chatMessages  = document.getElementById('chatMessages');
+  const sendBtn       = document.getElementById('sendBtn');
+  const contextInput  = document.getElementById('contextTopicId');
+  const topicTitle    = document.getElementById('currentTopicTitle');
+  const topicDesc     = document.getElementById('currentTopicDesc');
 
-function setTopicContext(topicId) {
+  function fillQuestion(text) {
+    messageInput.value = text;
+    messageInput.focus();
+    autoResize();
+  }
+
+  function setTopicContext(topicId) {
     currentTopicId = topicId;
-    contextTopicIdInput.value = topicId || '';
+    contextInput.value = topicId || '';
 
+    // Reset all buttons
     document.querySelectorAll('.topic-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.topicId) === topicId);
-        btn.classList.toggle('btn-primary', parseInt(btn.dataset.topicId) === topicId);
-        btn.classList.toggle('btn-outline-secondary', parseInt(btn.dataset.topicId) !== topicId);
+      btn.classList.remove('active');
     });
 
     if (topicId) {
-        const btn = document.querySelector(`.topic-btn[data-topic-id="${topicId}"]`);
-        currentTopicTitle.textContent = btn.querySelector('i').nextSibling.textContent.trim();
-        currentTopicDesc.textContent = 'Context-aware assistance for this topic';
+      const btn = document.querySelector(`.topic-btn[data-topic-id="${topicId}"]`);
+      if (btn) btn.classList.add('active');
+      topicTitle.textContent = btn ? btn.querySelector('span').textContent.trim() : 'Topic Chat';
+      topicDesc.textContent = 'Context-aware assistance for this topic';
     } else {
-        currentTopicTitle.textContent = 'General Chat';
-        currentTopicDesc.textContent = 'Ask anything about cybersecurity';
+      document.getElementById('generalTopicBtn').classList.add('active');
+      topicTitle.textContent = 'General Chat';
+      topicDesc.textContent = 'Ask anything about cybersecurity · No internet required';
     }
-}
+  }
 
-function appendMessage(role, content, topicId) {
-    const div = document.createElement('div');
-    div.className = `message mb-3 ${role === 'user' ? 'text-end' : ''}`;
-    const badge = topicId ? `<span class="badge bg-${role === 'user' ? 'light text-dark' : 'secondary'} ms-1">${topicId}</span>` : '';
-    div.innerHTML = `
-        <div class="d-inline-block p-3 rounded-3 ${role === 'user' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
-            <div class="small mb-1 ${role === 'user' ? 'text-white-50' : 'text-muted'}">
-                <i class="bi bi-${role === 'user' ? 'person' : 'robot'} me-1"></i>
-                ${role === 'user' ? 'You' : 'AI Tutor'}
-                ${badge}
-            </div>
-            <div class="${role === 'user' ? 'text-white' : ''}">${content}</div>
+  function appendMessage(role, content) {
+    // Remove empty state if it exists
+    const emptyState = chatMessages.querySelector('.chat-empty');
+    if (emptyState) emptyState.remove();
+
+    const row = document.createElement('div');
+    row.className = `msg-row ${role === 'user' ? 'user-row' : ''}`;
+
+    const topicBadge = currentTopicId
+      ? `<span class="msg-topic-badge"><i class="bi bi-book"></i>${topicTitle.textContent}</span>`
+      : '';
+
+    row.innerHTML = `
+      <div class="msg-avatar ${role === 'user' ? 'user-avatar' : 'ai-avatar'}">
+        <i class="bi bi-${role === 'user' ? 'person-fill' : 'robot'}"></i>
+      </div>
+      <div>
+        <div class="msg-meta">
+          <span>${role === 'user' ? 'You' : 'AI Mentor'}</span>
+          ${role === 'user' ? topicBadge : ''}
         </div>
+        <div class="msg-bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}">
+          ${content}
+        </div>
+      </div>
     `;
-    chatMessages.appendChild(div);
+    chatMessages.appendChild(row);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+    return row;
+  }
 
-async function sendMessage(message) {
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+  function showTypingIndicator() {
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.id = 'typingIndicator';
+    row.innerHTML = `
+      <div class="msg-avatar ai-avatar"><i class="bi bi-robot"></i></div>
+      <div>
+        <div class="msg-meta"><span>AI Mentor</span></div>
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    `;
+    chatMessages.appendChild(row);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
 
-    appendMessage('user', message, currentTopicId);
+  function removeTypingIndicator() {
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+  }
 
-    try {
-        const response = await fetch('{{ url_for("assistant.chat_api") }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, context_topic_id: currentTopicId })
-        });
-        const data = await response.json();
-        if (data.reply) {
-            appendMessage('assistant', data.reply, currentTopicId);
-        } else if (data.error) {
-            appendMessage('assistant', `Error: ${data.error}`, currentTopicId);
-        }
-    } catch (e) {
-        appendMessage('assistant', 'Connection error. Is the server running?', currentTopicId);
-    } finally {
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = '<i class="bi bi-send"></i>';
-    }
-}
-
-chatForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  async function sendMessage() {
     const message = messageInput.value.trim();
     if (!message) return;
+
     messageInput.value = '';
-    messageInput.style.height = 'auto';
-    await sendMessage(message);
-});
+    autoResize();
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:14px;height:14px;border-width:2px;"></span>';
 
-messageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        chatForm.dispatchEvent(new Event('submit'));
+    appendMessage('user', escapeHtml(message));
+    showTypingIndicator();
+
+    try {
+      const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+      const csrfToken = metaCsrf ? metaCsrf.getAttribute('content') : '';
+      const resp = await fetch('{{ url_for("assistant.chat_api") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ message, context_topic_id: currentTopicId })
+      });
+      const data = await resp.json();
+      removeTypingIndicator();
+      if (data.reply) {
+        appendMessage('assistant', data.reply);
+      } else if (data.error) {
+        appendMessage('assistant', `<span style="color:var(--danger)"><i class="bi bi-exclamation-triangle me-1"></i>Error: ${escapeHtml(data.error)}</span>`);
+      }
+    } catch (e) {
+      removeTypingIndicator();
+      appendMessage('assistant', '<span style="color:var(--danger)"><i class="bi bi-wifi-off me-1"></i>Connection error. Is the server running?</span>');
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
+      messageInput.focus();
     }
-});
+  }
 
-// Auto-resize textarea
-messageInput.addEventListener('input', () => {
+  function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(text));
+    return d.innerHTML;
+  }
+
+  function autoResize() {
     messageInput.style.height = 'auto';
-    messageInput.style.height = Math.min(messageInput.scrollHeight, 150) + 'px';
-});
+    messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+  }
 
-// Focus input on load
-messageInput.focus();
+  chatForm.addEventListener('submit', e => { e.preventDefault(); sendMessage(); });
+
+  messageInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  messageInput.addEventListener('input', autoResize);
+
+  // Scroll to bottom of messages on load
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  messageInput.focus();
 </script>
 {% endblock %}

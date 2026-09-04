@@ -86,7 +86,7 @@ def apply_update_route():
         hmac_secret.encode('utf-8'),
         download_url.encode('utf-8'),
         hashlib.sha256
-    ).hexdigest()
+    ).hexdigest()  # type: ignore[attr-defined]
     
     if not hmac.compare_digest(signature, expected_signature):
         current_app.logger.warning("Invalid update signature from %s", request.remote_addr)

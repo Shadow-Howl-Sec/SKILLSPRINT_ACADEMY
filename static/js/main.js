@@ -14,9 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function applyUpdate() {
+  const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+  const csrfToken = metaCsrf ? metaCsrf.getAttribute('content') : '';
   fetch('/settings/apply-update', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
     body: JSON.stringify({ download_url: window.updateDownloadUrl || '' })
   }).then(r => {
     if (r.ok) {

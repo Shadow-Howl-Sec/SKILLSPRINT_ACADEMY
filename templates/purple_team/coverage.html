@@ -1,130 +1,113 @@
 {% extends "base_cybersec.html" %}
 
-{% block title %}ATT&CK Coverage Matrix — Purple Team{% endblock %}
+{% block title %}ATT&CK Coverage Matrix — SkillSprint Academy{% endblock %}
 {% set active = "purple_team" %}
 
-{% block page_title %}Coverage Matrix{% endblock %}
-{% block page_subtitle %}Your ATT&CK technique coverage: attacked, detected, rules written{% endblock %}
+{% block page_title %}ATT&CK Coverage Matrix{% endblock %}
+{% block page_subtitle %}Enterprise MITRE ATT&CK technique verification: attacked, detected, detection rules written{% endblock %}
 
-{% block extra_css %}
-<style>
+{% block head_extra %}
+<style nonce="{{ csp_nonce }}">
   .coverage-table {
-    font-size: 0.75rem;
+    font-size: 0.82rem;
   }
   .coverage-table th {
     position: sticky;
     top: 0;
-    background: #16161e;
+    background: #0f172a;
     z-index: 10;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
   }
   .coverage-table td {
     vertical-align: middle;
+    border-color: rgba(255, 255, 255, 0.05);
   }
   .technique-cell {
-    min-width: 140px;
-    max-width: 180px;
-  }
-  .badge-status {
-    font-size: 0.65rem;
-    padding: 0.25rem 0.5rem;
+    min-width: 180px;
+    max-width: 240px;
   }
   .tactic-header {
-    background: linear-gradient(135deg, #1e1e2e 0%, #16161e 100%);
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .summary-card {
-    transition: transform 0.15s, box-shadow 0.15s;
-  }
-  .summary-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  }
-  .legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
     font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-stat-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .summary-stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Top Action Bar -->
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-  <div>
-    <nav aria-label="breadcrumb" class="mb-2">
-      <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="{{ url_for('purple_team.log_list') }}">Purple Team</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Coverage Matrix</li>
-      </ol>
-    </nav>
-  </div>
   <div class="d-flex gap-2">
-    <a href="{{ url_for('purple_team.log_list') }}" class="btn btn-outline-secondary">
-      <i class="bi bi-list-ul me-1"></i> Exercise Log
+    <a href="{{ url_for('purple_team.log_list') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-list-task me-1"></i> Exercise Log
     </a>
-    <a href="{{ url_for('purple_team.export') }}" class="btn btn-outline-primary">
-      <i class="bi bi-download me-1"></i> Export Markdown
+    <a href="{{ url_for('purple_team.log_new') }}" class="btn btn-sm btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> New Exercise
     </a>
   </div>
+  <a href="{{ url_for('purple_team.export') }}" class="btn btn-sm btn-outline-primary">
+    <i class="bi bi-download me-1"></i> Export Portfolio Markdown
+  </a>
 </div>
 
 <!-- Summary Stats -->
 <div class="row g-3 mb-4">
-  <div class="col-md-3">
-    <div class="card summary-card h-100 border-primary">
-      <div class="card-body text-center">
-        <div class="display-4 fw-bold text-primary">{{ total_techniques }}</div>
-        <div class="text-muted small">Techniques Covered</div>
-      </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-stat-box text-center">
+      <div style="font-size:2rem;font-weight:800;color:var(--primary);font-family:'JetBrains Mono',monospace;">{{ total_techniques }}</div>
+      <div class="text-muted small mt-1">Techniques Tracked</div>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="card summary-card h-100 border-danger">
-      <div class="card-body text-center">
-        <div class="display-4 fw-bold text-danger">{{ attacked_count }}</div>
-        <div class="text-muted small">Attacked</div>
-      </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-stat-box text-center">
+      <div style="font-size:2rem;font-weight:800;color:#f43f5e;font-family:'JetBrains Mono',monospace;">{{ attacked_count }}</div>
+      <div class="text-muted small mt-1">Simulated / Attacked</div>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="card summary-card h-100 border-success">
-      <div class="card-body text-center">
-        <div class="display-4 fw-bold text-success">{{ detected_count }}</div>
-        <div class="text-muted small">Detected</div>
-      </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-stat-box text-center">
+      <div style="font-size:2rem;font-weight:800;color:var(--success);font-family:'JetBrains Mono',monospace;">{{ detected_count }}</div>
+      <div class="text-muted small mt-1">Alerted / Detected</div>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="card summary-card h-100 border-info">
-      <div class="card-body text-center">
-        <div class="display-4 fw-bold text-info">{{ rule_count }}</div>
-        <div class="text-muted small">Rules Written</div>
-      </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-stat-box text-center">
+      <div style="font-size:2rem;font-weight:800;color:var(--info);font-family:'JetBrains Mono',monospace;">{{ rule_count }}</div>
+      <div class="text-muted small mt-1">Rules Authored</div>
     </div>
   </div>
 </div>
 
-<!-- Legend -->
-<div class="card mb-4">
-  <div class="card-body py-2">
-    <div class="d-flex flex-wrap gap-2">
-      <span class="legend-item bg-success bg-opacity-25 text-success border border-success">
-        <i class="bi bi-check-lg"></i> Attacked
-      </span>
-      <span class="legend-item bg-success bg-opacity-25 text-success border border-success">
-        <i class="bi bi-shield-fill-check"></i> Detected
-      </span>
-      <span class="legend-item bg-info bg-opacity-25 text-info border border-info">
-        <i class="bi bi-file-earmark-code"></i> Rule Written
-      </span>
-      <span class="legend-item bg-secondary bg-opacity-25 text-secondary border border-secondary">
-        <i class="bi bi-dash-lg"></i> Not Started
-      </span>
-    </div>
+<!-- Matrix Legend -->
+<div class="admin-card p-3 mb-4">
+  <div class="d-flex flex-wrap gap-3 align-items-center">
+    <span class="small text-muted fw-bold"><i class="bi bi-info-circle me-1"></i> Legend:</span>
+    <span class="badge" style="background:rgba(244,63,94,0.15);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);font-size:0.75rem;">
+      <i class="bi bi-lightning-charge-fill me-1"></i> Attacked
+    </span>
+    <span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);border:1px solid rgba(16,185,129,0.3);font-size:0.75rem;">
+      <i class="bi bi-shield-fill-check me-1"></i> Detected
+    </span>
+    <span class="badge" style="background:rgba(14,165,233,0.15);color:var(--info);border:1px solid rgba(14,165,233,0.3);font-size:0.75rem;">
+      <i class="bi bi-file-earmark-code-fill me-1"></i> Rule Written
+    </span>
+    <span class="badge" style="background:rgba(255,255,255,0.04);color:var(--text-muted);border:1px solid var(--border);font-size:0.75rem;">
+      <i class="bi bi-dash me-1"></i> Untested
+    </span>
   </div>
 </div>
 
@@ -132,83 +115,86 @@
 {% for tactic_name, tactic_id in mitre_tactics %}
 {% set techniques = matrix.get(tactic_name, []) %}
 {% if techniques %}
-<div class="card mb-4">
-  <div class="card-header tactic-header">
-    <div class="d-flex justify-content-between align-items-center">
-      <h6 class="mb-0">{{ tactic_name }} <small class="text-muted">({{ tactic_id }})</small></h6>
-      <span class="badge bg-secondary">{{ techniques | length }} techniques</span>
+<div class="admin-card mb-4 overflow-hidden" style="border-radius:14px;">
+  <div class="p-3 tactic-header d-flex justify-content-between align-items-center">
+    <div>
+      <span style="font-weight:700;color:var(--text-primary);font-size:0.88rem;">{{ tactic_name }}</span>
+      <span class="ms-2 badge" style="background:rgba(255,255,255,0.06);color:var(--text-muted);font-family:'JetBrains Mono',monospace;">{{ tactic_id }}</span>
     </div>
+    <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--primary);border:1px solid rgba(99,102,241,0.3);">
+      {{ techniques | length }} techniques
+    </span>
   </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-dark table-hover coverage-table mb-0">
-        <thead>
-          <tr>
-            <th style="width: 40%; min-width: 200px;">Technique</th>
-            <th class="text-center" style="width: 20%;">Attacked</th>
-            <th class="text-center" style="width: 20%;">Detected</th>
-            <th class="text-center" style="width: 20%;">Rule Written</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for tech in techniques | sort(attribute='technique_id') %}
-          <tr>
-            <td class="technique-cell">
-              <code class="text-info">{{ tech.technique_id }}</code>
-              <div class="text-muted small mt-1">
-                {% set log = tech._log if tech._log is defined else none %}
-                {% if log %}
+  <div class="table-responsive">
+    <table class="table table-dark table-hover coverage-table mb-0">
+      <thead>
+        <tr>
+          <th style="width: 40%; min-width: 220px;">Technique ID & Title</th>
+          <th class="text-center" style="width: 20%;">Attack Status</th>
+          <th class="text-center" style="width: 20%;">Detection Status</th>
+          <th class="text-center" style="width: 20%;">Detection Rule</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tech in techniques | sort(attribute='technique_id') %}
+        <tr>
+          <td class="technique-cell">
+            <code style="color:var(--primary);font-weight:700;font-size:0.85rem;">{{ tech.technique_id }}</code>
+            <div class="small mt-1" style="color:var(--text-primary);font-weight:600;">
+              {% set log = tech._log if tech._log is defined else none %}
+              {% if log %}
                 {{ log.technique_title }}
-                {% else %}
-                <em>Click to log</em>
-                {% endif %}
-              </div>
-            </td>
-            <td class="text-center">
-              {% if tech.attacked %}
-              <span class="badge badge-status bg-success"><i class="bi bi-check-lg"></i> Yes</span>
               {% else %}
-              <span class="badge badge-status bg-secondary"><i class="bi bi-x-lg"></i> No</span>
+                <span class="text-muted">{{ tech.technique_title or 'Simulation Target' }}</span>
               {% endif %}
+            </div>
+          </td>
+          <td class="text-center">
+            {% if tech.attacked %}
+              <span class="badge" style="background:rgba(244,63,94,0.15);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);">
+                <i class="bi bi-check-lg"></i> Executed
+              </span>
               {% if tech.first_attacked %}
-              <div class="text-muted small mt-1">{{ tech.first_attacked.strftime('%Y-%m-%d') }}</div>
+              <div class="text-muted small mt-1" style="font-size:0.7rem;">{{ tech.first_attacked.strftime('%Y-%m-%d') }}</div>
               {% endif %}
-            </td>
-            <td class="text-center">
-              {% if tech.detected %}
-              <span class="badge badge-status bg-success"><i class="bi bi-shield-fill-check"></i> Yes</span>
-              {% else %}
-              <span class="badge badge-status bg-secondary"><i class="bi bi-x-lg"></i> No</span>
-              {% endif %}
+            {% else %}
+              <span class="badge" style="background:rgba(255,255,255,0.03);color:var(--text-muted);border:1px solid var(--border);">
+                Pending
+              </span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if tech.detected %}
+              <span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);border:1px solid rgba(16,185,129,0.3);">
+                <i class="bi bi-shield-fill-check"></i> Verified
+              </span>
               {% if tech.first_detected %}
-              <div class="text-muted small mt-1">{{ tech.first_detected.strftime('%Y-%m-%d') }}</div>
+              <div class="text-muted small mt-1" style="font-size:0.7rem;">{{ tech.first_detected.strftime('%Y-%m-%d') }}</div>
               {% endif %}
-            </td>
-            <td class="text-center">
-              {% if tech.rule_written %}
-              <span class="badge badge-status bg-info"><i class="bi bi-file-earmark-code"></i> Yes</span>
-              {% else %}
-              <span class="badge badge-status bg-secondary"><i class="bi bi-x-lg"></i> No</span>
-              {% endif %}
+            {% else %}
+              <span class="badge" style="background:rgba(255,255,255,0.03);color:var(--text-muted);border:1px solid var(--border);">
+                No Alert
+              </span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if tech.rule_written %}
+              <span class="badge" style="background:rgba(14,165,233,0.15);color:var(--info);border:1px solid rgba(14,165,233,0.3);">
+                <i class="bi bi-file-earmark-code"></i> Authored
+              </span>
               {% if tech.last_reviewed %}
-              <div class="text-muted small mt-1">{{ tech.last_reviewed.strftime('%Y-%m-%d') }}</div>
+              <div class="text-muted small mt-1" style="font-size:0.7rem;">{{ tech.last_reviewed.strftime('%Y-%m-%d') }}</div>
               {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-{% else %}
-<!-- Tactic with no coverage yet - show as collapsed or minimal -->
-<div class="card mb-2">
-  <div class="card-header tactic-header py-2">
-    <div class="d-flex justify-content-between align-items-center">
-      <h6 class="mb-0 text-muted">{{ tactic_name }} <small class="text-muted">({{ tactic_id }})</small></h6>
-      <span class="badge bg-secondary">0 techniques</span>
-    </div>
+            {% else %}
+              <span class="badge" style="background:rgba(255,255,255,0.03);color:var(--text-muted);border:1px solid var(--border);">
+                None
+              </span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 {% endif %}
@@ -216,11 +202,15 @@
 
 <!-- Empty state if no coverage at all -->
 {% if total_techniques == 0 %}
-<div class="text-center py-5">
-  <i class="bi bi-grid-3x3-gap fs-1 text-muted"></i>
-  <h5 class="mt-3 text-muted">No ATT&CK coverage yet</h5>
-  <p class="text-muted">Complete vm_exercise labs or log exercises manually to build your coverage matrix.</p>
-  <a href="{{ url_for('purple_team.log_new') }}" class="btn btn-primary mt-2">
+<div class="admin-card text-center py-5">
+  <div style="width:64px;height:64px;border-radius:18px;background:rgba(99,102,241,0.1);display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--primary);">
+    <i class="bi bi-grid-3x3-gap-fill" style="font-size:2rem;"></i>
+  </div>
+  <h5 style="font-weight:700;color:var(--text-primary);">No ATT&CK Coverage Recorded Yet</h5>
+  <p class="text-muted small mb-3" style="max-width:400px;margin:0 auto;">
+    Complete purple team VM exercises or log your own tests manually to populate your enterprise coverage matrix.
+  </p>
+  <a href="{{ url_for('purple_team.log_new') }}" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg me-1"></i> Log First Exercise
   </a>
 </div>

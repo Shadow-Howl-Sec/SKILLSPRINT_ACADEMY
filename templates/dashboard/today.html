@@ -88,6 +88,7 @@
               <a href="{{ url_for('assessment.topic_quiz', topic_id=item.topic_id) }}" class="btn btn-sm btn-warning"><i class="bi bi-patch-question"></i> Take Quiz</a>
             {% endif %}
             <form method="post" action="{{ url_for('dashboard.complete_item', item_id=item.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-sm btn-success" title="Mark done"><i class="bi bi-check2"></i> Done</button>
             </form>
           </div>
@@ -130,6 +131,7 @@
           <a href="{{ url_for('assessment.topic_quiz', topic_id=next_pending.topic_id) }}" class="btn btn-warning btn-sm"><i class="bi bi-patch-question me-1"></i> Take Quiz</a>
         {% else %}
           <form method="post" action="{{ url_for('dashboard.complete_item', item_id=next_pending.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-primary btn-sm"><i class="bi bi-check2 me-1"></i> Mark Done</button>
           </form>
         {% endif %}

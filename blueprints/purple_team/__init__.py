@@ -8,6 +8,6 @@ Provides:
 """
 from flask import Blueprint
 
-purple_team_bp = Blueprint("purple_team", __name__, url_prefix="/purple-team")
+from blueprints.purple_team.routes import purple_team_bp
 
-from blueprints.purple_team import routes  # noqa: F401,E402
+__all__ = ["purple_team_bp"]
