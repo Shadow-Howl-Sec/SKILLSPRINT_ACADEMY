@@ -44,7 +44,7 @@ def check_update():
         }), 500
 
 
-@settings_bp.route("/api/update/status")
+@settings_bp.route("/api/update/status", methods=["GET", "POST"])
 def update_status():
     """Get cached update status without checking."""
     try:

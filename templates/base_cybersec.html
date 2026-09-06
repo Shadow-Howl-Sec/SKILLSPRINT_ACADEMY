@@ -179,7 +179,8 @@
     <!-- Main Content -->
     <div style="flex:1;overflow-y:auto;padding:1.75rem;" class="dash-content">
 
-      <!-- Update banner -->
+      <!-- Update banner (hidden in offline mode) -->
+      {% if not OFFLINE_MODE %}
       <div id="update-banner" class="alert alert-info alert-dismissible fade show mb-4" style="display:none;" role="alert">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div>
@@ -197,6 +198,7 @@
         </div>
         <div id="update-release-notes" class="mt-2" style="display:none;font-size:0.8rem;opacity:0.8;"></div>
       </div>
+      {% endif %}
 
       <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -233,6 +235,10 @@
 {% else %}
   <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endif %}
+<script nonce="{{ csp_nonce }}">
+  // Server-injected runtime config — required before main.js loads
+  window.OFFLINE_MODE = {{ 'true' if OFFLINE_MODE else 'false' }};
+</script>
 <script nonce="{{ csp_nonce }}" src="/static/js/update_checker.js"></script>
 <script nonce="{{ csp_nonce }}" src="/static/js/main.js"></script>
 {% block scripts %}{% endblock %}

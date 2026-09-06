@@ -37,7 +37,7 @@ def view():
 
     # Group items by topic
     groups: OrderedDict[int, dict] = OrderedDict()
-    for it in sorted(roadmap.items, key=lambda i: (i.scheduled_date or date.min,
+    for it in sorted(roadmap.items, key=lambda i: (i.scheduled_date or datetime.min.replace(tzinfo=timezone.utc) if getattr(i.scheduled_date, 'tzinfo', None) else (i.scheduled_date or datetime.min),
                                                    i.order_index)):
         tid = it.topic_id or 0
         g_item = groups.setdefault(tid, {

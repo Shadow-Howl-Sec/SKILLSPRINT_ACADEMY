@@ -20,7 +20,7 @@
       <form method="post" action="{{ url_for('assessment.topic_quiz', topic_id=topic.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% for q in questions %}
-        <div class="mb-4 p-3 rounded border" style="background:rgba(255,255,255,0.03);border-color:var(--border);">
+        <div class="mb-4 p-3 rounded border js-question-group" data-qtype="{{ q.question_type }}" style="background:rgba(255,255,255,0.03);border-color:var(--border);">
           <div class="d-flex align-items-center justify-content-between mb-2">
             <span class="badge" style="font-size:0.7rem;background:rgba(99,102,241,0.15);color:var(--primary);border:1px solid rgba(99,102,241,0.3);">Question {{ loop.index }} of {{ questions | length }}</span>
             <span class="text-muted small">Difficulty: {{ q.difficulty }}/5</span>
@@ -62,14 +62,72 @@
 {% block scripts %}
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', () => {
+  // ── Click-to-select highlight for MCQ rows ──────────────────────
   document.querySelectorAll('.js-choice').forEach(el => {
     el.addEventListener('click', () => {
       const inputId = el.getAttribute('data-input');
       if (inputId) {
         const input = document.getElementById(inputId);
-        if (input) input.checked = true;
+        if (input) {
+          input.checked = true;
+          // Clear error highlight when user selects an option
+          const group = input.closest('.js-question-group');
+          if (group) {
+            group.style.borderColor = '';
+            group.style.background = 'rgba(255,255,255,0.02)';
+            const err = group.querySelector('.js-validation-msg');
+            if (err) err.remove();
+          }
+        }
       }
     });
+  });
+
+  // ── Form validation before submit ──────────────────────────────
+  const form = document.querySelector('form[method="post"]');
+  if (!form) return;
+
+  form.addEventListener('submit', e => {
+    let firstError = null;
+    let hasErrors = false;
+
+    // Find all MCQ question groups and verify one radio is selected
+    document.querySelectorAll('.js-question-group[data-qtype="mcq"]').forEach(group => {
+      const radios = group.querySelectorAll('input[type="radio"]');
+      const answered = Array.from(radios).some(r => r.checked);
+
+      // Remove previous error state
+      group.style.borderColor = '';
+      group.style.background = 'rgba(255,255,255,0.02)';
+      const prev = group.querySelector('.js-validation-msg');
+      if (prev) prev.remove();
+
+      if (!answered) {
+        hasErrors = true;
+        group.style.borderColor = 'rgba(244,63,94,0.6)';
+        group.style.background = 'rgba(244,63,94,0.05)';
+
+        const msg = document.createElement('p');
+        msg.className = 'js-validation-msg text-danger mt-2 mb-0 small';
+        msg.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>Please select an answer before submitting.';
+        group.appendChild(msg);
+
+        if (!firstError) firstError = group;
+      }
+    });
+
+    if (hasErrors) {
+      e.preventDefault();
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      if (window.showToast) {
+        window.showToast(
+          '<i class="bi bi-exclamation-triangle me-1"></i>Please answer all questions before submitting.',
+          'warning'
+        );
+      }
+    }
   });
 });
 </script>

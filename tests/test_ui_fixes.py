@@ -1,0 +1,71 @@
+"""Unit tests for Phase 1 UI fixes and API endpoint resolutions."""
+import unittest
+from app import app
+from extensions import db
+from models import User, Topic, AssessmentQuestion
+
+class TestUIFixes(unittest.TestCase):
+    """Test suite covering the 6 Phase 1 UI & API bug fixes."""
+
+    def setUp(self):
+        self.app = app
+        self.app.config['TESTING'] = True
+        self.app.config['WTF_CSRF_ENABLED'] = False
+        self.client = self.app.test_client()
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+
+    def tearDown(self):
+        self.ctx.pop()
+
+    def test_update_status_accepts_post(self):
+        """Fix 1 & 3: Ensure /api/update/status handles POST without 405 Method Not Allowed."""
+        res = self.client.post('/api/update/status', json={'force': False})
+        self.assertIn(res.status_code, (200, 404))
+        self.assertNotEqual(res.status_code, 405)
+
+    def test_update_status_accepts_get(self):
+        """Ensure /api/update/status also handles GET requests."""
+        res = self.client.get('/api/update/status')
+        self.assertIn(res.status_code, (200, 404))
+        self.assertNotEqual(res.status_code, 405)
+
+    def test_apply_update_offline_mode_returns_400(self):
+        """Fix 2 & 4: Ensure /settings/apply-update returns HTTP 400 when in OFFLINE_MODE."""
+        self.app.config['OFFLINE_MODE'] = True
+        res = self.client.post('/settings/apply-update', json={
+            'download_url': 'https://example.com/update.zip'
+        })
+        self.assertEqual(res.status_code, 400)
+        data = res.get_json()
+        self.assertIn('error', data)
+        self.assertIn('offline mode', data['error'].lower())
+
+    def test_offline_mode_injected_in_base_cybersec(self):
+        """Fix 2: Ensure base_cybersec.html injects window.OFFLINE_MODE before main.js."""
+        res = self.client.get('/roadmap')
+        self.assertEqual(res.status_code, 200)
+        html = res.get_data(as_text=True)
+        self.assertIn('window.OFFLINE_MODE =', html)
+        self.assertIn('/static/js/update_checker.js', html)
+        self.assertIn('/static/js/main.js', html)
+
+    def test_offline_mode_injected_in_index(self):
+        """Fix 5: Ensure index.html includes scripts and window.OFFLINE_MODE runtime injection."""
+        res = self.client.get('/')
+        self.assertEqual(res.status_code, 200)
+        html = res.get_data(as_text=True)
+        self.assertIn('window.OFFLINE_MODE =', html)
+        self.assertIn('/static/js/update_checker.js', html)
+        self.assertIn('/static/js/main.js', html)
+
+    def test_quiz_has_client_side_validation_script(self):
+        """Fix 6: Ensure checkpoint_quiz.html includes client-side validation script for MCQs."""
+        topic = Topic.query.first()
+        self.assertIsNotNone(topic)
+        res = self.client.get(f'/topic/{topic.id}/quiz')
+        self.assertEqual(res.status_code, 200)
+        html = res.get_data(as_text=True)
+        self.assertIn('js-question-group', html)
+        self.assertIn('js-choice', html)
+        self.assertIn('Please answer all questions before submitting', html)

@@ -343,12 +343,13 @@ class TestTopicsBlueprint(unittest.TestCase):
         self.ctx.pop()
 
     def test_topic_detail(self):
+        import html
         topic = Topic.query.first()
         self.assertIsNotNone(topic)
 
         res = self.client.get(f'/topic/{topic.id}')
         self.assertEqual(res.status_code, 200)
-        self.assertIn(topic.title.encode(), res.data)
+        self.assertIn(html.escape(topic.title).encode(), res.data)
 
     def test_topic_detail_404(self):
         max_id = db.session.query(db.func.max(Topic.id)).scalar() or 0

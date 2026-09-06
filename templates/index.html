@@ -777,5 +777,11 @@
 {% else %}
 <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endif %}
+<script nonce="{{ csp_nonce }}">
+  // Server-injected runtime config — required before main.js loads
+  window.OFFLINE_MODE = {{ 'true' if OFFLINE_MODE else 'false' }};
+</script>
+<script nonce="{{ csp_nonce }}" src="/static/js/update_checker.js"></script>
+<script nonce="{{ csp_nonce }}" src="/static/js/main.js"></script>
 </body>
 </html>
