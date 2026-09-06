@@ -1,7 +1,7 @@
 {% extends "base_cybersec.html" %}
 {% block title %}{{ role.name }} — SkillSprint Academy{% endblock %}
 {% set active = "job_roles" %}
-{% block page_title %}<span style="font-size:1.5rem;">{{ role.icon_emoji }}</span> {{ role.name }}{% endblock %}
+{% block page_title %}{% if role.icon_url %}<img src="{{ role.icon_url }}" alt="{{ role.name }}" style="width:32px;height:32px;object-fit:contain;vertical-align:middle;margin-right:8px;">{% else %}<span style="font-size:1.5rem;">{{ role.icon_emoji }}</span>{% endif %} {{ role.name }}{% endblock %}
 {% block page_subtitle %}{{ role.difficulty_label }}{% if role.avg_salary_note %} · {{ role.avg_salary_note }}{% endif %}{% endblock %}
 
 {% block content %}

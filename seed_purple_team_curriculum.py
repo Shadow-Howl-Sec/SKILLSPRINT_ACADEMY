@@ -2915,38 +2915,42 @@ git add . && git commit -m "Initial portfolio setup"
         db.session.flush()
         print(f"[+] Topics seeded: {len(all_topics)} topics across 6 pillars.")
 
-        # ── PURPLE TEAM JOB ROLE ──────────────────────────────────────────
-        role, _ = _get_or_create(JobRole, {"slug": "purple-team-operator"}, {
-            "name": "Purple Team Operator",
-            "description": (
-                "A Purple Team Operator bridges offensive (Red Team) and defensive (Blue Team) "
-                "disciplines. They attack their own organisation's infrastructure using Red Team TTPs, "
-                "then immediately pivot to improving detections, refining Sigma rules, and closing "
-                "security gaps. This role is one of the most in-demand in modern cybersecurity."
+        # ── MASTER PURPLE TEAM EXPERT JOB ROLE ───────────────────────────
+        # Ensure 'Master Purple Team Expert' is the single job role track
+        JobRoleTopic.query.delete()
+        JobRole.query.delete()
+        db.session.flush()
+
+        role = JobRole(
+            slug="master-purple-team-expert",
+            name="Master Purple Team Expert",
+            description=(
+                "The Master Purple Team Expert track bridges offensive (Red Team) and defensive (Blue Team) "
+                "disciplines into a unified mastery path. Learn host & network attack vectors, Active Directory "
+                "exploitation, threat hunting, Sigma rule development, and incident response."
             ),
-            "avg_salary_note": "₹8-25 LPA (India) | $65-130k (US) | £45-90k (UK)",
-            "recommended_certs": json.dumps([
+            avg_salary_note="₹12-35 LPA (India) | $90-180k (US) | £60-120k (UK)",
+            recommended_certs=json.dumps([
                 "eJPT", "BTL1", "PNPT", "CRTP", "SC-200", "OSCP", "CRTO", "Certified Purple Team Professional"
             ]),
-            "icon_emoji": "🟣",
-            "color_hex": "#a855f7",
-            "difficulty_label": "Intermediate",
-            "is_default": True,
-            "is_active": True,
-        })
+            icon_url="/static/img/skill_logo.ico",
+            icon_emoji="🟣",
+            color_hex="#a855f7",
+            difficulty_label="Mastery",
+            is_default=True,
+            is_active=True,
+        )
+        db.session.add(role)
+        db.session.flush()
 
         # Map all topics to the role in order
         for idx, topic in enumerate(all_topics):
-            jrt_exists = JobRoleTopic.query.filter_by(
-                job_role_id=role.id, topic_id=topic.id
-            ).first()
-            if not jrt_exists:
-                db.session.add(JobRoleTopic(
-                    job_role_id=role.id,
-                    topic_id=topic.id,
-                    order_index=idx,
-                    is_core=True,
-                ))
+            db.session.add(JobRoleTopic(
+                job_role_id=role.id,
+                topic_id=topic.id,
+                order_index=idx,
+                is_core=True,
+            ))
 
         db.session.commit()
 

@@ -10,7 +10,11 @@
   <div class="col-md-6 col-lg-4">
     <div class="admin-card p-3 h-100 d-flex flex-column">
       <div class="d-flex align-items-center gap-2 mb-2">
-        <span style="font-size:1.75rem;">{{ role.icon_emoji }}</span>
+        {% if role.icon_url %}
+          <img src="{{ role.icon_url }}" alt="{{ role.name }}" style="width:32px;height:32px;object-fit:contain;">
+        {% else %}
+          <span style="font-size:1.75rem;">{{ role.icon_emoji }}</span>
+        {% endif %}
         <div>
           <h6 style="margin:0;font-weight:700;font-size:.95rem;">{{ role.name }}</h6>
           <span class="badge bg-light text-secondary" style="font-size:.62rem;">{{ role.difficulty_label }}</span>
