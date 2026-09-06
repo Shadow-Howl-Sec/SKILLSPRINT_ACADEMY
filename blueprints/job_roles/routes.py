@@ -20,8 +20,7 @@ job_roles_bp = Blueprint("job_roles", __name__)
 
 @job_roles_bp.route("/job-roles")
 def browse():
-    roles = JobRole.query.filter_by(is_active=True).order_by(JobRole.id).all()
-    return render_template("job_roles/browse.html", roles=roles)
+    return redirect(url_for("roadmap.start"))
 
 
 @job_roles_bp.route("/job-roles/<int:role_id>")

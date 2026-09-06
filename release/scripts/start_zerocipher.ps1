@@ -112,8 +112,8 @@ if (-not (Test-Path (Split-Path $dbPath -Parent))) {
 & py -3 -c 'from app import create_tables; create_tables()' | Out-Null
 Write-Ok "tables ok"
 
-Write-Step "Running seed.py (idempotent - adds new curriculum + capstones)"
-& py -3 seed.py | Out-Null
+Write-Step "Running seed_comprehensive.py (curriculum, labs, quizzes, videos)"
+& py -3 seed_comprehensive.py | Out-Null
 Write-Ok "seed ok"
 
 # ---------------------------------------------------------------------------

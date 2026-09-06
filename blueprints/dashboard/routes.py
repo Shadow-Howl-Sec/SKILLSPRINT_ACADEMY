@@ -23,8 +23,8 @@ def today():
     roadmap = Roadmap.query.filter_by(
         user_id=g.user.id, status="active").first()
     if roadmap is None:
-        flash("Choose a job role to generate your roadmap.", "info")
-        return redirect(url_for("job_roles.browse"))
+        flash("Start your Purple Team journey first.", "info")
+        return redirect(url_for("index"))
 
     today_date = date.today()
     today_items = sorted(

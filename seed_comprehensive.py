@@ -1078,6 +1078,10 @@ def main():
         new_modules = seed_all_topic_learning_modules(topics)
         print(f"[+] Seeded {new_modules} new TopicLearningModules (total: {TopicLearningModule.query.count()}).")
 
+        # 9. Curated Video Lectures and Assessment Questions for ALL Topics
+        import seed_all_videos_and_quizzes
+        seed_all_videos_and_quizzes.main()
+
         db.session.commit()
         print("[SUCCESS] Comprehensive Purple Team curriculum data population complete!")
 

@@ -129,8 +129,8 @@ class TestJobRolesBlueprint(unittest.TestCase):
 
     def test_job_roles_browse(self):
         res = self.client.get('/job-roles')
-        self.assertEqual(res.status_code, 200)
-        self.assertIn(b'Purple Team', res.data)  # Job roles content
+        self.assertEqual(res.status_code, 302)
+        self.assertIn('/roadmap/start', res.headers.get('Location', ''))
 
     def test_job_roles_detail(self):
         role = JobRole.query.first()

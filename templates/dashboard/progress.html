@@ -27,9 +27,9 @@
           <i class="bi bi-radar" style="font-size:2rem;"></i>
         </div>
         <h6 style="color:var(--text-primary);font-weight:700;">No Skill Profile Generated Yet</h6>
-        <p class="small text-muted mb-3" style="max-width:360px;margin:0 auto;">Choose a job role track and complete checkpoint quizzes and labs to build your skill radar.</p>
-        <a href="{{ url_for('job_roles.browse') }}" class="btn btn-primary btn-sm">
-          <i class="bi bi-compass me-1"></i> Browse Job Roles
+        <p class="small text-muted mb-3" style="max-width:360px;margin:0 auto;">Complete checkpoint quizzes and labs in your Purple Team roadmap to build your skill radar.</p>
+        <a href="{{ url_for('roadmap.start') }}" class="btn btn-primary btn-sm">
+          <i class="bi bi-lightning-charge-fill me-1"></i> Start Purple Team Roadmap
         </a>
       </div>
       {% endif %}

@@ -32,8 +32,8 @@ def _active_roadmap():
 def view():
     roadmap = _active_roadmap()
     if roadmap is None:
-        flash("Generate a roadmap to get started.", "info")
-        return redirect(url_for("job_roles.browse"))
+        flash("Start your Purple Team journey to get going.", "info")
+        return redirect(url_for("index"))
 
     # Group items by topic
     groups: OrderedDict[int, dict] = OrderedDict()
@@ -57,7 +57,7 @@ def view():
 def calendar():
     roadmap = _active_roadmap()
     if roadmap is None:
-        return redirect(url_for("job_roles.browse"))
+        return redirect(url_for("index"))
 
     # 14-day forward calendar view with time blocks
     start = date.today()
@@ -145,6 +145,30 @@ def replan():
     replan_roadmap(roadmap)
     db.session.commit()
     flash("Your roadmap has been recalculated.", "success")
+    return redirect(url_for("roadmap.view"))
+
+
+@roadmap_bp.route("/roadmap/start")
+def start():
+    """Auto-generate the Purple Team roadmap for the current user."""
+    from models import JobRole
+    # Check if user already has an active roadmap
+    existing = _active_roadmap()
+    if existing:
+        flash("You already have an active roadmap!", "info")
+        return redirect(url_for("roadmap.view"))
+
+    # Find the default Purple Team role, or first active role
+    role = JobRole.query.filter_by(is_default=True, is_active=True).first()
+    if not role:
+        role = JobRole.query.filter_by(is_active=True).first()
+    if not role:
+        flash("No curriculum data found. Please seed the database first.", "error")
+        return redirect(url_for("index"))
+
+    generate_roadmap(user_id=g.user.id, job_role_id=role.id)
+    db.session.commit()
+    flash("Your Purple Team roadmap has been generated! Let's begin.", "success")
     return redirect(url_for("roadmap.view"))
 
 

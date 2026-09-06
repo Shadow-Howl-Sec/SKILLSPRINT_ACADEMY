@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="SkillSprint Academy — Zero to Purple Team Mastery, Fully Offline">
-  <title>SkillSprint Academy — Command Center</title>
-  <link rel="icon" href="/static/img/skill_logo.png">
+  <link rel="icon" type="image/png" href="/static/img/skill_logo.png">
+  <link rel="apple-touch-icon" href="/static/img/skill_logo.png">
   {% if OFFLINE_MODE %}
     <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="/static/vendor/fonts/fonts.css" rel="stylesheet">
@@ -385,9 +385,7 @@
     <a href="{{ url_for('roadmap.view') }}" class="cmd-nav-link"><i class="bi bi-signpost-2"></i>Roadmap</a>
     <a href="{{ url_for('labs.browse') }}" class="cmd-nav-link"><i class="bi bi-terminal-fill"></i>Labs</a>
     <a href="{{ url_for('purple_team.coverage') }}" class="cmd-nav-link"><i class="bi bi-grid-3x3-gap-fill"></i>ATT&CK</a>
-    <a href="{{ url_for('job_roles.browse') }}" class="cmd-nav-link"><i class="bi bi-briefcase"></i>Tracks</a>
     <a href="{{ url_for('assistant.chat') }}" class="cmd-nav-link"><i class="bi bi-robot"></i>AI Mentor</a>
-    <a href="{{ url_for('library.list') }}" class="cmd-nav-link"><i class="bi bi-collection"></i>Library</a>
     <a href="{{ url_for('offline.lab_setup') }}" class="cmd-nav-link"><i class="bi bi-pc-display"></i>Lab Setup</a>
   </nav>
 
@@ -409,7 +407,7 @@
   <div class="cmd-hero animate-fade-up">
     <div class="cmd-hero-eyebrow"><i class="bi bi-shield-lock-fill"></i>Operational Command Center</div>
     <h1>Zero to <span>Purple Team</span> Mastery</h1>
-    <p>Offline-first cybersecurity training platform. Attack, detect, defend — all from your local environment. No internet required, no telemetry, your data stays yours.</p>
+    <p>Offline-first 2-phase cybersecurity training program. <strong>Phase 1 (Months 1–3)</strong> qualifies you for cybersecurity internships and jobs such as Network Administrator and Security Support. <strong>Phase 2</strong> elevates you into a full Purple Team specialist.</p>
     <div class="cmd-hero-badges">
       <span class="cmd-hero-badge" style="background:rgba(16,185,129,0.1);color:#34d399;border-color:rgba(16,185,129,0.25);">
         <i class="bi bi-wifi-off"></i>100% Offline
@@ -481,10 +479,6 @@
       <div class="cmd-tool-icon" style="background:rgba(99,102,241,0.15);color:#818cf8;"><i class="bi bi-robot"></i></div>
       <span>AI Mentor</span>
     </a>
-    <a href="{{ url_for('library.list') }}" class="cmd-tool">
-      <div class="cmd-tool-icon" style="background:rgba(6,182,212,0.15);color:#22d3ee;"><i class="bi bi-collection"></i></div>
-      <span>My Library</span>
-    </a>
     <a href="{{ url_for('dashboard.progress') }}" class="cmd-tool">
       <div class="cmd-tool-icon" style="background:rgba(16,185,129,0.15);color:#34d399;"><i class="bi bi-graph-up-arrow"></i></div>
       <span>Skill Radar</span>
@@ -492,10 +486,6 @@
     <a href="{{ url_for('offline.lab_setup') }}" class="cmd-tool">
       <div class="cmd-tool-icon" style="background:rgba(168,85,247,0.15);color:#c084fc;"><i class="bi bi-pc-display"></i></div>
       <span>VirtualBox Setup</span>
-    </a>
-    <a href="{{ url_for('offline.about') }}" class="cmd-tool">
-      <div class="cmd-tool-icon" style="background:rgba(100,116,139,0.15);color:#94a3b8;"><i class="bi bi-info-circle"></i></div>
-      <span>Offline Info</span>
     </a>
   </div>
 
@@ -508,21 +498,19 @@
           <i class="bi bi-rocket-takeoff" style="font-size:1.75rem;color:#fff;"></i>
         </div>
         <h3 style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.5rem;color:#fff;margin-bottom:0.5rem;">Start Your Purple Team Journey</h3>
-        <p style="color:#8892b0;font-size:0.95rem;max-width:500px;margin:0 auto 2rem;">Choose a job-role track and get a personalized 12-week roadmap with daily tasks, labs, quizzes, and MITRE ATT&CK mapped exercises.</p>
-        <a href="{{ url_for('job_roles.browse') }}" class="btn btn-primary btn-lg" style="padding:0.875rem 2rem;font-size:1rem;font-weight:600;">
-          <i class="bi bi-signpost-2 me-2"></i>Choose Your Track & Start Learning
+        <p style="color:#8892b0;font-size:0.95rem;max-width:550px;margin:0 auto 2rem;">Fast-track your career in 2 streamlined phases: Phase 1 gets you job/internship-ready in 3 months (Network Administrator & Cybersecurity Support), followed by Phase 2 Purple Team mastery.</p>
+        <a href="{{ url_for('roadmap.start') }}" class="btn btn-primary btn-lg" style="padding:0.875rem 2.25rem;font-size:1rem;font-weight:600;">
+          <i class="bi bi-lightning-charge-fill me-2"></i>Start Purple Team Journey
         </a>
       </div>
       
       <div style="border-top:1px solid rgba(99,102,241,0.2);margin-top:2rem;padding-top:2rem;">
-        <p style="color:#8892b0;font-size:0.85rem;margin-bottom:1rem;"><strong>What you'll get:</strong></p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;text-align:left;">
-          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> 12-week structured curriculum</div>
-          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> Daily 2-3hr time blocks</div>
-          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> 260+ topics with theory & labs</div>
-          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> MITRE ATT&CK mapped exercises</div>
-          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> Checkpoint quizzes & XP</div>
-          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> Purple Team exercise logging</div>
+        <p style="color:#8892b0;font-size:0.85rem;margin-bottom:1rem;"><strong>Your 2-Phase Career Progression:</strong></p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;text-align:left;">
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> <strong>Phase 1 (3 Months):</strong> Network Admin & Cyber Job Ready</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-info"></i> <strong>Phase 2:</strong> Advanced Purple Team & Attack/Defend</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> Comprehensive Theory, Video Lectures, Labs & Quizzes</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> MITRE ATT&CK Matrix & Hands-On Exercises</div>
         </div>
       </div>
     </div>
@@ -609,18 +597,6 @@
       <p class="cmd-card-desc">Visual matrix of MITRE ATT&CK techniques you've attacked, detected, and built rules for. Track your coverage across all tactics.</p>
     </a>
 
-    <a href="{{ url_for('job_roles.browse') }}" class="cmd-card">
-      <div class="cmd-card-head">
-        <div class="cmd-card-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24;"><i class="bi bi-briefcase-fill"></i></div>
-        <div>
-          <div class="cmd-card-title">Job Role Tracks</div>
-          <span class="cmd-hero-badge" style="font-size:0.65rem;background:rgba(6,182,212,0.1);color:#22d3ee;border-color:rgba(6,182,212,0.2);">
-            <i class="bi bi-award"></i>10 Roles
-          </span>
-        </div>
-      </div>
-      <p class="cmd-card-desc">SOC Analyst, Pentester, Detection Engineer, Threat Hunter, and more. Each with curated topics, labs, and capstone projects.</p>
-    </a>
 
     <a href="{{ url_for('assistant.chat') }}" class="cmd-card">
       <div class="cmd-card-head">
@@ -650,17 +626,17 @@
   </div>
 
   <!-- Phase 1 Curriculum -->
-  <div class="cmd-section-title"><i class="bi bi-flag-fill" style="color:#34d399;"></i> Phase 1: Zero to Job-Ready (Months 1–3)</div>
+  <div class="cmd-section-title"><i class="bi bi-briefcase-fill" style="color:#34d399;"></i> Phase 1: Zero to Job & Internship Ready (Months 1–3)</div>
   <div class="cmd-curriculum-grid">
     <div class="cmd-curr-card">
       <div class="cmd-curr-head">
         <div class="cmd-curr-icon" style="background:rgba(99,102,241,0.15);color:#818cf8;"><i class="bi bi-wifi"></i></div>
         <div>
           <div class="cmd-curr-title">Weeks 1–2: Foundations</div>
-          <div class="cmd-curr-sub">Networking & OS</div>
+          <div class="cmd-curr-sub">Networking & SysAdmin</div>
         </div>
       </div>
-      <p class="cmd-curr-desc">TCP/IP, DNS, HTTP, Wireshark, Linux filesystem, Bash scripting, Windows internals, security mindset & ethics.</p>
+      <p class="cmd-curr-desc">TCP/IP, subnetting, DNS, Wireshark packet capture, Linux & Windows system administration — essential for Network Administrator & IT Support jobs.</p>
       <div class="cmd-progress-bar" style="margin-top:0.75rem;"><div class="cmd-progress-fill" style="width:0%;"></div></div>
     </div>
     <div class="cmd-curr-card">

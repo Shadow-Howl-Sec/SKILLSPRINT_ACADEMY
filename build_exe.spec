@@ -38,6 +38,7 @@ project_datas = [
     ('seed.py', '.'),
     ('seed_comprehensive.py', '.'),
     ('seed_resources.py', '.'),
+    ('seed_all_videos_and_quizzes.py', '.'),
     ('config.py', '.'),
     ('models.py', '.'),
     ('extensions.py', '.'),
