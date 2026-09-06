@@ -20,15 +20,46 @@
           <div>This is an offline bundled challenge — no internet required. Download the artifact(s) below and work on them locally (or inside your Kali VM).</div>
         </div>
 
-        <h6 style="font-weight:700;margin:1rem 0 .5rem;">Step 1 — Get the challenge files</h6>
-        <p class="small text-muted">Bundle path: <code>bundles/labs/{{ (lab.url_or_container_ref or '') }}</code></p>
+        <h6 style="font-weight:700;margin:1.25rem 0 .5rem;color:var(--text-primary);">
+          <i class="bi bi-file-earmark-arrow-down me-2 text-primary"></i>Challenge Artifacts
+        </h6>
+        {% set clean_bundle_path = (lab.url_or_container_ref or '').replace('bundles/labs/', '').strip('/') %}
+        <p class="small text-muted mb-3">Bundle folder: <code style="color:var(--primary-light);">bundles/labs/{{ clean_bundle_path }}</code></p>
+
+        {% if bundle_files %}
+        <div class="d-flex flex-column gap-2 mb-4">
+          {% for f in bundle_files %}
+          <div class="d-flex align-items-center justify-content-between p-3 rounded"
+               style="background:rgba(255,255,255,0.03);border:1px solid var(--border);">
+            <div class="d-flex align-items-center gap-3">
+              <i class="bi {{ 'bi-file-text text-info' if f.is_readme else 'bi-file-earmark-code text-warning' }}" style="font-size:1.4rem;"></i>
+              <div>
+                <div style="font-weight:600;font-size:0.88rem;color:var(--text-primary);">{{ f.filename }}</div>
+                <div class="small text-muted">{{ f.size_str }}</div>
+              </div>
+            </div>
+            <a href="{{ url_for('labs.serve_bundle_file', lab_id=lab.id, filename=f.filename) }}"
+               class="btn btn-sm btn-outline-primary" download>
+              <i class="bi bi-download me-1"></i>Download
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
         <div class="d-flex flex-wrap gap-2 mb-4">
           <a href="{{ url_for('labs.serve_bundle_file', lab_id=lab.id, filename=(lab.url_or_container_ref or '') | basename|default('README.md')) }}"
              class="btn btn-primary">
-            <i class="bi bi-download me-1"></i> Open challenge files
+            <i class="bi bi-download me-1"></i> Download challenge file
           </a>
-          <a href="{{ url_for('offline.lab_setup') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-hdd-network me-1"></i> Setup the Kali VM
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 mb-4">
+          <a href="{{ url_for('offline.lab_setup') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-hdd-network me-1"></i> Setup Local VMs
+          </a>
+          <a href="{{ url_for('assistant.chat') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-robot me-1"></i> Ask AI Mentor
           </a>
         </div>
       {% elif OFFLINE_MODE %}

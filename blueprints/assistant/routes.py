@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import uuid
 
+import markdown
 from flask import Blueprint, render_template, request, jsonify, g
 from extensions import db, limiter
 from models import ChatMessage, Topic
@@ -14,6 +15,15 @@ from models import ChatMessage, Topic
 from services.ai_tutor_service import answer
 
 assistant_bp = Blueprint("assistant", __name__)
+
+
+def _render_markdown(text: str) -> str:
+    if not text:
+        return ""
+    try:
+        return markdown.markdown(text, extensions=['fenced_code', 'tables', 'codehilite'])
+    except Exception:
+        return text
 
 
 def _session_id() -> str:
@@ -54,7 +64,8 @@ def chat_api():
     db.session.add(user_msg)
     db.session.flush()
 
-    reply = answer(message, topic_id)
+    reply = answer(message, topic_id, g.user.id)
+    reply_html = _render_markdown(reply)
     ai_msg = ChatMessage(
         user_id=g.user.id, session_id=sid,
         role="assistant", content=reply,
@@ -62,4 +73,4 @@ def chat_api():
     )
     db.session.add(ai_msg)
     db.session.commit()
-    return jsonify({"reply": reply, "session_id": sid})
+    return jsonify({"reply": reply, "reply_html": reply_html, "session_id": sid})

@@ -36,10 +36,10 @@
             </div>
 
             <div class="mt-4 d-flex justify-content-end gap-2">
-                <button class="btn btn-outline-secondary" onclick="resetExercise()">
+                <button class="btn btn-outline-secondary" id="resetBtn">
                     <i class="bi bi-arrow-clockwise me-1"></i>Reset
                 </button>
-                <button class="btn btn-primary" onclick="submitExercise()">
+                <button class="btn btn-primary" id="submitBtn">
                     <i class="bi bi-check-circle me-1"></i>Submit Solution
                 </button>
             </div>
@@ -47,7 +47,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 const exerciseSpec = {{ spec_json | safe }};
 const exerciseId = {{ exercise.id }};
 
@@ -88,9 +88,11 @@ function submitExercise() {
     localStorage.setItem(`exercise_${exerciseId}`, JSON.stringify(solution));
 
     // Submit to server (roadmap item completion)
+    const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = metaCsrf ? metaCsrf.getAttribute('content') : '';
     fetch('{{ url_for("dashboard.complete_item", item_id=0).replace("/0", "") }}' + '/' + exerciseId + '/complete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
         body: JSON.stringify({ solution })
     }).then(r => {
         if (r.ok || r.redirected) {
@@ -119,6 +121,12 @@ window.addEventListener('DOMContentLoaded', () => {
             console.warn('Failed to restore saved solution:', e);
         }
     }
+    
+    // Bind buttons
+    const resetBtn = document.getElementById('resetBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    if (resetBtn) resetBtn.addEventListener('click', resetExercise);
+    if (submitBtn) submitBtn.addEventListener('click', submitExercise);
 });
 </script>
 {% endblock %}

@@ -7,10 +7,10 @@
 </div>
 
 <div class="d-flex gap-2 mb-3">
-    <button class="btn btn-outline-primary btn-sm" onclick="runCode()">
+    <button class="btn btn-outline-primary btn-sm" id="runCodeBtn">
         <i class="bi bi-play-fill me-1"></i>Run Code
     </button>
-    <button class="btn btn-outline-secondary btn-sm" onclick="runTests()">
+    <button class="btn btn-outline-secondary btn-sm" id="runTestsBtn">
         <i class="bi bi-check-circle me-1"></i>Run Tests
     </button>
 </div>
@@ -22,7 +22,11 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('runCodeBtn')?.addEventListener('click', runCode);
+  document.getElementById('runTestsBtn')?.addEventListener('click', runTests);
+});
 async function runCode() {
     const code = document.getElementById('code-editor').value;
     const output = document.getElementById('codeOutput');

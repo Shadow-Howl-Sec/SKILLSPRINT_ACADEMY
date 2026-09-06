@@ -15,10 +15,10 @@
 </div>
 
 <div class="d-flex gap-2 mb-3">
-    <button class="btn btn-outline-primary btn-sm" onclick="testRegex()">
+    <button class="btn btn-outline-primary btn-sm" id="testRegexBtn">
         <i class="bi bi-play-fill me-1"></i>Test Regex
     </button>
-    <button class="btn btn-outline-secondary btn-sm" onclick="explainRegex()">
+    <button class="btn btn-outline-secondary btn-sm" id="explainRegexBtn">
         <i class="bi bi-info-circle me-1"></i>Explain
     </button>
 </div>
@@ -37,7 +37,11 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('testRegexBtn')?.addEventListener('click', testRegex);
+  document.getElementById('explainRegexBtn')?.addEventListener('click', explainRegex);
+});
 function testRegex() {
     const pattern = document.getElementById('regex-pattern').value;
     const testStr = document.getElementById('regex-test').value;
@@ -115,7 +119,13 @@ function explainRegex() {
         }
     }
     
-    explainDiv.innerHTML = tokens.map(t => `<div class="d-flex mb-1"><code class="me-3" style="min-width: 60px;">${t.char}</code><span class="text-muted small">${t.desc}</span></div>`).join('');
+    explainDiv.innerHTML = tokens.map(t => `<div class="d-flex mb-1"><code class="me-3" style="min-width: 60px;">${escapeHtml(t.char)}</code><span class="text-muted small">${t.desc}</span></div>`).join('');
+}
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(text));
+    return d.innerHTML;
 }
 
 function escapeChar(c) {

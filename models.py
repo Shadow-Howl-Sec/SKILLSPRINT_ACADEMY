@@ -1,6 +1,6 @@
 from extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 # Import VMConfig for type hints
@@ -36,8 +36,8 @@ class User(db.Model):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     email_verified = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     is_admin = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     
@@ -111,7 +111,7 @@ class MiniProject(db.Model):
     # | "self_grade_checklist".  When non-null, this is a Tier-4 capstone.
     grading_method = db.Column(db.String(30), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     # Relationships
     submissions = db.relationship('ProjectSubmission', backref='mini_project', lazy=True)
@@ -129,7 +129,7 @@ class ProjectSubmission(db.Model):
     status = db.Column(db.String(20), default='submitted')  # submitted, reviewed, approved, rejected
     feedback = db.Column(db.Text)
     score = db.Column(db.Float)
-    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    submitted_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     reviewed_at = db.Column(db.DateTime)
     reviewed_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     
@@ -177,7 +177,7 @@ class Topic(db.Model):
     difficulty = db.Column(db.Integer, default=1)   # 1-5
     estimated_minutes = db.Column(db.Integer, default=60)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     # Gap 3 optional: Curriculum week assignment
     week_id = db.Column(db.Integer, db.ForeignKey('curriculum_week.id'), nullable=True)
 
@@ -256,7 +256,7 @@ class JobRole(db.Model):
     # Gap 3: Purple Team as default track
     is_default = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     # Relationships
     role_topics = db.relationship('JobRoleTopic', backref='job_role', lazy=True,
@@ -302,7 +302,7 @@ class ContentItem(db.Model):
     source = db.Column(db.String(20), default='in_house')
     created_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     # Interactive exercise spec (plan §4) — JSON blob describing the exercise
     # (kind ∈ {code_py, code_js, pcap_challenge, cipher_lab, regex_lab,
@@ -335,6 +335,38 @@ class TopicHint(db.Model):
         return f"<TopicHint topic={self.topic_id} lvl={self.hint_level}>"
 
 
+class TopicLearningModule(db.Model):
+    """Comprehensive 5-component learning module for each topic.
+
+    Components:
+      1. theory_md       — Detailed theoretical foundation (markdown)
+      2. video_url       — Curated video lecture URL
+      3. video_title     — Title of the recommended video
+      4. video_source    — Platform (YouTube, Coursera, etc.)
+      5. lab_guide_md    — VM lab exercise guide (markdown)
+      6. lab_prerequisites — VM/software needed for the lab
+      7. assessment_md   — Assessment questions and challenges (markdown)
+      8. real_world_md   — Real-world application and industry context (markdown)
+    """
+    __tablename__ = 'topic_learning_module'
+    id = db.Column(db.Integer, primary_key=True)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False, unique=True)
+    theory_md = db.Column(db.Text)
+    video_url = db.Column(db.String(500))
+    video_title = db.Column(db.String(300))
+    video_source = db.Column(db.String(50))
+    lab_guide_md = db.Column(db.Text)
+    lab_prerequisites = db.Column(db.Text)
+    assessment_md = db.Column(db.Text)
+    real_world_md = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+    topic = db.relationship('Topic', backref=db.backref('learning_module', uselist=False, lazy=True))
+
+    def __repr__(self):
+        return f"<TopicLearningModule topic={self.topic_id}>"
+
+
 class CachedResource(db.Model):
     """One-time-synced offline copy of an external page/PDF (plan §6.2).
 
@@ -347,7 +379,7 @@ class CachedResource(db.Model):
     local_path = db.Column(db.String(500), nullable=False)  # relative under instance/resource_cache
     title = db.Column(db.String(300))
     resource_type = db.Column(db.String(20))   # article | pdf | video | github | course
-    fetched_at = db.Column(db.DateTime, default=datetime.utcnow)
+    fetched_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     content_hash = db.Column(db.String(64))    # sha-256 of cached body
 
     def __repr__(self):
@@ -365,7 +397,7 @@ class LocalInbox(db.Model):
     subject = db.Column(db.String(200))
     body = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     user = db.relationship('User', backref='local_inbox', lazy=True)
 
@@ -392,7 +424,7 @@ class Lab(db.Model):
     xp_reward = db.Column(db.Integer, default=25)
     mitre_techniques = db.Column(db.Text)          # JSON list of MITRE technique IDs
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     # --- NEW: fields for vm_exercise provider (Gap 1) ---
     attacker_vm = db.Column(db.String(100), nullable=True)       # e.g. "Kali"
@@ -461,8 +493,8 @@ class VMConfig(db.Model):
     # Network configuration
     network_cidr = db.Column(db.String(20), default='192.168.56.0/24')  # Host-only network
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     is_validated = db.Column(db.Boolean, default=False)  # Set true after connection test passes
     
     def __repr__(self):
@@ -523,7 +555,7 @@ class SkillProfile(db.Model):
     score = db.Column(db.Float, default=0.0)       # 0-100
     # confidence: low | medium | high
     confidence = db.Column(db.String(10), default='low')
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'skill_area_id', name='uq_skill_profile_user_area'),
@@ -539,7 +571,7 @@ class Roadmap(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     job_role_id = db.Column(db.Integer, db.ForeignKey('job_role.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     target_completion_date = db.Column(db.DateTime)
     # status: active | paused | completed
     status = db.Column(db.String(20), default='active')
@@ -612,7 +644,7 @@ class UserResource(db.Model):
     estimated_minutes = db.Column(db.Integer, default=30)
     skill_area_id = db.Column(db.Integer, db.ForeignKey('skill_area.id'), nullable=True)
     notes = db.Column(db.Text)
-    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+    added_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     is_completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime)
     # v2: community sharing
@@ -635,7 +667,7 @@ class XPLog(db.Model):
     source_id = db.Column(db.Integer)              # FK to relevant record
     xp_amount = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), index=True)
 
     def __repr__(self):
         return f"<XPLog user={self.user_id} +{self.xp_amount}xp [{self.source_type}]>"
@@ -670,7 +702,7 @@ class AssessmentQuestion(db.Model):
     difficulty = db.Column(db.Integer, default=1)  # 1-5
     applicable_roles = db.Column(db.Text)  # JSON list of role slugs
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     # Relationships
     skill_area = db.relationship('SkillArea', backref='assessment_questions', lazy=True)
@@ -690,7 +722,7 @@ class ChatMessage(db.Model):
     role = db.Column(db.String(10), nullable=False)
     content = db.Column(db.Text, nullable=False)
     related_topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), index=True)
 
     # Relationships
     related_topic = db.relationship('Topic', backref='chat_messages', lazy=True)
@@ -715,7 +747,7 @@ class PurpleTeamExerciseLog(db.Model):
     lab_id = db.Column(db.Integer, db.ForeignKey('lab.id'), nullable=True)
     technique_title = db.Column(db.String(200), nullable=False)
     mitre_id = db.Column(db.String(20), nullable=True, index=True)
-    date_completed = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    date_completed = db.Column(db.DateTime, default=datetime.now(timezone.utc), index=True)
     attack_succeeded = db.Column(db.Boolean, default=False)
     detected = db.Column(db.Boolean, default=False)
     rule_written = db.Column(db.Boolean, default=False)

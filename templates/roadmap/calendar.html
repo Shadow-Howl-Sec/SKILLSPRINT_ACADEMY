@@ -5,57 +5,62 @@
 {% block page_subtitle %}Modifiable daily 2-3hr schedule blocks · Drag or click to reschedule tasks{% endblock %}
 
 {% block head_extra %}
-<style>
+<style nonce="{{ csp_nonce }}">
   .calendar-day-card {
-    background: var(--white);
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 1rem;
     height: 100%;
-    transition: transform 0.2s, box-shadow 0.2s;
+    color: var(--text-primary);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .calendar-day-card:hover {
+    border-color: rgba(99, 102, 241, 0.25);
   }
   .calendar-day-card.today {
-    border: 2px solid var(--accent);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    border: 2px solid var(--primary);
+    box-shadow: 0 4px 16px var(--primary-glow);
   }
   .block-badge {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.5rem;
+    font-size: 0.72rem;
+    padding: 0.25rem 0.6rem;
     border-radius: 6px;
-    background: #f1f5f9;
-    color: #475569;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-light);
+    border: 1px solid rgba(99, 102, 241, 0.2);
     font-weight: 600;
   }
   .task-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 0.6rem 0.75rem;
-    margin-bottom: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 0.6rem;
     font-size: 0.82rem;
-    cursor: grab;
-    transition: background 0.15s, border-color 0.15s;
+    color: var(--text-primary);
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
   }
   .task-card:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(99, 102, 241, 0.35);
   }
   .task-card.done {
-    opacity: 0.6;
+    opacity: 0.45;
     text-decoration: line-through;
-    cursor: default;
   }
   .task-type-badge {
     font-size: 0.65rem;
-    padding: 0.15rem 0.4rem;
+    padding: 0.15rem 0.45rem;
     border-radius: 4px;
     font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
-  .type-content_item { background: #dbeafe; color: #1e40af; }
-  .type-lab { background: #fee2e2; color: #991b1b; }
-  .type-checkpoint_quiz { background: #fef3c7; color: #92400e; }
-  .type-external_resource { background: #e0e7ff; color: #3730a3; }
+  .type-content_item { background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); }
+  .type-lab { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+  .type-checkpoint_quiz { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+  .type-external_resource { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
 </style>
 {% endblock %}
 
@@ -120,20 +125,24 @@
             </span>
           </div>
 
-          <div class="fw-semibold text-dark mb-1" style="font-size:0.82rem;line-height:1.3;">
+          <div class="fw-semibold mb-1" style="font-size:0.84rem;line-height:1.35;color:var(--text-primary);">
             {% if it.item_type == 'checkpoint_quiz' %}
-              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="text-dark text-decoration-none">
+              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="text-decoration-none" style="color:var(--text-primary);">
                 <i class="bi bi-patch-question-fill text-warning me-1"></i>
                 {{ it.topic.title if it.topic else 'Checkpoint Quiz' }}
               </a>
             {% elif it.item_type == 'lab' and it.lab %}
-              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="text-dark text-decoration-none">
+              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="text-decoration-none" style="color:var(--text-primary);">
                 <i class="bi bi-flag-fill text-danger me-1"></i> {{ it.lab.title }}
               </a>
+            {% elif it.topic %}
+              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="text-decoration-none" style="color:var(--text-primary);">
+                <i class="bi bi-book-fill text-info me-1"></i> {{ it.topic.title }}
+              </a>
             {% elif it.content_item %}
-              <i class="bi bi-book-fill text-primary me-1"></i> {{ it.content_item.title }}
+              <span style="color:var(--text-primary);"><i class="bi bi-book-fill text-primary me-1"></i> {{ it.content_item.title }}</span>
             {% else %}
-              {{ it.topic.title if it.topic else 'Task' }}
+              <span style="color:var(--text-primary);">{{ it.topic.title if it.topic else 'Task' }}</span>
             {% endif %}
           </div>
 
@@ -154,7 +163,11 @@
               <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="btn btn-sm btn-warning py-0 px-2" style="font-size:0.7rem;">Take Quiz</a>
             {% elif it.item_type == 'lab' and it.lab_id %}
               <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:0.7rem;">Start Lab</a>
-            {% else %}
+            {% endif %}
+            {% if it.topic_id and it.item_type != 'checkpoint_quiz' %}
+              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="btn btn-sm btn-outline-info py-0 px-2" style="font-size:0.7rem;">Learn</a>
+            {% endif %}
+            {% if it.status != 'done' and it.item_type != 'checkpoint_quiz' and it.item_type != 'lab' and not it.topic_id %}
               <form method="post" action="{{ url_for('dashboard.complete_item', item_id=it.id) }}" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size:0.7rem;">Done</button>
@@ -182,8 +195,8 @@
           {% endif %}
         </div>
         {% else %}
-        <div class="text-center py-4 text-muted small border border-dashed rounded">
-          <i class="bi bi-calendar-check d-block mb-1" style="font-size:1.2rem;"></i>
+        <div class="text-center py-4 text-muted small rounded" style="border:1px dashed var(--border);background:rgba(255,255,255,0.015);">
+          <i class="bi bi-calendar-check d-block mb-1" style="font-size:1.3rem;color:var(--text-muted);opacity:0.6;"></i>
           No tasks scheduled
         </div>
         {% endfor %}

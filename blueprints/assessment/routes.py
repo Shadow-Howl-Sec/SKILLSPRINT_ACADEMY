@@ -8,7 +8,7 @@ Routes:
 from __future__ import annotations
 
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 
 from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, g
 from extensions import db
@@ -74,7 +74,7 @@ def topic_quiz(topic_id: int):
             ).all()
             for item in quiz_items:
                 item.status = "done"
-                item.completed_at = datetime.utcnow()
+                item.completed_at = datetime.now(timezone.utc)
                 
         if passed:
             xp = award_xp(g.user.id, "checkpoint_quiz", topic.id, xp_amount=25,

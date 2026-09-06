@@ -9,7 +9,7 @@ Routes:
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 
 from flask import (Blueprint, render_template, redirect, url_for, request,
@@ -221,9 +221,10 @@ def export():
     logs = PurpleTeamExerciseLog.query.filter_by(user_id=g.user.id).order_by(
         PurpleTeamExerciseLog.date_completed).all()
     
+    now_utc = datetime.now(timezone.utc)
     md_lines = [
         "# Purple Team Exercise Log",
-        f"**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}",
+        f"**Generated:** {now_utc.strftime('%Y-%m-%d %H:%M UTC')}",
         f"**User:** {g.user.username}",
         "",
         "---",
@@ -270,7 +271,7 @@ def export():
     
     response = make_response(md_content)
     response.headers["Content-Type"] = "text/markdown"
-    response.headers["Content-Disposition"] = f'attachment; filename="purple_team_log_{datetime.utcnow().strftime("%Y%m%d")}.md"'
+    response.headers["Content-Disposition"] = f'attachment; filename="purple_team_log_{now_utc.strftime("%Y%m%d")}.md"'
     return response
 
 
@@ -293,7 +294,7 @@ def _update_coverage(user_id: int, mitre_id: str, attack_succeeded: bool, detect
         )
         db.session.add(coverage)
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if attack_succeeded and not coverage.first_attacked_date:
         coverage.first_attacked_date = now
     if detected and not coverage.first_detected_date:

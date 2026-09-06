@@ -18,27 +18,29 @@
       </div>
 
       <form method="post" action="{{ url_for('assessment.topic_quiz', topic_id=topic.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% for q in questions %}
-        <div class="mb-4 p-3 border rounded bg-light">
+        <div class="mb-4 p-3 rounded border" style="background:rgba(255,255,255,0.03);border-color:var(--border);">
           <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="badge bg-secondary" style="font-size:0.7rem;">Question {{ loop.index }} of {{ questions | length }}</span>
+            <span class="badge" style="font-size:0.7rem;background:rgba(99,102,241,0.15);color:var(--primary);border:1px solid rgba(99,102,241,0.3);">Question {{ loop.index }} of {{ questions | length }}</span>
             <span class="text-muted small">Difficulty: {{ q.difficulty }}/5</span>
           </div>
 
-          <h6 style="font-weight:600;line-height:1.4;" class="mb-3">{{ q.question_text }}</h6>
+          <h6 style="font-weight:600;line-height:1.4;color:var(--text-primary);" class="mb-3">{{ q.question_text }}</h6>
 
           {% set opts = (q.options | from_json) or [] %}
           {% if q.question_type == "mcq" and opts %}
             {% for opt in opts %}
-            <div class="form-check p-2 ps-4 mb-2 bg-white rounded border" style="cursor:pointer;" onclick="this.querySelector('input').checked=true;">
+            <div class="form-check p-2 ps-4 mb-2 rounded border js-choice" style="background:rgba(255,255,255,0.02);border-color:var(--border);cursor:pointer;" data-input="q_{{ q.id }}_{{ loop.index0 }}">
               <input class="form-check-input" type="radio" name="q_{{ q.id }}" id="q_{{ q.id }}_{{ loop.index0 }}" value="{{ loop.index0 }}" required>
-              <label class="form-check-label w-100" for="q_{{ q.id }}_{{ loop.index0 }}" style="cursor:pointer;font-size:0.9rem;">
+              <label class="form-check-label w-100" for="q_{{ q.id }}_{{ loop.index0 }}" style="cursor:pointer;font-size:0.9rem;color:var(--text-primary);">
                 {{ opt }}
               </label>
             </div>
             {% endfor %}
           {% else %}
-            <textarea class="form-control" name="q_{{ q.id }}" rows="2" placeholder="Type your answer..." required></textarea>
+            <textarea class="form-control" name="q_{{ q.id }}" rows="2" placeholder="Type your answer..." required
+                      style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);"></textarea>
           {% endif %}
         </div>
         {% endfor %}
@@ -55,4 +57,20 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.js-choice').forEach(el => {
+    el.addEventListener('click', () => {
+      const inputId = el.getAttribute('data-input');
+      if (inputId) {
+        const input = document.getElementById(inputId);
+        if (input) input.checked = true;
+      }
+    });
+  });
+});
+</script>
 {% endblock %}

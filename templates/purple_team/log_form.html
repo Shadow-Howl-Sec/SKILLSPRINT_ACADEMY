@@ -1,7 +1,7 @@
 {% extends "base_cybersec.html" %}
 
 {% block title %}{% if log %}Edit{% else %}Log New{% endif %} Exercise — Purple Team{% endblock %}
-{% set active = "purple_team" %}
+{% set active = "log_new" %}
 
 {% block page_title %}{% if log %}Edit Exercise Log{% else %}Log New Exercise{% endif %}{% endblock %}
 {% block page_subtitle %}{% if log %}Update your attack → detect → document entry{% else %}Record an ad-hoc exercise (Atomic Red Team, manual test, etc.){% endif %}{% endblock %}
@@ -9,27 +9,29 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-8">
-    <div class="card">
-      <div class="card-body p-4">
+    <div class="admin-card p-4" style="border-radius:14px;">
         <form method="POST">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
             <label for="technique_title" class="form-label fw-bold">Technique Title <span class="text-danger">*</span></label>
-            <input type="text" class="form-control bg-dark text-light border-secondary" id="technique_title" name="technique_title" 
-                   value="{{ log.technique_title if log else '' }}" placeholder="e.g., Kerberoasting against GOAD" required>
-            <div class="form-text">Descriptive name for this exercise</div>
+            <input type="text" class="form-control" id="technique_title" name="technique_title"
+                   value="{{ log.technique_title if log else '' }}" placeholder="e.g., Kerberoasting against GOAD" required
+                   style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+            <div class="form-text" style="color:var(--text-dim);">Descriptive name for this exercise</div>
           </div>
 
           <div class="row g-3 mb-3">
             <div class="col-md-6">
               <label for="mitre_id" class="form-label">MITRE ATT&CK ID</label>
-              <input type="text" class="form-control bg-dark text-light border-secondary" id="mitre_id" name="mitre_id" 
-                     value="{{ log.mitre_id if log else '' }}" placeholder="e.g., T1558.003" pattern="T\d{4}(\.\d{3})?">
-              <div class="form-text">Format: TXXXX or TXXXX.XXX (e.g., T1558.003)</div>
+              <input type="text" class="form-control" id="mitre_id" name="mitre_id"
+                     value="{{ log.mitre_id if log else '' }}" placeholder="e.g., T1558.003" pattern="T\d{4}(\.\d{3})?"
+                     style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+              <div class="form-text" style="color:var(--text-dim);">Format: TXXXX or TXXXX.XXX (e.g., T1558.003)</div>
             </div>
             <div class="col-md-6">
               <label for="lab_id" class="form-label">Associated Lab (optional)</label>
-              <select class="form-select bg-dark text-light border-secondary" id="lab_id" name="lab_id">
+              <select class="form-select" id="lab_id" name="lab_id"
+                      style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
                 <option value="">— Manual entry (no lab) —</option>
                 {% for lab in labs %}
                 <option value="{{ lab.id }}" {% if log and log.lab_id == lab.id %}selected{% endif %}>
@@ -37,7 +39,7 @@
                 </option>
                 {% endfor %}
               </select>
-              <div class="form-text">Link to a curriculum lab if applicable</div>
+              <div class="form-text" style="color:var(--text-dim);">Link to a curriculum lab if applicable</div>
             </div>
           </div>
 
@@ -76,8 +78,9 @@
 
           <div class="mb-3">
             <label for="notes" class="form-label fw-bold">Notes / Write-up <span class="text-muted">(markdown supported)</span></label>
-            <textarea class="form-control bg-dark text-light border-secondary" id="notes" name="notes" rows="8"
-                      placeholder="Document what you did, commands run, observations, detection logic, rule syntax, challenges faced, screenshots paths, etc.">{{ log.notes if log else '' }}</textarea>
+            <textarea class="form-control" id="notes" name="notes" rows="8"
+                      placeholder="Document what you did, commands run, observations, detection logic, rule syntax, challenges faced, screenshots paths, etc."
+                      style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">{{ log.notes if log else '' }}</textarea>
           </div>
 
           <div class="d-flex gap-2 justify-content-end">
@@ -89,15 +92,11 @@
             </button>
           </div>
         </form>
-      </div>
     </div>
 
     <!-- Quick Reference -->
-    <div class="card mt-4">
-      <div class="card-header">
-        <h6 class="mb-0"><i class="bi bi-info-circle me-1"></i> MITRE ATT&CK Quick Reference</h6>
-      </div>
-      <div class="card-body">
+    <div class="admin-card p-4 mt-4" style="border-radius:14px;">
+        <h6 class="mb-3" style="font-weight:700;color:var(--text-primary);"><i class="bi bi-info-circle me-1 text-primary"></i> MITRE ATT&CK Quick Reference</h6>
         <div class="row g-2 text-small">
           <div class="col-6 col-md-3"><code>T1558.003</code> Kerberoasting</div>
           <div class="col-6 col-md-3"><code>T1558.004</code> AS-REP Roasting</div>
@@ -116,7 +115,6 @@
           <div class="col-6 col-md-3"><code>T1027</code> Obfuscated Files/Info</div>
         </div>
         <p class="text-muted small mb-0 mt-2">Full matrix: <a href="https://attack.mitre.org" target="_blank" rel="noopener">attack.mitre.org</a></p>
-      </div>
     </div>
   </div>
 </div>

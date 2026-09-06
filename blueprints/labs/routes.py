@@ -14,8 +14,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import posixpath
 import socket
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from flask import (Blueprint, render_template, redirect, url_for, request,
                    flash, abort, current_app, send_from_directory, g)
@@ -131,6 +132,75 @@ def browse():
                            OFFLINE_MODE=_offline_mode())
 
 
+def _clean_bundle_subpath(ref: str) -> str:
+    if not ref:
+        return ""
+    clean = ref.replace("\\", "/").strip("/")
+    for prefix in ("bundles/labs/", "bundles/labs", "bundles/", "bundles", "labs/", "labs"):
+        if clean.startswith(prefix):
+            clean = clean[len(prefix):].lstrip("/")
+    return clean
+
+
+def _resolve_bundle_file(bundles_root: str, ref: str, filename: str) -> str | None:
+    bundles_root_abs = os.path.abspath(bundles_root)
+    filename = filename.replace("\\", "/").lstrip("/")
+    clean_ref = _clean_bundle_subpath(ref)
+
+    candidates = [filename]
+    if clean_ref:
+        candidates.append(f"{clean_ref}/{filename}")
+        parent = posixpath.dirname(clean_ref)
+        if parent:
+            candidates.append(f"{parent}/{filename}")
+        if filename == posixpath.basename(clean_ref):
+            candidates.append(clean_ref)
+
+    for rel in candidates:
+        rel_norm = posixpath.normpath(rel)
+        if rel_norm.startswith(".."):
+            continue
+        joined = safe_join(bundles_root_abs, rel_norm)
+        if joined and os.path.isfile(joined):
+            joined_abs = os.path.abspath(joined)
+            if os.path.commonpath([joined_abs, bundles_root_abs]) == bundles_root_abs:
+                return joined_abs
+    return None
+
+
+def _get_bundle_artifacts(bundles_root: str, ref: str) -> list[dict]:
+    """List available artifacts for a bundled lab."""
+    if not bundles_root or not ref or not os.path.isdir(bundles_root):
+        return []
+    clean_ref = _clean_bundle_subpath(ref)
+    target_dir = os.path.join(bundles_root, clean_ref.replace("/", os.sep))
+    if not os.path.isdir(target_dir):
+        target_dir = os.path.dirname(target_dir)
+        if not os.path.isdir(target_dir):
+            return []
+
+    artifacts = []
+    try:
+        for entry in os.scandir(target_dir):
+            if entry.is_file():
+                size_bytes = entry.stat().st_size
+                if size_bytes >= 1024 * 1024:
+                    size_str = f"{size_bytes / (1024 * 1024):.1f} MB"
+                elif size_bytes >= 1024:
+                    size_str = f"{size_bytes / 1024:.1f} KB"
+                else:
+                    size_str = f"{size_bytes} B"
+
+                artifacts.append({
+                    "filename": entry.name,
+                    "size_str": size_str,
+                    "is_readme": entry.name.lower() == "readme.md",
+                })
+    except Exception:
+        pass
+    return sorted(artifacts, key=lambda x: (not x["is_readme"], x["filename"]))
+
+
 @labs_bp.route("/lab/<int:lab_id>")
 def detail(lab_id: int):
     lab = Lab.query.get_or_404(lab_id)
@@ -138,19 +208,27 @@ def detail(lab_id: int):
         # Link-out labs are disabled in offline mode (plan §5.4 / §9).
         flash("This lab requires internet and is disabled in offline mode.", "info")
         return redirect(url_for("labs.browse"))
-    
+
     # VM pre-flight check for vm_exercise labs
     if lab.is_vm_exercise:
         vm_ok, missing = _check_vm_prerequisites(lab)
         if not vm_ok:
             flash(f"VM prerequisites not met: {', '.join(missing)}. Configure at <a href='{url_for('offline.lab_setup')}'>Lab Setup</a>.", "warning")
             return redirect(url_for("offline.lab_setup"))
-    
+
+    # Discover bundle artifacts if offline lab
+    bundle_files = []
+    if lab.is_offline_available:
+        bundles_root = current_app.config.get("BUNDLES_LABS_DIR")
+        if bundles_root:
+            bundle_files = _get_bundle_artifacts(bundles_root, lab.url_or_container_ref or "")
+
     # Use different template for vm_exercise labs
     if lab.is_vm_exercise:
         return render_template("labs/detail_vm_exercise.html", lab=lab,
-                               OFFLINE_MODE=_offline_mode())
+                                OFFLINE_MODE=_offline_mode())
     return render_template("labs/detail.html", lab=lab,
+                           bundle_files=bundle_files,
                            OFFLINE_MODE=_offline_mode())
 
 
@@ -158,25 +236,19 @@ def detail(lab_id: int):
 def serve_bundle_file(lab_id: int, filename: str):
     """Serve a bundled challenge artifact (plan §5.3). Read-only & sandboxed.
 
-    `filename` is interpreted relative to the app's bundles/labs/ root; we use
-    safe_join + an explicit under-bundles-dir check so no escaping is possible.
+    `filename` is safely resolved relative to BUNDLES_LABS_DIR and the lab's bundle path.
     """
     lab = Lab.query.get_or_404(lab_id)
     if not lab.is_offline_available:
         abort(404)
     bundles_root = current_app.config.get("BUNDLES_LABS_DIR")
-    if not bundles_root:
+    if not bundles_root or not os.path.isdir(bundles_root):
         abort(404)
-    # The lab may carry url_or_container_ref like "networking/capture_challenge1.pcap"
-    sub = (lab.url_or_container_ref or "").strip("/").replace("\\", "/")
-    full = safe_join(bundles_root, os.path.join(sub, filename)) if sub else \
-           safe_join(bundles_root, filename)
+
+    full = _resolve_bundle_file(bundles_root, lab.url_or_container_ref or "", filename)
     if not full or not os.path.isfile(full):
         abort(404)
-    # Confirm resolved path is still under bundles_root.
-    if os.path.commonpath([os.path.abspath(full),
-                           os.path.abspath(bundles_root)]) != os.path.abspath(bundles_root):
-        abort(404)
+
     return send_from_directory(os.path.dirname(full), os.path.basename(full),
                                as_attachment=True)
 
@@ -198,8 +270,6 @@ def _log_purple_team_exercise(lab, form_data):
 
     # Update AttackCoverage
     if lab.mitre_technique:
-        # We need the tactic - for now extract from technique or leave empty
-        # In a full implementation, you'd have a MITRE reference table
         coverage = AttackCoverage.query.filter_by(
             user_id=g.user.id,
             mitre_technique_id=lab.mitre_technique
@@ -207,12 +277,12 @@ def _log_purple_team_exercise(lab, form_data):
         if coverage is None:
             coverage = AttackCoverage(
                 user_id=g.user.id,
-                mitre_tactic="",  # Would be populated from MITRE reference data
+                mitre_tactic="",
                 mitre_technique_id=lab.mitre_technique,
             )
             db.session.add(coverage)
-        
-        now = datetime.utcnow()
+
+        now = datetime.now(timezone.utc)
         if form_data.get('attack_succeeded') and not coverage.first_attacked_date:
             coverage.first_attacked_date = now
         if form_data.get('detected') and not coverage.first_detected_date:

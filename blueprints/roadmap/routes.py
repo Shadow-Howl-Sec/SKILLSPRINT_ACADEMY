@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 from collections import OrderedDict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, g, jsonify
 from extensions import db
@@ -41,7 +41,7 @@ def view():
                                                    i.order_index)):
         tid = it.topic_id or 0
         g_item = groups.setdefault(tid, {
-            "topic": Topic.query.get(tid) if tid else None,
+            "topic": db.session.get(Topic, tid) if tid else None,
             "items": [],
             "total": 0, "done": 0,
         })

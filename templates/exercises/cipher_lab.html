@@ -32,13 +32,13 @@
 </div>
 
 <div class="d-flex gap-2 mb-3">
-    <button class="btn btn-outline-primary btn-sm" onclick="decrypt()">
+    <button class="btn btn-outline-primary btn-sm" id="decryptBtn">
         <i class="bi bi-unlock me-1"></i>Decrypt
     </button>
-    <button class="btn btn-outline-secondary btn-sm" onclick="encrypt()">
+    <button class="btn btn-outline-secondary btn-sm" id="encryptBtn">
         <i class="bi bi-lock me-1"></i>Encrypt
     </button>
-    <button class="btn btn-outline-info btn-sm" onclick="analyze()">
+    <button class="btn btn-outline-info btn-sm" id="analyzeBtn">
         <i class="bi bi-graph-up me-1"></i>Frequency Analysis
     </button>
 </div>
@@ -57,7 +57,12 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('decryptBtn')?.addEventListener('click', decrypt);
+  document.getElementById('encryptBtn')?.addEventListener('click', encrypt);
+  document.getElementById('analyzeBtn')?.addEventListener('click', analyze);
+});
 function decrypt() {
     const ciphertext = document.getElementById('cipher-input').value;
     const key = document.getElementById('cipher-key').value;
@@ -101,19 +106,25 @@ function encrypt() {
     alert('Encryption not implemented in this demo. Use the Python exercise for full implementation.');
 }
 
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(text));
+    return d.innerHTML;
+}
+
 function analyze() {
     const ciphertext = document.getElementById('cipher-input').value;
     if (!ciphertext) { alert('Enter ciphertext first.'); return; }
-    
+
     const freq = {};
     for (const c of ciphertext.toUpperCase()) {
         if (/[A-Z]/.test(c)) freq[c] = (freq[c] || 0) + 1;
     }
-    
+
     const sorted = Object.entries(freq).sort((a,b) => b[1] - a[1]);
     const chart = document.getElementById('freqChart');
-    chart.innerHTML = sorted.map(([c, n]) => 
-        `<div class="d-flex align-items-center mb-1"><span class="me-2 fw-bold" style="width: 30px;">${c}</span><div class="flex-grow-1 bg-primary" style="height: 20px; width: ${n/sorted[0][1]*100}%"></div><span class="ms-2 text-muted small">${n}</span></div>`
+    chart.innerHTML = sorted.map(([c, n]) =>
+        `<div class="d-flex align-items-center mb-1"><span class="me-2 fw-bold" style="width: 30px;">${escapeHtml(c)}</span><div class="flex-grow-1 bg-primary" style="height: 20px; width: ${Math.min(100, (n/sorted[0][1]*100))}%"></div><span class="ms-2 text-muted small">${n}</span></div>`
     ).join('');
     document.getElementById('freqAnalysis').style.display = 'block';
 }

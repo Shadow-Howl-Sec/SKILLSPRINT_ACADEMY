@@ -55,6 +55,11 @@
         hideUpdateBanner();
     }
 
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
     async function checkForUpdates(force = false) {
         // Don't check if we're offline or update already dismissed for this version
         if (typeof OFFLINE_MODE !== 'undefined' && OFFLINE_MODE) {
@@ -65,7 +70,14 @@
         if (dismissed && !force) {
             // Check if there's a cached update that matches dismissed version
             try {
-                const response = await fetch('/api/update/status');
+                const response = await fetch('/api/update/status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ force }),
+                });
                 const cached = await response.json();
                 if (cached.latest_version === dismissed) {
                     return; // User dismissed this version
@@ -81,6 +93,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
                 },
                 body: JSON.stringify({ force }),
             });
@@ -107,7 +120,7 @@
         if (!banner || !banner.dataset.downloadUrl) return;
 
         const downloadUrl = banner.dataset.downloadUrl;
-        
+
         // Disable button
         const btn = banner.querySelector('.btn-primary');
         if (btn) {
@@ -120,6 +133,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
                 },
                 body: JSON.stringify({ download_url: downloadUrl }),
             });

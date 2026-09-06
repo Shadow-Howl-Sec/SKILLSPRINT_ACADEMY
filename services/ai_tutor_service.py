@@ -48,16 +48,57 @@ def _retrieve_context(topic_id: Optional[int], query: str, k: int = 4) -> str:
     return "\n\n---\n\n".join(chunks)[:8000]
 
 
-def _build_system_prompt(topic: Optional[Topic]) -> str:
-    role_line = "You are SkillSprint Academy's AI cybersecurity tutor. "
+def _build_system_prompt(topic: Optional[Topic], user_context: Optional[dict] = None) -> str:
+    role_line = "You are SkillSprint Academy's AI cybersecurity tutor and personal mentor. "
     if topic is not None:
         role_line += f"The student is currently studying '{topic.title}'. "
+    
+    # Add user context for personalized mentoring
+    if user_context:
+        role_line += f"Their current streak is {user_context.get('streak', 0)} days, total XP: {user_context.get('xp', 0)}, level: {user_context.get('level', 1)}. "
+        if user_context.get('active_roadmap'):
+            role_line += f"They're on the '{user_context['active_roadmap']}' track. "
+        if user_context.get('today_tasks'):
+            role_line += f"They have {user_context['today_tasks']} tasks scheduled today. "
+    
     role_line += (
         "Answer clearly and concisely, like a friendly mentor. If the question "
         "is about a lab, give progressive hints without revealing the flag. "
-        "Offer an 'Explain like I'm 5' option when the user asks for depth."
+        "Offer an 'Explain like I'm 5' option when the user asks for depth. "
+        "Encourage consistent daily practice. Celebrate progress. Suggest next steps."
     )
     return role_line
+
+
+def _get_user_context(user_id: int) -> dict:
+    """Gather user context for personalized mentoring."""
+    from models import User, StreakRecord, Roadmap, RoadmapItem, XPLog
+    from datetime import date
+    from extensions import db
+    
+    user = db.session.get(User, user_id)
+    if not user:
+        return {}
+    
+    streak_rec = StreakRecord.query.filter_by(user_id=user_id).first()
+    active_roadmap = Roadmap.query.filter_by(user_id=user_id, status='active').first()
+    today_tasks = 0
+    if active_roadmap:
+        today_tasks = sum(1 for i in active_roadmap.items 
+                         if i.scheduled_date and i.scheduled_date.date() == date.today() 
+                         and i.status != 'done')
+    
+    role_name = active_roadmap.job_role.name if active_roadmap and active_roadmap.job_role else None
+    
+    level = max(1, user.total_xp // 100 + 1)
+    
+    return {
+        'xp': user.total_xp,
+        'level': level,
+        'streak': streak_rec.current_streak if streak_rec else 0,
+        'active_roadmap': role_name,
+        'today_tasks': today_tasks,
+    }
 
 
 def db_get_topic(topic_id: int) -> Optional[Topic]:
@@ -223,11 +264,12 @@ def _stub_reply(query: str, topic: Optional[Topic]) -> str:
 # ---------------------------------------------------------------------------
 # Public entry points
 # ---------------------------------------------------------------------------
-def answer(query: str, topic_id: Optional[int] = None) -> str:
+def answer(query: str, topic_id: Optional[int] = None, user_id: Optional[int] = None) -> str:
     """Return the assistant's reply to a user message (plan §7.1) — SYNCHRONOUS."""
     topic = db_get_topic(topic_id) if topic_id else None
     context = _retrieve_context(topic_id, query)
-    system = _build_system_prompt(topic)
+    user_context = _get_user_context(user_id) if user_id else None
+    system = _build_system_prompt(topic, user_context)
 
     provider = current_app.config.get("AI_TUTOR_PROVIDER", "auto")
     if provider == "auto":

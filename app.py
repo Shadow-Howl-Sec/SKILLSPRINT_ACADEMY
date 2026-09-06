@@ -8,10 +8,9 @@ import atexit
 from datetime import datetime, timezone
 from flask import (Flask, render_template, request, jsonify, redirect,
                    url_for, flash, abort, g)
-from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
 from sqlalchemy import text
-from extensions import db, migrate, limiter
+from extensions import db, migrate, limiter, csrf
 load_dotenv()
 
 if getattr(sys, 'frozen', False):
@@ -27,13 +26,12 @@ OFFLINE_MODE = True
 
 
 # ---------------------------------------------------------------------------
-# CSP — Hardened for offline operation with nonce-based script/style
+# CSP — Hardened for offline operation with nonce-based script execution
 # ---------------------------------------------------------------------------
-# Generate a nonce for each request (Talisman will inject it)
 _csp = {
     'default-src': ["'self'"],
     'script-src': ["'self'", "'strict-dynamic'"],
-    'style-src': ["'self'"],
+    'style-src': ["'self'", "'unsafe-inline'"],
     'font-src': ["'self'", 'data:'],
     'img-src': ["'self'", 'data:'],
     'connect-src': ["'self'", 'http://127.0.0.1:11434'],
@@ -48,7 +46,7 @@ talisman = Talisman(
     content_security_policy=_csp,
     force_https=False,
     strict_transport_security=False,
-    content_security_policy_nonce_in=['script-src', 'style-src'],
+    content_security_policy_nonce_in=['script-src'],
 )
 
 # ---------------------------------------------------------------------------
@@ -57,7 +55,7 @@ talisman = Talisman(
 db.init_app(app)
 migrate.init_app(app, db)
 limiter.init_app(app)
-csrf = CSRFProtect(app)
+csrf.init_app(app)
 
 # ---------------------------------------------------------------------------
 # Nonce for CSP — expose to templates
@@ -79,8 +77,10 @@ from blueprints.library.routes import library_bp
 from blueprints.assistant.routes import assistant_bp
 from blueprints.assessment.routes import assessment_bp
 from blueprints.settings.routes import settings_bp
+from blueprints.topics.routes import topics_bp
 
 app.register_blueprint(roadmap_bp)
+app.register_blueprint(topics_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(labs_bp)
 app.register_blueprint(purple_team_bp)
@@ -187,11 +187,19 @@ def inject_globals():
 
 @app.route('/')
 def index():
-    from models import StreakRecord
+    from models import StreakRecord, Roadmap
     user = g.get('user')
     xp = user.total_xp if user else 0
     streak = StreakRecord.query.filter_by(user_id=user.id).first() if user else None
-    return render_template('index.html', xp=xp, streak=streak)
+    
+    # Check if user has an active roadmap
+    has_roadmap = False
+    active_roadmap = None
+    if user:
+        active_roadmap = Roadmap.query.filter_by(user_id=user.id, status='active').first()
+        has_roadmap = active_roadmap is not None
+    
+    return render_template('index.html', xp=xp, streak=streak, has_roadmap=has_roadmap, active_roadmap=active_roadmap)
 
 
 @app.route('/health')

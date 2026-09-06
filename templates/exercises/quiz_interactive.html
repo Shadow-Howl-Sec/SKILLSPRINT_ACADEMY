@@ -36,7 +36,10 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  // runTests is called from the parent template (exercises/base.html)
+});
 function runTests() {
     const form = document.getElementById('quizForm');
     if (!form) return;

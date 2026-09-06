@@ -747,7 +747,7 @@ def seed_curriculum_weeks(topics_by_title: dict) -> None:
         8: ["Packet Forensics at Scale", "Malware Static Analysis", "Red Team C2 & Infrastructure"],
         9: ["SIEM Queries & Sigma Rules", "Threat Hunting at Scale", "Packet Forensics at Scale"],
         10: ["Threat Hunting at Scale", "SIEM Queries & Sigma Rules", "Packet Forensics at Scale"],
-        11: ["SOC Playbooks", "Threat Hunting at Scale", "Incident Responder Tabletop"],
+        11: ["SOC Playbooks", "Threat Hunting at Scale", "Malware Static Analysis"],
         12: ["Kerberos & BloodHound", "Active Directory Fundamentals", "Lateral Movement & OPSEC", "SIEM Queries & Sigma Rules"],
     }
     

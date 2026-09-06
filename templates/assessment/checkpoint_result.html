@@ -35,9 +35,9 @@
 
       <div class="d-flex justify-content-center gap-2 mt-4">
         {% if not passed %}
-          <a href="{{ url_for('assessment.topic_quiz', topic_id=topic.id) }}" class="btn btn-warning">
-            <i class="bi bi-arrow-repeat me-1"></i> Retake Quiz
-          </a>
+        <a href="{{ url_for('assessment.topic_quiz', topic_id=topic.id) }}" class="btn btn-warning">
+          <i class="bi bi-arrow-repeat me-1"></i> Retake Quiz
+        </a>
         {% endif %}
         <a href="{{ url_for('roadmap.view') }}" class="btn btn-primary">
           <i class="bi bi-map me-1"></i> Continue Roadmap
@@ -50,11 +50,11 @@
       <h6 style="font-weight:700;" class="mb-3"><i class="bi bi-list-check me-2 text-primary"></i>Answer Review & Explanations</h6>
 
       {% for r in results %}
-      <div class="p-3 mb-3 border rounded {% if r.is_correct %}border-success bg-light{% else %}border-danger bg-light{% endif %}">
+      <div class="p-3 mb-3 border rounded {% if r.is_correct %}border-success{% else %}border-danger{% endif %}" style="background:rgba(255,255,255,0.03);">
         <div class="d-flex align-items-start gap-2 mb-2">
           <i class="bi {% if r.is_correct %}bi-check-circle-fill text-success{% else %}bi-x-circle-fill text-danger{% endif %}" style="font-size:1.2rem;"></i>
           <div class="flex-grow-1">
-            <h6 style="font-weight:600;font-size:0.92rem;margin:0;">{{ r.question }}</h6>
+            <h6 style="font-weight:600;font-size:0.92rem;margin:0;color:var(--text-primary);">{{ r.question }}</h6>
           </div>
         </div>
 
@@ -69,7 +69,7 @@
           </div>
           {% endif %}
           {% if r.explanation %}
-          <div class="mt-2 text-muted fst-italic border-top pt-2">
+          <div class="mt-2 text-muted fst-italic border-top pt-2" style="border-color:var(--border);">
             <i class="bi bi-info-circle me-1"></i>{{ r.explanation }}
           </div>
           {% endif %}

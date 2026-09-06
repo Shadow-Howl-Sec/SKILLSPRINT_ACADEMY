@@ -347,14 +347,14 @@
     </div>
 
     <div class="chat-topics-list">
-      <button class="topic-btn active" id="generalTopicBtn" onclick="setTopicContext(null)">
+      <button class="topic-btn active" id="generalTopicBtn" data-topic-id="">
         <i class="bi bi-chat-square-dots" style="color:var(--accent-cyan);"></i>
         <span>General Chat</span>
       </button>
       {% if topics %}
         <div style="height:1px;background:var(--border);margin:0.3rem 0.5rem;"></div>
         {% for topic in topics %}
-        <button class="topic-btn" data-topic-id="{{ topic.id }}" onclick="setTopicContext({{ topic.id }})">
+        <button class="topic-btn" data-topic-id="{{ topic.id }}">
           <i class="bi bi-book" style="color:var(--text-dim);"></i>
           <span>{{ topic.title }}</span>
         </button>
@@ -413,11 +413,11 @@
         <h5 style="color:var(--text-primary);margin-bottom:0.5rem;font-size:1rem;">Ready to Help</h5>
         <p style="font-size:0.83rem;max-width:340px;line-height:1.6;">Ask me anything about cybersecurity, your current topic, or Purple Team techniques. Works 100% offline.</p>
         <div class="suggestion-chips">
-          <span class="suggestion-chip" onclick="fillQuestion('Explain Kerberoasting and how to detect it')">Explain Kerberoasting</span>
-          <span class="suggestion-chip" onclick="fillQuestion('What is a Sigma rule and how do I write one?')">Write Sigma rules</span>
-          <span class="suggestion-chip" onclick="fillQuestion('How does Pass-the-Hash work?')">Pass-the-Hash</span>
-          <span class="suggestion-chip" onclick="fillQuestion('What is MITRE ATT&CK and how is it used?')">MITRE ATT&CK</span>
-          <span class="suggestion-chip" onclick="fillQuestion('Explain BloodHound for AD enumeration')">BloodHound</span>
+          <span class="suggestion-chip" data-question="Explain Kerberoasting and how to detect it">Explain Kerberoasting</span>
+          <span class="suggestion-chip" data-question="What is a Sigma rule and how do I write one?">Write Sigma rules</span>
+          <span class="suggestion-chip" data-question="How does Pass-the-Hash work?">Pass-the-Hash</span>
+          <span class="suggestion-chip" data-question="What is MITRE ATT&CK and how is it used?">MITRE ATT&CK</span>
+          <span class="suggestion-chip" data-question="Explain BloodHound for AD enumeration">BloodHound</span>
         </div>
       </div>
       {% endif %}
@@ -563,8 +563,10 @@
       });
       const data = await resp.json();
       removeTypingIndicator();
-      if (data.reply) {
-        appendMessage('assistant', data.reply);
+      if (data.reply_html) {
+        appendMessage('assistant', data.reply_html);
+      } else if (data.reply) {
+        appendMessage('assistant', escapeHtml(data.reply));
       } else if (data.error) {
         appendMessage('assistant', `<span style="color:var(--danger)"><i class="bi bi-exclamation-triangle me-1"></i>Error: ${escapeHtml(data.error)}</span>`);
       }
@@ -599,6 +601,22 @@
   });
 
   messageInput.addEventListener('input', autoResize);
+
+  // Bind topic selector buttons
+  document.querySelectorAll('.topic-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.getAttribute('data-topic-id');
+      setTopicContext(tid ? parseInt(tid, 10) : null);
+    });
+  });
+
+  // Bind suggestion chips
+  document.querySelectorAll('.suggestion-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const q = chip.getAttribute('data-question');
+      if (q) fillQuestion(q);
+    });
+  });
 
   // Scroll to bottom of messages on load
   chatMessages.scrollTop = chatMessages.scrollHeight;

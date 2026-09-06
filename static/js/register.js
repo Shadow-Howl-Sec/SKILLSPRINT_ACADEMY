@@ -1,4 +1,8 @@
 $(document).ready(function() {
+    // Get CSRF token from meta tag
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
     // Pricing and discount logic (sync with HTML)
     const BASE_PRICE = 2499;
     // If discount already set in HTML, reuse it; otherwise, generate
@@ -26,6 +30,9 @@ $(document).ready(function() {
             url: '/create_order',
             type: 'POST',
             contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
             data: JSON.stringify({ amount: discountedPrice }), // Use discounted price
             success: function(orderData) {
                 var options = {
@@ -43,6 +50,9 @@ $(document).ready(function() {
                             url: '/register',
                             type: 'POST',
                             contentType: 'application/json',
+                            headers: {
+                                'X-CSRFToken': csrfToken
+                            },
                             data: JSON.stringify(formData),
                             success: function(res) {
                                 window.location.href = '/success';

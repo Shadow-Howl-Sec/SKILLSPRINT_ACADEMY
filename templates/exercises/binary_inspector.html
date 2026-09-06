@@ -35,10 +35,10 @@
 </div>
 
 <div class="d-flex gap-2 mb-3">
-    <button class="btn btn-outline-primary btn-sm" onclick="inspectBinary()">
+    <button class="btn btn-outline-primary btn-sm" id="inspectBinaryBtn">
         <i class="bi bi-search me-1"></i>Inspect
     </button>
-    <button class="btn btn-outline-secondary btn-sm" onclick="exportBinary()">
+    <button class="btn btn-outline-secondary btn-sm" id="exportBinaryBtn">
         <i class="bi bi-download me-1"></i>Export Output
     </button>
 </div>
@@ -61,7 +61,11 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('inspectBinaryBtn')?.addEventListener('click', inspectBinary);
+  document.getElementById('exportBinaryBtn')?.addEventListener('click', exportBinary);
+});
 // Simulated binary data for demo (in reality, would fetch the actual file)
 const sampleBinary = {
     strings: `!This program cannot be run in DOS mode

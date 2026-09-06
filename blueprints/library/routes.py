@@ -6,7 +6,7 @@
 """
 from __future__ import annotations
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 
 from flask import (Blueprint, render_template, redirect, url_for, request,
                    flash, abort, g)
@@ -23,7 +23,7 @@ def list():
     resources = (UserResource.query
                  .filter_by(user_id=g.user.id)
                  .order_by(UserResource.added_at.desc()).all())
-    return render_template("library/list.html", resources=resources)
+    return render_template("library/list.html", resources=resources, now=date.today().isoformat())
 
 
 @library_bp.route("/library/add", methods=["GET", "POST"])
@@ -69,7 +69,7 @@ def schedule(resource_id: int):
     try:
         scheduled_date = datetime.strptime(when, "%Y-%m-%d")
     except ValueError:
-        scheduled_date = datetime.utcnow()
+        scheduled_date = datetime.now(timezone.utc)
 
     item = RoadmapItem(
         roadmap_id=roadmap.id,
@@ -84,3 +84,16 @@ def schedule(resource_id: int):
     db.session.commit()
     flash("Resource slotted into your schedule.", "success")
     return redirect(url_for("library.list"))
+
+
+@library_bp.route("/library/<int:resource_id>/delete", methods=["POST"])
+def delete(resource_id: int):
+    resource = UserResource.query.get_or_404(resource_id)
+    if resource.user_id != g.user.id:
+        abort(403)
+
+    RoadmapItem.query.filter_by(user_resource_id=resource.id).delete()
+    db.session.delete(resource)
+    db.session.commit()
+    flash("Resource removed from your library.", "info")
+    return redirect(url_for("library.list"))

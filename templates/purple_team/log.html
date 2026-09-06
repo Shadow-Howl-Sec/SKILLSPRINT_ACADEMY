@@ -1,7 +1,7 @@
 {% extends "base_cybersec.html" %}
 
 {% block title %}Purple Team Exercise Log — SkillSprint Academy{% endblock %}
-{% set active = "purple_team" %}
+{% set active = "purple_team_log" %}
 
 {% block page_title %}Exercise Log & Timeline{% endblock %}
 {% block page_subtitle %}Documented timeline of attack simulation → detection engineering → remediation actions{% endblock %}
@@ -128,7 +128,7 @@
               <a href="{{ url_for('purple_team.log_edit', log_id=log.id) }}" class="btn btn-sm btn-outline-secondary" title="Edit exercise log">
                 <i class="bi bi-pencil"></i>
               </a>
-              <form method="POST" action="{{ url_for('purple_team.log_delete', log_id=log.id) }}" class="d-inline" onsubmit="return confirm('Delete this exercise log entry?')">
+              <form method="POST" action="{{ url_for('purple_team.log_delete', log_id=log.id) }}" class="d-inline js-confirm-delete" data-confirm="Delete this exercise log entry?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete entry">
                   <i class="bi bi-trash"></i>

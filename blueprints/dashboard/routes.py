@@ -7,9 +7,9 @@ Provides:
 """
 from __future__ import annotations
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 
-from flask import Blueprint, render_template, redirect, url_for, flash, abort, g
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, g, request, jsonify
 from extensions import db
 from models import Roadmap, RoadmapItem, StreakRecord, XPLog, SkillProfile, SkillArea
 from services.xp_service import award_xp, touch_streak
@@ -100,10 +100,12 @@ def complete_item(item_id: int):
     if item.roadmap.user_id != g.user.id:
         abort(403)
     if item.status == "done":
+        if request.is_json or request.headers.get("Accept") == "application/json" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"status": "already_done", "item_id": item.id})
         return redirect(url_for("dashboard.today"))
 
     item.status = "done"
-    item.completed_at = datetime.utcnow()
+    item.completed_at = datetime.now(timezone.utc)
     db.session.flush()
 
     source_type = "lab" if item.item_type == "lab" else \
@@ -115,5 +117,9 @@ def complete_item(item_id: int):
     if g.user.streak_record and g.user.streak_record.current_streak and g.user.streak_record.current_streak % 7 == 0:
         award_xp(g.user.id, "streak_bonus", None)
     db.session.commit()
+
+    if request.is_json or request.headers.get("Accept") == "application/json" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"status": "success", "item_id": item.id, "xp": xp})
+
     flash(f"+{xp} XP — nice work!", "success")
     return redirect(url_for("dashboard.today"))

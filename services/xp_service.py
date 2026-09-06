@@ -66,12 +66,11 @@ def _get_or_create_streak(user_id: int) -> StreakRecord:
 def touch_streak(user_id: int, when: date | None = None) -> StreakRecord:
     """Mark the user active on `when` (default today). Updates streak counter.
 
-    Rules (Duolingo-style):
+    Rules:
       - Same day as last_active → no change.
-      - Yesterday → +1 streak.
+      - Yesterday (consecutive day) → +1 streak.
       - Gap of 1 day with freezes available → consume a freeze, +1 streak.
-      - Larger gap → reset streak to 1 (today), refill weekly freezes if a new
-        ISO week has started since last_active.
+      - Larger gap (missed days) → reset streak to 0.
     """
     when = when or date.today()
     rec = _get_or_create_streak(user_id)
@@ -85,16 +84,20 @@ def touch_streak(user_id: int, when: date | None = None) -> StreakRecord:
         rec.freezes_available = int(current_app.config.get("STREAK_FREEZES_PER_WEEK", 1))
 
     if last is None:
+        # First learning activity completed
         rec.current_streak = 1
     else:
         gap = (when - last).days
         if gap == 1:
+            # Consecutive day - increment streak
             rec.current_streak += 1
         elif gap == 2 and rec.freezes_available > 0:
+            # Missed one day but have freeze available
             rec.freezes_available -= 1
             rec.current_streak += 1
         else:
-            rec.current_streak = 1
+            # Missed days without freeze - streak broken, reset to 0
+            rec.current_streak = 0
 
     if rec.current_streak > rec.longest_streak:
         rec.longest_streak = rec.current_streak

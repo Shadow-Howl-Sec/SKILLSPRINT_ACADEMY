@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   {% endif %}
   <link rel="stylesheet" href="/static/css/style.css">
-  <style>
+  <style nonce="{{ csp_nonce }}">
     /* ── Command Center Specific Styles ── */
     :root {
       --idx-bg: #060610;
@@ -499,6 +499,35 @@
     </a>
   </div>
 
+  <!-- Guided Onboarding Flow for New Users -->
+  {% if not has_roadmap %}
+  <div class="cmd-roadmap-card" style="background:linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08));border:1px solid rgba(99,102,241,0.3);margin-bottom:2rem;">
+    <div class="cmd-roadmap-card" style="background:transparent;border:none;padding:0;">
+      <div style="text-align:center;padding:2rem;">
+        <div style="width:72px;height:72px;border-radius:50%;margin:0 auto 1.5rem;background:linear-gradient(135deg, #6366f1, #a855f7);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(99,102,241,0.4);">
+          <i class="bi bi-rocket-takeoff" style="font-size:1.75rem;color:#fff;"></i>
+        </div>
+        <h3 style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.5rem;color:#fff;margin-bottom:0.5rem;">Start Your Purple Team Journey</h3>
+        <p style="color:#8892b0;font-size:0.95rem;max-width:500px;margin:0 auto 2rem;">Choose a job-role track and get a personalized 12-week roadmap with daily tasks, labs, quizzes, and MITRE ATT&CK mapped exercises.</p>
+        <a href="{{ url_for('job_roles.browse') }}" class="btn btn-primary btn-lg" style="padding:0.875rem 2rem;font-size:1rem;font-weight:600;">
+          <i class="bi bi-signpost-2 me-2"></i>Choose Your Track & Start Learning
+        </a>
+      </div>
+      
+      <div style="border-top:1px solid rgba(99,102,241,0.2);margin-top:2rem;padding-top:2rem;">
+        <p style="color:#8892b0;font-size:0.85rem;margin-bottom:1rem;"><strong>What you'll get:</strong></p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;text-align:left;">
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> 12-week structured curriculum</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> Daily 2-3hr time blocks</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> 260+ topics with theory & labs</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> MITRE ATT&CK mapped exercises</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> Checkpoint quizzes & XP</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> Purple Team exercise logging</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
   <!-- Roadmap Progress Preview -->
   <div class="cmd-section-title"><i class="bi bi-signpost-2-fill"></i> Roadmap Progress</div>
   <div class="cmd-roadmap-card">
@@ -536,6 +565,7 @@
       <i class="bi bi-arrow-right-circle me-1"></i>View Full Roadmap
     </a>
   </div>
+  {% endif %}
 
   <!-- Learning Tracks -->
   <div class="cmd-section-title"><i class="bi bi-collection-fill"></i> Learning Tracks</div>
@@ -743,9 +773,9 @@
 </main>
 
 {% if OFFLINE_MODE %}
-<script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script nonce="{{ csp_nonce }}" src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 {% else %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endif %}
 </body>
 </html>

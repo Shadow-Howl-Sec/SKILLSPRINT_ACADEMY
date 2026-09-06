@@ -72,9 +72,15 @@
           <i class="{{ {'content_item':'bi-book-fill','lab':'bi-flag-fill','checkpoint_quiz':'bi-patch-question-fill','review':'bi-arrow-repeat','external_resource':'bi-link-45deg'}[item.item_type] or 'bi-circle' }}"
              style="font-size:1.25rem;color:{% if item.item_type == 'lab' %}var(--danger){% elif item.item_type == 'checkpoint_quiz' %}var(--warning){% else %}var(--primary){% endif %};width:24px;"></i>
           <div class="flex-grow-1">
-            <div style="font-weight:600;font-size:0.92rem;color:var(--text-primary);">
-              {{ item.content_item.title if item.content_item else (item.lab.title if item.lab else ('External: ' ~ item.user_resource.title if item.user_resource else (item.topic.title if item.topic else 'Checkpoint'))) }}
-            </div>
+            {% if item.topic_id %}
+              <a href="{{ url_for('topics.detail', topic_id=item.topic_id) }}" style="font-weight:600;font-size:0.92rem;color:var(--text-primary);text-decoration:none;">
+                {{ item.content_item.title if item.content_item else (item.lab.title if item.lab else ('External: ' ~ item.user_resource.title if item.user_resource else (item.topic.title if item.topic else 'Checkpoint'))) }}
+              </a>
+            {% else %}
+              <div style="font-weight:600;font-size:0.92rem;color:var(--text-primary);">
+                {{ item.content_item.title if item.content_item else (item.lab.title if item.lab else ('External: ' ~ item.user_resource.title if item.user_resource else (item.topic.title if item.topic else 'Checkpoint'))) }}
+              </div>
+            {% endif %}
             <div class="small text-muted">
               <i class="bi bi-clock me-1"></i>{{ item.estimated_minutes }} min
               {% if item.time_slot %} · <i class="bi bi-geo-alt me-1"></i>{{ item.time_slot }}{% endif %}
@@ -86,6 +92,9 @@
               <a href="{{ url_for('labs.detail', lab_id=item.lab_id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-play-fill"></i> Start Lab</a>
             {% elif item.item_type == 'checkpoint_quiz' and item.topic_id %}
               <a href="{{ url_for('assessment.topic_quiz', topic_id=item.topic_id) }}" class="btn btn-sm btn-warning"><i class="bi bi-patch-question"></i> Take Quiz</a>
+            {% endif %}
+            {% if item.topic_id %}
+              <a href="{{ url_for('topics.detail', topic_id=item.topic_id) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-book"></i> Learn</a>
             {% endif %}
             <form method="post" action="{{ url_for('dashboard.complete_item', item_id=item.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -117,10 +126,23 @@
       {% endif %}
     </div>
 
-    <!-- Continue Where You Left Off -->
-    {% if next_pending %}
-    <div class="admin-card p-4">
-      <div class="d-flex align-items-center justify-content-between">
+    <!-- Personal Mentor Guidance -->
+    {% if next_pending or today_items %}
+    <div class="admin-card p-4 mt-4" style="background:linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.05));border:1px solid rgba(99,102,241,0.2);">
+      <h6 style="margin:0 0 1rem;font-weight:700;color:var(--text-primary);"><i class="bi bi-robot me-2 text-primary"></i>Your Mentor Suggests</h6>
+      {% if today_items %}
+        <div class="small mb-3" style="color:var(--text-secondary);">
+          You have <strong>{{ today_items | length }}</strong> task{{ 's' if today_items | length > 1 else '' }} scheduled today. 
+          {% set lab_count = today_items | selectattr('item_type', 'equalto', 'lab') | list | length %}
+          {% set quiz_count = today_items | selectattr('item_type', 'equalto', 'checkpoint_quiz') | list | length %}
+          {% set content_count = today_items | selectattr('item_type', 'equalto', 'content_item') | list | length %}
+          {% if lab_count > 0 %}<span class="badge bg-danger ms-1">{{ lab_count }} Lab{{ 's' if lab_count > 1 else '' }}</span>{% endif %}
+          {% if quiz_count > 0 %}<span class="badge bg-warning ms-1">{{ quiz_count }} Quiz{{ 'es' if quiz_count > 1 else '' }}</span>{% endif %}
+          {% if content_count > 0 %}<span class="badge bg-primary ms-1">{{ content_count }} Lesson{{ 's' if content_count > 1 else '' }}</span>{% endif %}
+        </div>
+      {% endif %}
+      {% if next_pending %}
+      <div class="d-flex align-items-center justify-content-between mb-3">
         <div>
           <h6 style="margin:0;font-weight:700;"><i class="bi bi-play-circle me-2 text-primary"></i>Continue Where You Left Off</h6>
           <span class="small text-muted">Your next pending item on the roadmap.</span>
@@ -136,9 +158,14 @@
           </form>
         {% endif %}
       </div>
+      {% endif %}
+      <div class="d-flex gap-2 flex-wrap mt-3">
+        <a href="{{ url_for('assistant.chat') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-robot me-1"></i> Ask AI Mentor</a>
+        <a href="{{ url_for('roadmap.calendar') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar3 me-1"></i> View Calendar</a>
+        <a href="{{ url_for('purple_team.coverage') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-grid-3x3-gap-fill me-1"></i> ATT&CK Coverage</a>
+      </div>
     </div>
     {% endif %}
-  </div>
 
   <!-- Right Sidebar -->
   <div class="col-lg-4">

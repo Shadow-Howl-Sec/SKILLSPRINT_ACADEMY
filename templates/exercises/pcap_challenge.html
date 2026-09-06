@@ -32,10 +32,10 @@
 </div>
 
 <div class="d-flex gap-2 mb-3">
-    <button class="btn btn-outline-primary btn-sm" onclick="analyzePcap()">
+    <button class="btn btn-outline-primary btn-sm" id="analyzePcapBtn">
         <i class="bi bi-search me-1"></i>Analyze
     </button>
-    <button class="btn btn-outline-secondary btn-sm" onclick="exportFindings()">
+    <button class="btn btn-outline-secondary btn-sm" id="exportFindingsBtn">
         <i class="bi bi-file-earmark-text me-1"></i>Export Findings
     </button>
 </div>
@@ -55,7 +55,11 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('analyzePcapBtn')?.addEventListener('click', analyzePcap);
+  document.getElementById('exportFindingsBtn')?.addEventListener('click', exportFindings);
+});
 function analyzePcap() {
     const filter = document.getElementById('pcap-filter').value;
     const focus = document.getElementById('pcap-focus').value;
