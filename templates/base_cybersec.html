@@ -39,7 +39,7 @@
 
     <!-- Nav items -->
     <div style="overflow-y:auto; flex:1; padding:0.5rem 0;">
-      <div class="dash-nav-section">Learning Path</div>
+      <div class="dash-nav-section">Curriculum & Roadmap</div>
       <a href="{{ url_for('dashboard.today') }}" class="dash-nav-link {% if active == 'today' %}active{% endif %}">
         <i class="bi bi-speedometer2"></i><span>Today's Schedule</span>
       </a>
@@ -49,44 +49,27 @@
       <a href="{{ url_for('roadmap.calendar') }}" class="dash-nav-link {% if active == 'calendar' %}active{% endif %}">
         <i class="bi bi-calendar3"></i><span>Timetable</span>
       </a>
+
+      <div class="dash-nav-section">Purple Team Practice</div>
       <a href="{{ url_for('labs.browse') }}" class="dash-nav-link {% if active == 'labs' %}active{% endif %}">
         <i class="bi bi-terminal-fill"></i><span>Purple Labs</span>
       </a>
-
-      <div class="dash-nav-section">Purple Team Ops</div>
       <a href="{{ url_for('purple_team.coverage') }}" class="dash-nav-link {% if active == 'coverage' %}active{% endif %}">
         <i class="bi bi-grid-3x3-gap-fill"></i><span>ATT&CK Matrix</span>
       </a>
       <a href="{{ url_for('purple_team.log_list') }}" class="dash-nav-link {% if active == 'purple_team_log' %}active{% endif %}">
         <i class="bi bi-journal-code"></i><span>Exercise Log</span>
       </a>
-      <a href="{{ url_for('purple_team.log_new') }}" class="dash-nav-link {% if active == 'log_new' %}active{% endif %}">
-        <i class="bi bi-journal-plus"></i><span>Log Exercise</span>
-      </a>
-      <a href="{{ url_for('purple_team.export') }}" class="dash-nav-link">
-        <i class="bi bi-file-earmark-arrow-down"></i><span>Export Portfolio</span>
-      </a>
 
-      <div class="dash-nav-section">Resources & AI</div>
+      <div class="dash-nav-section">Mastery & Tools</div>
       <a href="{{ url_for('job_roles.browse') }}" class="dash-nav-link {% if active == 'job_roles' %}active{% endif %}">
-        <i class="bi bi-briefcase"></i><span>Job Tracks</span>
-      </a>
-      <a href="{{ url_for('library.list') }}" class="dash-nav-link {% if active == 'library' %}active{% endif %}">
-        <i class="bi bi-collection"></i><span>My Library</span>
+        <i class="bi bi-briefcase"></i><span>Master Track</span>
       </a>
       <a href="{{ url_for('assistant.chat') }}" class="dash-nav-link {% if active == 'assistant' %}active{% endif %}">
         <i class="bi bi-robot"></i><span>AI Mentor</span>
       </a>
-
-      <div class="dash-nav-section">Environment</div>
       <a href="{{ url_for('offline.lab_setup') }}" class="dash-nav-link {% if active == 'lab_setup' %}active{% endif %}">
         <i class="bi bi-pc-display"></i><span>VirtualBox Setup</span>
-      </a>
-      <a href="{{ url_for('dashboard.progress') }}" class="dash-nav-link {% if active == 'progress' %}active{% endif %}">
-        <i class="bi bi-graph-up-arrow"></i><span>Skill Radar</span>
-      </a>
-      <a href="{{ url_for('offline.ai_tutor_settings') }}" class="dash-nav-link {% if active == 'ai_settings' %}active{% endif %}">
-        <i class="bi bi-cpu"></i><span>AI Settings</span>
       </a>
     </div>
 
