@@ -1,0 +1,304 @@
+{% extends "base_cybersec.html" %}
+{% block title %}{{ topic.title }} — SkillSprint Academy{% endblock %}
+{% set active = "roadmap" %}
+{% block page_title %}{{ topic.title }}{% endblock %}
+{% block page_subtitle %}{{ topic.skill_area.name if topic.skill_area else 'General' }} · Difficulty {{ topic.difficulty }}/5 · {{ topic.estimated_minutes }} mins study time{% endblock %}
+
+{% block head_extra %}
+{{ super() }}
+<style>
+.topic-header-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 0.85rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.topic-jump-nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.topic-jump-link {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.35rem 0.85rem;
+  border-radius: 2rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.topic-jump-link:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.content-section-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 2rem;
+  margin-bottom: 1.75rem;
+}
+.content-section-card h4 {
+  color: var(--accent-light);
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+  color: var(--text-primary);
+  margin-top: 1.5rem;
+  font-weight: 700;
+}
+.markdown-content h1 { font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+.markdown-content h2 { font-size: 1.2rem; color: #a855f7; }
+.markdown-content h3 { font-size: 1.05rem; color: #38bdf8; }
+.markdown-content p { color: var(--text-secondary); line-height: 1.75; font-size: 0.95rem; }
+.markdown-content code {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.3rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+}
+.markdown-content pre {
+  background: #0d1117;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 1.1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+.markdown-content pre code { background: none; padding: 0; color: #e6edf3; }
+.markdown-content ul, .markdown-content ol { color: var(--text-secondary); line-height: 1.7; }
+.markdown-content li { margin-bottom: 0.4rem; }
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+.markdown-content th, .markdown-content td {
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--border);
+}
+.markdown-content th { background: rgba(99, 102, 241, 0.12); color: var(--text-primary); font-weight: 600; }
+.markdown-content blockquote {
+  border-left: 4px solid var(--primary);
+  background: rgba(99, 102, 241, 0.08);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0 0.4rem 0.4rem 0;
+}
+.prereq-badge {
+  background: rgba(99,102,241,0.15);
+  color: var(--accent-light);
+  border: 1px solid rgba(99,102,241,0.3);
+  padding: 0.25rem 0.6rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+}
+.next-badge {
+  background: rgba(16,185,129,0.15);
+  color: #10b981;
+  border: 1px solid rgba(16,185,129,0.3);
+  padding: 0.25rem 0.6rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Topic Overview Header -->
+<div class="topic-header-card">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+    <div>
+      <span class="badge mb-2" style="background:rgba(168,85,247,0.2);color:#c084fc;border:1px solid rgba(168,85,247,0.3);">
+        <i class="bi bi-shield-check me-1"></i> {{ topic.skill_area.name if topic.skill_area else 'Purple Team' }}
+      </span>
+      <h3 style="font-weight:800;color:#fff;margin:0;">{{ topic.title }}</h3>
+      <p style="color:#8892b0;font-size:0.92rem;margin-top:0.4rem;max-width:750px;">{{ topic.description }}</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('assessment.topic_quiz', topic_id=topic.id) }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-lightning-charge me-1"></i> Start Quiz
+      </a>
+      <a href="{{ url_for('roadmap.view') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Roadmap
+      </a>
+    </div>
+  </div>
+
+  {% if prereqs or next_topics %}
+  <div class="d-flex flex-wrap gap-2 align-items-center mt-3">
+    {% if prereqs %}
+    <span class="text-muted small">Prerequisites:</span>
+    {% for p in prereqs %}
+    <a href="{{ url_for('topics.detail', topic_id=p.id) }}" class="prereq-badge text-decoration-none">{{ p.title }}</a>
+    {% endfor %}
+    {% endif %}
+    {% if next_topics %}
+    <span class="text-muted small ms-2">Leads to:</span>
+    {% for n in next_topics[:3] %}
+    <a href="{{ url_for('topics.detail', topic_id=n.id) }}" class="next-badge text-decoration-none">{{ n.title }}</a>
+    {% endfor %}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="topic-jump-nav">
+    <a href="#theory-section" class="topic-jump-link"><i class="bi bi-book me-1"></i> 1. Theoretical Foundation</a>
+    <a href="#video-section" class="topic-jump-link"><i class="bi bi-play-circle me-1"></i> 2. Video Lectures</a>
+    <a href="#lab-section" class="topic-jump-link"><i class="bi bi-terminal-fill me-1"></i> 3. Hands-On Lab</a>
+    <a href="#realworld-section" class="topic-jump-link"><i class="bi bi-briefcase me-1"></i> 4. Purple Team Scenarios</a>
+    <a href="#quiz-section" class="topic-jump-link"><i class="bi bi-check-circle me-1"></i> 5. Assessment Quiz</a>
+  </div>
+</div>
+
+{% if module %}
+<!-- Section 1: Detailed Theoretical Foundation -->
+<div class="content-section-card" id="theory-section">
+  <h4><i class="bi bi-book me-2" style="color:var(--primary);"></i> 1. Theoretical Foundation</h4>
+  {% if module.theory_md %}
+  <div class="markdown-content">
+    {{ module.theory_md | markdown | safe }}
+  </div>
+  {% else %}
+  <p class="text-muted">Theoretical analysis for this module is being updated.</p>
+  {% endif %}
+</div>
+
+<!-- Section 2: Video Lectures -->
+<div class="content-section-card" id="video-section">
+  <h4><i class="bi bi-play-circle-fill me-2" style="color:#f43f5e;"></i> 2. Video Lectures</h4>
+  {% if module.video_url %}
+  <div class="mb-3">
+    <div class="d-flex align-items-start gap-3 p-3 rounded" style="background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);">
+      <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#f43f5e,#fb7185);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="bi bi-play-fill" style="font-size:1.5rem;color:#fff;"></i>
+      </div>
+      <div class="flex-grow-1">
+        <h6 style="font-weight:700;color:var(--text-primary);margin:0 0 0.25rem;">{{ module.video_title or topic.title ~ ' — Video Lecture' }}</h6>
+        <p class="mb-2 small" style="color:var(--text-muted);">Source: {{ module.video_source or 'Online' }} · Recommended lecture for this topic</p>
+        <a href="{{ module.video_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background:linear-gradient(135deg,#f43f5e,#fb7185);color:#fff;font-weight:600;">
+          <i class="bi bi-play-circle me-1"></i> Watch Video Lecture
+        </a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-4" style="color:var(--text-muted);">
+    <i class="bi bi-camera-video-off" style="font-size:2rem;opacity:0.5;"></i>
+    <p class="mt-2 mb-0">Video lecture for <strong>{{ topic.title }}</strong> will be available soon.</p>
+    <p class="small">Check back after the next curriculum update.</p>
+  </div>
+  {% endif %}
+  
+  {% set video_content_items = topic.content_items | selectattr('type', 'equalto', 'video') | list %}
+  {% if video_content_items %}
+  <h6 class="mt-3 mb-2" style="color:var(--text-primary);font-weight:700;"><i class="bi bi-collection-play me-2"></i>Additional Video Resources</h6>
+  <div class="d-flex flex-column gap-2">
+    {% for v in video_content_items %}
+    <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-play-btn-fill" style="color:#fb7185;"></i>
+        <div>
+          <div style="font-weight:600;color:var(--text-primary);font-size:0.9rem;">{{ v.title }}</div>
+          <div class="small" style="color:var(--text-muted);">{{ v.estimated_minutes }} mins</div>
+        </div>
+      </div>
+      {% if v.url %}
+      <a href="{{ v.url }}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-box-arrow-up-right"></i></a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Section 3: Hands-On Execution & Command Guide -->
+<div class="content-section-card" id="lab-section">
+  <h4><i class="bi bi-terminal-fill me-2" style="color:#34d399;"></i> 3. Purple Team Practical Execution & Detection Guide</h4>
+  {% if module.lab_prerequisites %}
+  <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <div><strong>Lab Setup Prerequisites:</strong> {{ module.lab_prerequisites }}</div>
+  </div>
+  {% endif %}
+  {% if module.lab_guide_md %}
+  <div class="markdown-content">
+    {{ module.lab_guide_md | markdown | safe }}
+  </div>
+  {% endif %}
+  {% if labs %}
+  <h6 class="mt-4 mb-3" style="color:var(--text-primary);font-weight:700;"><i class="bi bi-pc-display-horizontal me-2 text-info"></i>Associated Hands-On VM Labs</h6>
+  <div class="d-flex flex-column gap-2">
+    {% for lab in labs %}
+    <a href="{{ url_for('labs.detail', lab_id=lab.id) }}" class="d-flex align-items-center justify-content-between p-3 rounded text-decoration-none" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);">
+      <div>
+        <div style="font-weight:600;color:var(--text-primary);">{{ lab.title }}</div>
+        <div class="small text-muted">{{ lab.provider }} · Difficulty {{ lab.difficulty }}/5 · {{ lab.estimated_minutes }} mins</div>
+      </div>
+      <i class="bi bi-box-arrow-up-right text-muted"></i>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Section 3: Real-World Applications & Threat Intelligence -->
+<div class="content-section-card" id="realworld-section">
+  <h4><i class="bi bi-briefcase me-2" style="color:#fbbf24;"></i> 4. Real-World Applications & Threat Scenarios</h4>
+  {% if module.real_world_md %}
+  <div class="markdown-content">
+    {{ module.real_world_md | markdown | safe }}
+  </div>
+  {% else %}
+  <p class="text-muted">Real-world threat scenario mappings are updated continuously.</p>
+  {% endif %}
+</div>
+
+<!-- Section 4: Checkpoint Assessment & Quiz -->
+<div class="content-section-card text-center py-4" id="quiz-section" style="background:linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.08));">
+  <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#10b981);margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(99,102,241,0.3);">
+    <i class="bi bi-patch-check-fill" style="font-size:1.5rem;color:#fff;"></i>
+  </div>
+  <h5 style="font-weight:700;color:#fff;">5. Assessment — Test Your Knowledge</h5>
+  <p style="color:#8892b0;font-size:0.9rem;max-width:500px;margin:0.5rem auto 1.5rem;">Complete the checkpoint quiz for <strong>{{ topic.title }}</strong> to validate your understanding and earn XP points on your roadmap.</p>
+  <a href="{{ url_for('assessment.topic_quiz', topic_id=topic.id) }}" class="btn btn-primary px-4 py-2" style="font-weight:600;">
+    <i class="bi bi-lightning-charge-fill me-1"></i> Launch Checkpoint Quiz
+  </a>
+</div>
+{% else %}
+<div class="content-section-card text-center p-5">
+  <i class="bi bi-journal-text" style="font-size:3rem;color:var(--text-muted);"></i>
+  <h5 class="mt-3" style="color:var(--text-muted);">Topic Content</h5>
+  <p class="text-muted">Theoretical module for <strong>{{ topic.title }}</strong> is loaded.</p>
+  <a href="{{ url_for('assessment.topic_quiz', topic_id=topic.id) }}" class="btn btn-primary mt-2">
+    <i class="bi bi-lightning-charge me-1"></i> Take Quiz
+  </a>
+</div>
+{% endif %}
+
+<div class="mt-4 mb-5 d-flex justify-content-between align-items-center">
+  <a href="{{ url_for('roadmap.view') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Return to Roadmap
+  </a>
+  <a href="{{ url_for('assessment.topic_quiz', topic_id=topic.id) }}" class="btn btn-primary btn-sm">
+    Take Checkpoint Quiz <i class="bi bi-arrow-right ms-1"></i>
+  </a>
+</div>
+{% endblock %}

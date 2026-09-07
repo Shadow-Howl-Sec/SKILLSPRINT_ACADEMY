@@ -1,0 +1,208 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Editable Timetable Calendar — SkillSprint Academy{% endblock %}
+{% set active = "calendar" %}
+{% block page_title %}Timetable & Interactive Calendar{% endblock %}
+{% block page_subtitle %}Modifiable daily 2-3hr schedule blocks · Drag or click to reschedule tasks{% endblock %}
+
+{% block head_extra %}
+<style nonce="{{ csp_nonce }}">
+  .calendar-day-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem;
+    height: 100%;
+    color: var(--text-primary);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .calendar-day-card:hover {
+    border-color: rgba(99, 102, 241, 0.25);
+  }
+  .calendar-day-card.today {
+    border: 2px solid var(--primary);
+    box-shadow: 0 4px 16px var(--primary-glow);
+  }
+  .block-badge {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-light);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    font-weight: 600;
+  }
+  .task-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .task-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(99, 102, 241, 0.35);
+  }
+  .task-card.done {
+    opacity: 0.45;
+    text-decoration: line-through;
+  }
+  .task-type-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .type-content_item { background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); }
+  .type-lab { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+  .type-checkpoint_quiz { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+  .type-external_resource { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('roadmap.view') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Roadmap View
+    </a>
+    <span class="text-muted small">Showing next 14 days schedule</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('roadmap.availability') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-clock-history me-1"></i> Edit Daily 2-3hr Blocks
+    </a>
+    <form method="post" action="{{ url_for('roadmap.replan') }}" class="d-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="bi bi-arrow-clockwise me-1"></i> Recalculate Schedule
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% for day in days %}
+  <div class="col-md-6 col-xl-3">
+    <div class="calendar-day-card {% if day.date == now[:10] %}today{% endif %}" id="day-{{ day.date.isoformat() }}">
+      <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+        <div>
+          <h6 style="margin:0;font-weight:700;font-size:0.9rem;">
+            {{ day.date.strftime('%a %b %d') }}
+          </h6>
+          <span class="text-muted" style="font-size:0.72rem;">
+            {% if day.date.isoformat() == now[:10] %}Today{% endif %}
+          </span>
+        </div>
+        <span class="badge bg-primary rounded-pill" style="font-size:0.7rem;">
+          {{ day.tasks | length }} tasks
+        </span>
+      </div>
+
+      <!-- Time Blocks Header -->
+      <div class="mb-2">
+        {% for b in day.blocks %}
+        <div class="block-badge mb-1 d-block">
+          <i class="bi bi-clock me-1"></i>{{ b.name }}: {{ b.start }}-{{ b.end }}
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Tasks List -->
+      <div class="task-list" data-date="{{ day.date.isoformat() }}">
+        {% for it in day.tasks %}
+        <div class="task-card {% if it.status == 'done' %}done{% endif %}" id="task-{{ it.id }}">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <span class="task-type-badge type-{{ it.item_type }}">
+              {{ it.item_type | replace('_', ' ') }}
+            </span>
+            <span class="text-muted" style="font-size:0.7rem;">
+              <i class="bi bi-hourglass-split me-1"></i>{{ it.estimated_minutes }}m
+            </span>
+          </div>
+
+          <div class="fw-semibold mb-1" style="font-size:0.84rem;line-height:1.35;color:var(--text-primary);">
+            {% if it.item_type == 'checkpoint_quiz' %}
+              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="text-decoration-none" style="color:var(--text-primary);">
+                <i class="bi bi-patch-question-fill text-warning me-1"></i>
+                {{ it.topic.title if it.topic else 'Checkpoint Quiz' }}
+              </a>
+            {% elif it.item_type == 'lab' and it.lab %}
+              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="text-decoration-none" style="color:var(--text-primary);">
+                <i class="bi bi-flag-fill text-danger me-1"></i> {{ it.lab.title }}
+              </a>
+            {% elif it.topic %}
+              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="text-decoration-none" style="color:var(--text-primary);">
+                <i class="bi bi-book-fill text-info me-1"></i> {{ it.topic.title }}
+              </a>
+            {% elif it.content_item %}
+              <span style="color:var(--text-primary);"><i class="bi bi-book-fill text-primary me-1"></i> {{ it.content_item.title }}</span>
+            {% else %}
+              <span style="color:var(--text-primary);">{{ it.topic.title if it.topic else 'Task' }}</span>
+            {% endif %}
+          </div>
+
+          {% if it.time_slot %}
+          <div class="text-muted small mb-1" style="font-size:0.7rem;">
+            <i class="bi bi-geo-alt me-1"></i>{{ it.time_slot }}
+          </div>
+          {% endif %}
+
+          {% if it.status != 'done' %}
+          <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
+            <button class="btn btn-sm btn-link p-0 text-primary" style="font-size:0.72rem;text-decoration:none;"
+                    data-bs-toggle="collapse" data-bs-target="#edit_slot_{{ it.id }}">
+              <i class="bi bi-pencil-square me-1"></i>Reschedule
+            </button>
+
+            {% if it.item_type == 'checkpoint_quiz' and it.topic_id %}
+              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="btn btn-sm btn-warning py-0 px-2" style="font-size:0.7rem;">Take Quiz</a>
+            {% elif it.item_type == 'lab' and it.lab_id %}
+              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:0.7rem;">Start Lab</a>
+            {% endif %}
+            {% if it.topic_id and it.item_type != 'checkpoint_quiz' %}
+              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="btn btn-sm btn-outline-info py-0 px-2" style="font-size:0.7rem;">Learn</a>
+            {% endif %}
+            {% if it.status != 'done' and it.item_type != 'checkpoint_quiz' and it.item_type != 'lab' and not it.topic_id %}
+              <form method="post" action="{{ url_for('dashboard.complete_item', item_id=it.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size:0.7rem;">Done</button>
+              </form>
+            {% endif %}
+          </div>
+
+          <!-- Inline Edit / Move Form -->
+          <div class="collapse mt-2" id="edit_slot_{{ it.id }}">
+            <form method="post" action="{{ url_for('roadmap.move_item', item_id=it.id) }}" style="background:rgba(15,23,42,0.95);border:1px solid var(--border);border-radius:10px;padding:0.75rem;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <label class="form-label mb-1 text-muted" for="new_date_{{ it.id }}" style="font-size:0.7rem;">Target Date</label>
+              <input type="date" id="new_date_{{ it.id }}" name="new_date" value="{{ day.date.isoformat() }}" class="form-control form-control-sm mb-2" style="background:rgba(255,255,255,0.05);border-color:var(--border);color:var(--text-primary);" aria-label="Target Date" title="Target Date">
+
+              <label class="form-label mb-1 text-muted" for="time_slot_{{ it.id }}" style="font-size:0.7rem;">Time Block Slot</label>
+              <select id="time_slot_{{ it.id }}" name="time_slot" class="form-select form-select-sm mb-2" style="background:rgba(255,255,255,0.05);border-color:var(--border);color:var(--text-primary);" aria-label="Time Block Slot" title="Time Block Slot">
+                <option value="09:00-11:30 (Morning Block)" {% if '09:00' in (it.time_slot or '') %}selected{% endif %}>09:00-11:30 (Morning Block)</option>
+                <option value="14:00-16:30 (Afternoon Block)" {% if '14:00' in (it.time_slot or '') %}selected{% endif %}>14:00-16:30 (Afternoon Block)</option>
+                <option value="19:00-21:30 (Evening Block)" {% if '19:00' in (it.time_slot or '') %}selected{% endif %}>19:00-21:30 (Evening Block)</option>
+              </select>
+
+              <button type="submit" class="btn btn-sm btn-primary w-100 py-1" style="font-size:0.75rem;">Save Change</button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted small rounded" style="border:1px dashed var(--border);background:rgba(255,255,255,0.015);">
+          <i class="bi bi-calendar-check d-block mb-1" style="font-size:1.3rem;color:var(--text-muted);opacity:0.6;"></i>
+          No tasks scheduled
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

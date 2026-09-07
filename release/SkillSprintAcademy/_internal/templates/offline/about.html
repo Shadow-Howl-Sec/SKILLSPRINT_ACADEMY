@@ -1,0 +1,116 @@
+{% extends "base_cybersec.html" %}
+
+{% block title %}About Offline Mode{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-wifi-off me-2"></i>Offline Mode</h2>
+                <a href="{{ url_for('dashboard.today') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-house-door me-1"></i>Dashboard
+                </a>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>What Works Fully Offline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-book me-2"></i>Complete Curriculum</h6>
+                            <ul class="small text-muted">
+                                <li>68+ topics with theory lessons (Markdown)</li>
+                                <li>Prerequisite DAG — no skipping allowed</li>
+                                <li>Checkpoint quizzes per topic</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-terminal me-2"></i>VM-Based Labs</h6>
+                            <ul class="small text-muted">
+                                <li>Kali Linux (attacker)</li>
+                                <li>GOAD Domain Controller + Windows 10</li>
+                                <li>Metasploitable2, DVWA/Juice Shop</li>
+                                <li>Wazuh SIEM for detection</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-robot me-2"></i>AI Tutor</h6>
+                            <ul class="small text-muted">
+                                <li>Ollama local LLM (llama3.1:8b-instruct)</li>
+                                <li>Rules-based fallback (always works)</li>
+                                <li>Progressive hints without flag leaks</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-graph-up me-2"></i>Progress Tracking</h6>
+                            <ul class="small text-muted">
+                                <li>XP, streaks, skill radar</li>
+                                <li>ATT&CK coverage matrix</li>
+                                <li>Purple team exercise log</li>
+                                <li>Markdown portfolio export</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-download me-2"></i>Resource Cache</h6>
+                            <ul class="small text-muted">
+                                <li>One-time sync of external docs</li>
+                                <li>Stored locally in instance/resource_cache</li>
+                                <li>Referenced by curriculum automatically</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="bi bi-shield-check me-2"></i>Auto-Updates</h6>
+                            <ul class="small text-muted">
+                                <li>Checks GitHub Releases (when online)</li>
+                                <li>Atomic folder swap via updater.exe</li>
+                                <li>User data never touched</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>What Requires Internet (One-Time)</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li><strong>Initial VM setup:</strong> Download Kali OVA, Windows Server ISO, Wazuh OVA</li>
+                        <li><strong>Ollama model pull:</strong> <code>ollama pull llama3.1:8b-instruct</code> (run once)</li>
+                        <li><strong>Resource cache sync:</strong> Run <code>scripts/sync_resource_cache.ps1</code> to fetch external docs</li>
+                        <li><strong>Application updates:</strong> GitHub Releases check (optional, can skip)</li>
+                    </ul>
+                    <p class="small text-muted mt-2 mb-0">After these one-time steps, the platform runs 100% offline — no external connections ever required.</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Network Architecture</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small">All VMs connect via VirtualBox <strong>Host-Only Adapter</strong> on <code>192.168.56.0/24</code>:</p>
+                    <table class="table table-sm table-bordered small">
+                        <thead>
+                            <tr><th>VM</th><th>IP</th><th>Role</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Kali Linux</td><td>192.168.56.5</td><td>Attacker platform</td></tr>
+                            <tr><td>GOAD-DC01</td><td>192.168.56.10</td><td>Domain Controller</td></tr>
+                            <tr><td>GOAD-WIN10</td><td>192.168.56.11</td><td>Windows target</td></tr>
+                            <tr><td>Metasploitable2</td><td>192.168.56.20</td><td>Linux target</td></tr>
+                            <tr><td>DVWA/Juice Shop</td><td>192.168.56.21</td><td>Web targets (Docker on Kali)</td></tr>
+                            <tr><td>Wazuh Manager</td><td>192.168.56.30</td><td>SIEM / Detection</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="small text-muted mb-0">Your host machine accesses VMs directly via these IPs. No NAT, no internet routing.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

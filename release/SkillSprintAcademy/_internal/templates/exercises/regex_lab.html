@@ -1,0 +1,140 @@
+<!-- regex_lab.html - Regex Lab Exercise -->
+<div class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label">Regex Pattern</label>
+        <input type="text" id="regex-pattern" class="form-control font-monospace" 
+               placeholder="^\\d{3}-\\d{2}-\\d{4}$" 
+               value="{{ exerciseSpec.pattern or '' }}">
+        <div class="form-text">Flags: <code>{{ exerciseSpec.flags or 'none' }}</code></div>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Test String</label>
+        <textarea id="regex-test" class="form-control font-monospace" rows="4" 
+                  placeholder="Enter test strings, one per line...">{{ exerciseSpec.test_string or '' }}</textarea>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <button class="btn btn-outline-primary btn-sm" id="testRegexBtn">
+        <i class="bi bi-play-fill me-1"></i>Test Regex
+    </button>
+    <button class="btn btn-outline-secondary btn-sm" id="explainRegexBtn">
+        <i class="bi bi-info-circle me-1"></i>Explain
+    </button>
+</div>
+
+<div class="card" id="regexResults" style="display: none;">
+    <div class="card-header bg-dark text-white"><i class="bi bi-terminal me-1"></i>Matches</div>
+    <div class="card-body p-0">
+        <pre id="regexOutput" class="mb-0 p-3 bg-dark text-light" style="max-height: 300px; overflow: auto;"></pre>
+    </div>
+</div>
+
+<div class="card mt-3" id="regexExplanation" style="display: none;">
+    <div class="card-header bg-info text-white"><i class="bi bi-lightbulb me-1"></i>Explanation</div>
+    <div class="card-body">
+        <div id="regexExplainText"></div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('testRegexBtn')?.addEventListener('click', testRegex);
+  document.getElementById('explainRegexBtn')?.addEventListener('click', explainRegex);
+});
+function testRegex() {
+    const pattern = document.getElementById('regex-pattern').value;
+    const testStr = document.getElementById('regex-test').value;
+    const flags = '{{ exerciseSpec.flags or "" }}';
+    const output = document.getElementById('regexOutput');
+    const panel = document.getElementById('regexResults');
+    
+    if (!pattern) {
+        alert('Enter a regex pattern first.');
+        return;
+    }
+    
+    panel.style.display = 'block';
+    output.textContent = 'Testing...';
+    
+    try {
+        const regex = new RegExp(pattern, flags);
+        const lines = testStr.split('\n').filter(l => l.trim());
+        let result = '';
+        
+        if (lines.length === 0) {
+            // Single string test
+            const match = testStr.match(regex);
+            if (match) {
+                result = `Match found!\n\nFull match: ${match[0]}\n`;
+                if (match.length > 1) {
+                    result += `Groups: ${match.slice(1).map((g, i) => `$${i+1}=${g}`).join(', ')}`;
+                }
+            } else {
+                result = 'No match.';
+            }
+        } else {
+            // Multi-line test
+            lines.forEach((line, i) => {
+                const match = line.match(regex);
+                result += `Line ${i+1}: ${match ? '✅ MATCH' : '❌ NO MATCH'} — ${line}\n`;
+                if (match && match.length > 1) {
+                    result += `  Groups: ${match.slice(1).map((g, j) => `$${j+1}=${g}`).join(', ')}\n`;
+                }
+            });
+        }
+        output.textContent = result;
+    } catch (e) {
+        output.textContent = 'Invalid regex: ' + e.message;
+        output.style.color = '#ff6b6b';
+    }
+}
+
+function explainRegex() {
+    const pattern = document.getElementById('regex-pattern').value;
+    const explainDiv = document.getElementById('regexExplainText');
+    const panel = document.getElementById('regexExplanation');
+    
+    if (!pattern) {
+        alert('Enter a regex pattern first.');
+        return;
+    }
+    
+    panel.style.display = 'block';
+    
+    // Simple regex explanation
+    const tokens = [];
+    let i = 0;
+    while (i < pattern.length) {
+        const c = pattern[i];
+        if (c === '\\' && i + 1 < pattern.length) {
+            tokens.push({ char: pattern.slice(i, i+2), desc: escapeChar(pattern[i+1]) });
+            i += 2;
+        } else if ('^$.*+?{}[]()|'.includes(c)) {
+            tokens.push({ char: c, desc: metaChar(c) });
+            i++;
+        } else {
+            tokens.push({ char: c, desc: 'Literal character' });
+            i++;
+        }
+    }
+    
+    explainDiv.innerHTML = tokens.map(t => `<div class="d-flex mb-1"><code class="me-3" style="min-width: 60px;">${escapeHtml(t.char)}</code><span class="text-muted small">${t.desc}</span></div>`).join('');
+}
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(text));
+    return d.innerHTML;
+}
+
+function escapeChar(c) {
+    const map = { 'd': 'Digit (0-9)', 'D': 'Non-digit', 'w': 'Word char', 'W': 'Non-word', 's': 'Whitespace', 'S': 'Non-whitespace', 'n': 'Newline', 't': 'Tab', 'b': 'Word boundary', 'B': 'Non-word boundary' };
+    return map[c] || `Escaped ${c}`;
+}
+
+function metaChar(c) {
+    const map = { '^': 'Start of string', '$': 'End of string', '.': 'Any char (except newline)', '*': '0 or more', '+': '1 or more', '?': '0 or 1', '{': 'Quantifier start', '[': 'Character class', '(': 'Capture group', '|': 'Alternation' };
+    return map[c] || 'Meta character';
+}
+</script>

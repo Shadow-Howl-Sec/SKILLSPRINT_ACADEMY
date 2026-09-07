@@ -1,0 +1,159 @@
+{% extends "base_cybersec.html" %}
+{% set active = "lab_setup" %}
+{% block title %}VirtualBox Lab Setup — SkillSprint Academy{% endblock %}
+{% block page_title %}VirtualBox & VM Prerequisites{% endblock %}
+{% block page_subtitle %}Configure and track your local host-only (192.168.56.0/24) attack, target, and SIEM machines{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-11">
+    <!-- Network Topology Banner -->
+    <div class="d-flex align-items-center gap-3 p-3 mb-4 rounded" 
+         style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(99,102,241,0.2);color:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="bi bi-hdd-network-fill" style="font-size:1.25rem;"></i>
+      </div>
+      <div class="small">
+        <div style="font-weight:700;color:var(--text-primary);">Host-Only Cyber Range Architecture</div>
+        <div class="text-muted">Interactive Purple Team drills run against your local VirtualBox environment. Tick the VMs currently powered on in VirtualBox to unlock corresponding drills.</div>
+      </div>
+    </div>
+
+    <!-- VM Checklist Form -->
+    <form method="POST" action="{{ url_for('offline.lab_setup') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="admin-card p-4 mb-4" style="border-radius:14px;">
+        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2" style="border-color:rgba(255,255,255,0.06) !important;">
+          <h6 style="margin:0;font-weight:700;color:var(--text-primary);">
+            <i class="bi bi-check2-square me-2 text-primary"></i>Running Virtual Machines
+          </h6>
+          <span class="small text-muted">Update anytime as you start/stop VMs</span>
+        </div>
+
+        <div class="row g-3">
+          {% for key, name, desc in vm_list %}
+          {% set is_active = prereqs.get(key) %}
+          <div class="col-md-6 col-xl-4">
+            <div class="p-3 h-100 rounded d-flex flex-column justify-content-between"
+                 style="background:{{ 'rgba(16,185,129,0.05)' if is_active else 'rgba(255,255,255,0.02)' }};border:1px solid {{ 'rgba(16,185,129,0.35)' if is_active else 'var(--border)' }};transition:var(--t-fast);">
+              <div class="d-flex align-items-start gap-3">
+                <input class="form-check-input mt-1 flex-shrink-0" type="checkbox" name="vm_{{ key }}" id="vm_{{ key }}"
+                       {% if is_active %}checked{% endif %} style="cursor:pointer;width:1.15rem;height:1.15rem;">
+                <div>
+                  <label class="form-check-label fw-bold d-block" for="vm_{{ key }}" style="cursor:pointer;color:var(--text-primary);font-size:0.9rem;">
+                    {{ name }}
+                  </label>
+                  <div class="small text-muted mt-1" style="font-size:0.78rem;line-height:1.4;">
+                    {{ desc }}
+                  </div>
+                </div>
+              </div>
+              <div class="mt-2 pt-2 text-end">
+                {% if is_active %}
+                <span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);font-size:0.68rem;border:1px solid rgba(16,185,129,0.3);">
+                  <i class="bi bi-circle-fill me-1" style="font-size:0.45rem;"></i> Active
+                </span>
+                {% else %}
+                <span class="badge" style="background:rgba(255,255,255,0.04);color:var(--text-dim);font-size:0.68rem;border:1px solid var(--border);">
+                  Stopped
+                </span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top" style="border-color:rgba(255,255,255,0.06) !important;">
+          <a href="{{ url_for('dashboard.today') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Dashboard
+          </a>
+          <button type="submit" class="btn btn-primary btn-sm px-4 py-2">
+            <i class="bi bi-save me-1"></i> Save VM Status
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Labs & Requirements Grid -->
+    <div class="d-flex align-items-center justify-content-between mb-3 mt-4">
+      <div>
+        <h5 style="margin:0;font-weight:700;color:var(--text-primary);">
+          <i class="bi bi-terminal-split me-2 text-primary"></i>VM Drills Availability
+        </h5>
+        <span class="small text-muted">Drills unlock automatically based on your active VMs</span>
+      </div>
+      <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--primary);border:1px solid rgba(99,102,241,0.3);font-size:0.75rem;">
+        {{ vm_labs|length }} VM Drills
+      </span>
+    </div>
+
+    <div class="row g-3">
+      {% for lab in vm_labs %}
+      {% set ready = lab_all_ready.get(lab.id) %}
+      <div class="col-md-6 col-lg-4">
+        <div class="admin-card p-3 h-100 d-flex flex-column justify-content-between"
+             style="border-radius:12px;opacity:{{ '1' if ready else '0.65' }};border-color:{{ 'rgba(16,185,129,0.3)' if ready else 'var(--border)' }};">
+          <div>
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+              <h6 style="margin:0;font-weight:700;font-size:0.88rem;line-height:1.35;color:var(--text-primary);">
+                {{ lab.title }}
+              </h6>
+              <span class="badge flex-shrink-0" 
+                    style="font-size:0.65rem;background:{{ 'rgba(16,185,129,0.15)' if ready else 'rgba(255,255,255,0.05)' }};color:{{ 'var(--success)' if ready else 'var(--text-muted)' }};border:1px solid {{ 'rgba(16,185,129,0.3)' if ready else 'var(--border)' }};">
+                {{ 'Ready' if ready else 'Locked' }}
+              </span>
+            </div>
+
+            <div class="small mb-3" style="font-size:0.75rem;">
+              {% if lab.mitre_technique %}
+              <div class="text-muted mb-1">
+                MITRE: <code style="color:var(--primary-light);">{{ lab.mitre_technique }}</code>
+              </div>
+              {% endif %}
+              <div class="d-flex flex-wrap gap-1 mt-2">
+                {% if lab.attacker_vm %}
+                <span class="badge" style="background:rgba(244,63,94,0.1);color:#fb7185;border:1px solid rgba(244,63,94,0.25);font-size:0.65rem;">
+                  Atk: {{ lab.attacker_vm }}
+                </span>
+                {% endif %}
+                {% if lab.target_vm %}
+                <span class="badge" style="background:rgba(14,165,233,0.1);color:#38bdf8;border:1px solid rgba(14,165,233,0.25);font-size:0.65rem;">
+                  Tgt: {{ lab.target_vm }}
+                </span>
+                {% endif %}
+                {% if lab.detection_vm %}
+                <span class="badge" style="background:rgba(16,185,129,0.1);color:#34d399;border:1px solid rgba(16,185,129,0.25);font-size:0.65rem;">
+                  SIEM: {{ lab.detection_vm }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-top" style="border-color:rgba(255,255,255,0.05) !important;">
+            {% if ready %}
+            <a href="{{ url_for('labs.detail', lab_id=lab.id) }}" class="btn btn-sm btn-primary w-100" style="font-size:0.78rem;">
+              <i class="bi bi-play-fill me-1"></i> Start Exercise
+            </a>
+            {% else %}
+            <span class="btn btn-sm btn-outline-secondary w-100 disabled" style="font-size:0.78rem;opacity:0.6;cursor:not-allowed;">
+              <i class="bi bi-lock-fill me-1"></i> Missing Prerequisites
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if not vm_labs %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-info-circle display-4 opacity-50"></i>
+      <p class="mt-3">No VM drills registered. All curriculum exercises are ready.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

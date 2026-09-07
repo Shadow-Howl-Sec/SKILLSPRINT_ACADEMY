@@ -1,0 +1,113 @@
+{% extends "base_cybersec.html" %}
+{% block title %}Add Resource — SkillSprint Academy{% endblock %}
+{% set active = "library" %}
+{% block page_title %}Add External Resource{% endblock %}
+{% block page_subtitle %}Bookmark writeups, cheatsheets, videos or repos — auto-fetches title and metadata{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="admin-card p-4" style="border-radius:14px;">
+      <form method="post" action="{{ url_for('library.add') }}" id="addResourceForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-light" for="resourceUrl">Resource URL <span class="text-danger">*</span></label>
+          <input class="form-control" name="url" id="resourceUrl" required type="url" 
+                 placeholder="https://attack.mitre.org/techniques/..." 
+                 style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+        </div>
+
+        <div class="p-3 mb-3 rounded small d-flex align-items-center gap-2" 
+             style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.2);color:var(--text-secondary);">
+          <i class="bi bi-info-circle text-info"></i>
+          <span>Title & thumbnail will be auto-fetched from page metadata or local offline cache. Override below if needed.</span>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-light" for="resourceTitle">Custom Title (optional — auto-detected)</label>
+          <input class="form-control" name="title" id="resourceTitle" 
+                 placeholder="e.g. Kerberoasting and AS-REP Roasting Cheatsheet"
+                 style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-light" for="resource_type">Resource Format / Type</label>
+            <select name="resource_type" id="resource_type" class="form-select"
+                    style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+              <option value="article">Technical Article / Blog</option>
+              <option value="video">Video Walkthrough / Talk</option>
+              <option value="course">Structured Course / Module</option>
+              <option value="pdf">PDF / Whitepaper</option>
+              <option value="github">GitHub Tool / Repository</option>
+              <option value="cheatsheet">Cheatsheet / Command Ref</option>
+              <option value="other">Other Reference</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-light" for="skillAreaSelect">Skill Area (optional)</label>
+            <select name="skill_area_id" id="skillAreaSelect" class="form-select"
+                    style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+              <option value="">— Unassigned / General —</option>
+              {% for a in areas %}
+                <option value="{{ a.id }}">{{ a.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-light" for="estimatedMinutes">Estimated Study Duration (minutes)</label>
+          <input class="form-control" name="estimated_minutes" id="estimatedMinutes" type="number" min="5" max="1200" value="30"
+                 style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold text-light" for="resourceNotes">Personal Notes / Why are you saving this? (optional)</label>
+          <textarea class="form-control" name="notes" id="resourceNotes" rows="3" 
+                    placeholder="Key takeaways, relevant tools (mimikatz, rubeus, wazuh rules), or target techniques..."
+                    style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);"></textarea>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+          <button type="submit" class="btn btn-primary btn-sm px-4 py-2">
+            <i class="bi bi-bookmark-plus me-1"></i> Add to Library
+          </button>
+          <a href="{{ url_for('library.list') }}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  const urlInput = document.getElementById('resourceUrl');
+  const typeSelect = document.getElementById('resource_type');
+  if (!urlInput || !typeSelect) return;
+
+  urlInput.addEventListener('blur', () => {
+    const u = (urlInput.value || '').toLowerCase();
+    let t = '';
+    if (u.includes('youtube.com') || u.includes('youtu.be')) t = 'video';
+    else if (u.includes('udemy.com') || u.includes('coursera.org')) t = 'course';
+    else if (u.includes('github.com') || u.includes('gitlab.com')) t = 'github';
+    else if (u.endsWith('.pdf')) t = 'pdf';
+    else if (u.includes('cheatsheet') || u.includes('cheat-sheet')) t = 'cheatsheet';
+    else if (u.length > 5) t = 'article';
+
+    if (t) {
+      for (const opt of typeSelect.options) {
+        if (opt.value === t) {
+          opt.selected = true;
+          break;
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

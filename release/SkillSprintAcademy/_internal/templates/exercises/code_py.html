@@ -1,0 +1,71 @@
+<!-- code_py.html - Python Code Exercise -->
+<div class="mb-3">
+    <label class="form-label">Python Code</label>
+    <textarea id="code-editor" class="form-control font-monospace" rows="20" spellcheck="false"
+              placeholder="# Write your Python solution here&#10;def solve():&#10;    pass"></textarea>
+    <div class="form-text">Python {{ exerciseSpec.python_version or '3.11' }} • Available: {{ exerciseSpec.allowed_modules|join(', ') if exerciseSpec.allowed_modules else 'stdlib only' }}</div>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <button class="btn btn-outline-primary btn-sm" id="runCodeBtn">
+        <i class="bi bi-play-fill me-1"></i>Run Code
+    </button>
+    <button class="btn btn-outline-secondary btn-sm" id="runTestsBtn">
+        <i class="bi bi-check-circle me-1"></i>Run Tests
+    </button>
+</div>
+
+<div class="card" id="outputPanel" style="display: none;">
+    <div class="card-header bg-dark text-white"><i class="bi bi-terminal me-1"></i>Output</div>
+    <div class="card-body p-0">
+        <pre id="codeOutput" class="mb-0 p-3 bg-dark text-light" style="max-height: 300px; overflow: auto;"></pre>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('runCodeBtn')?.addEventListener('click', runCode);
+  document.getElementById('runTestsBtn')?.addEventListener('click', runTests);
+});
+// Pyodide-based Python execution (if available)
+async function runCode() {
+    const code = document.getElementById('code-editor').value;
+    const output = document.getElementById('codeOutput');
+    const panel = document.getElementById('outputPanel');
+    panel.style.display = 'block';
+    output.textContent = 'Running...';
+
+    try {
+        if (typeof pyodide !== 'undefined') {
+            // Use Pyodide if loaded
+            const result = await pyodide.runPythonAsync(code);
+            output.textContent = result !== undefined ? String(result) : '(no output)';
+        } else {
+            // Fallback: show code (server-side execution would be needed)
+            output.textContent = '# Pyodide not loaded. Code:\n' + code;
+        }
+    } catch (e) {
+        output.textContent = 'Error: ' + e.message;
+        output.style.color = '#ff6b6b';
+    }
+}
+
+function runTests() {
+    const tests = exerciseSpec.tests || [];
+    if (tests.length === 0) {
+        alert('No tests defined for this exercise.');
+        return;
+    }
+    // Run each test case
+    let allPassed = true;
+    let output = 'Running tests...\n\n';
+    for (const test of tests) {
+        output += `Test: ${test.description || 'unnamed'}\n`;
+        output += `Input: ${JSON.stringify(test.input)}\n`;
+        output += `Expected: ${JSON.stringify(test.expected)}\n`;
+        output += `--- \n`;
+    }
+    document.getElementById('codeOutput').textContent = output;
+    document.getElementById('outputPanel').style.display = 'block';
+}
+</script>

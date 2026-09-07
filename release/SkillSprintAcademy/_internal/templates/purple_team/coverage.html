@@ -1,0 +1,218 @@
+{% extends "base_cybersec.html" %}
+
+{% block title %}ATT&CK Coverage Matrix — SkillSprint Academy{% endblock %}
+{% set active = "coverage" %}
+
+{% block page_title %}ATT&CK Coverage Matrix{% endblock %}
+{% block page_subtitle %}Enterprise MITRE ATT&CK technique verification: attacked, detected, detection rules written{% endblock %}
+
+{% block head_extra %}
+<style nonce="{{ csp_nonce }}">
+  .coverage-table {
+    font-size: 0.82rem;
+  }
+  .coverage-table th {
+    position: sticky;
+    top: 0;
+    background: #0f172a;
+    z-index: 10;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+  .coverage-table td {
+    vertical-align: middle;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+  .technique-cell {
+    min-width: 180px;
+    max-width: 240px;
+  }
+  .tactic-header {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-stat-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .summary-stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Top Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('purple_team.log_list') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-list-task me-1"></i> Exercise Log
+    </a>
+    <a href="{{ url_for('purple_team.log_new') }}" class="btn btn-sm btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> New Exercise
+    </a>
+  </div>
+  <a href="{{ url_for('purple_team.export') }}" class="btn btn-sm btn-outline-primary">
+    <i class="bi bi-download me-1"></i> Export Portfolio Markdown
+  </a>
+</div>
+
+<!-- Summary Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="summary-stat-box text-center">
+      <div style="font-size:2rem;font-weight:800;color:var(--primary);font-family:'JetBrains Mono',monospace;">{{ total_techniques }}</div>
+      <div class="text-muted small mt-1">Techniques Tracked</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-stat-box text-center">
+      <div style="font-size:2rem;font-weight:800;color:#f43f5e;font-family:'JetBrains Mono',monospace;">{{ attacked_count }}</div>
+      <div class="text-muted small mt-1">Simulated / Attacked</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-stat-box text-center">
+      <div style="font-size:2rem;font-weight:800;color:var(--success);font-family:'JetBrains Mono',monospace;">{{ detected_count }}</div>
+      <div class="text-muted small mt-1">Alerted / Detected</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-stat-box text-center">
+      <div style="font-size:2rem;font-weight:800;color:var(--info);font-family:'JetBrains Mono',monospace;">{{ rule_count }}</div>
+      <div class="text-muted small mt-1">Rules Authored</div>
+    </div>
+  </div>
+</div>
+
+<!-- Matrix Legend -->
+<div class="admin-card p-3 mb-4">
+  <div class="d-flex flex-wrap gap-3 align-items-center">
+    <span class="small text-muted fw-bold"><i class="bi bi-info-circle me-1"></i> Legend:</span>
+    <span class="badge" style="background:rgba(244,63,94,0.15);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);font-size:0.75rem;">
+      <i class="bi bi-lightning-charge-fill me-1"></i> Attacked
+    </span>
+    <span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);border:1px solid rgba(16,185,129,0.3);font-size:0.75rem;">
+      <i class="bi bi-shield-fill-check me-1"></i> Detected
+    </span>
+    <span class="badge" style="background:rgba(14,165,233,0.15);color:var(--info);border:1px solid rgba(14,165,233,0.3);font-size:0.75rem;">
+      <i class="bi bi-file-earmark-code-fill me-1"></i> Rule Written
+    </span>
+    <span class="badge" style="background:rgba(255,255,255,0.04);color:var(--text-muted);border:1px solid var(--border);font-size:0.75rem;">
+      <i class="bi bi-dash me-1"></i> Untested
+    </span>
+  </div>
+</div>
+
+<!-- ATT&CK Matrix -->
+{% for tactic_name, tactic_id in mitre_tactics %}
+{% set techniques = matrix.get(tactic_name, []) %}
+{% if techniques %}
+<div class="admin-card mb-4 overflow-hidden" style="border-radius:14px;">
+  <div class="p-3 tactic-header d-flex justify-content-between align-items-center">
+    <div>
+      <span style="font-weight:700;color:var(--text-primary);font-size:0.88rem;">{{ tactic_name }}</span>
+      <span class="ms-2 badge" style="background:rgba(255,255,255,0.06);color:var(--text-muted);font-family:'JetBrains Mono',monospace;">{{ tactic_id }}</span>
+    </div>
+    <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--primary);border:1px solid rgba(99,102,241,0.3);">
+      {{ techniques | length }} techniques
+    </span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-dark table-hover coverage-table mb-0">
+      <thead>
+        <tr>
+          <th style="width: 40%; min-width: 220px;">Technique ID & Title</th>
+          <th class="text-center" style="width: 20%;">Attack Status</th>
+          <th class="text-center" style="width: 20%;">Detection Status</th>
+          <th class="text-center" style="width: 20%;">Detection Rule</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tech in techniques | sort(attribute='technique_id') %}
+        <tr>
+          <td class="technique-cell">
+            <code style="color:var(--primary);font-weight:700;font-size:0.85rem;">{{ tech.technique_id }}</code>
+            <div class="small mt-1" style="color:var(--text-primary);font-weight:600;">
+              {% set log = tech._log if tech._log is defined else none %}
+              {% if log %}
+                {{ log.technique_title }}
+              {% else %}
+                <span class="text-muted">{{ tech.technique_title or 'Simulation Target' }}</span>
+              {% endif %}
+            </div>
+          </td>
+          <td class="text-center">
+            {% if tech.attacked %}
+              <span class="badge" style="background:rgba(244,63,94,0.15);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);">
+                <i class="bi bi-check-lg"></i> Executed
+              </span>
+              {% if tech.first_attacked %}
+              <div class="text-muted small mt-1" style="font-size:0.7rem;">{{ tech.first_attacked.strftime('%Y-%m-%d') }}</div>
+              {% endif %}
+            {% else %}
+              <span class="badge" style="background:rgba(255,255,255,0.03);color:var(--text-muted);border:1px solid var(--border);">
+                Pending
+              </span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if tech.detected %}
+              <span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);border:1px solid rgba(16,185,129,0.3);">
+                <i class="bi bi-shield-fill-check"></i> Verified
+              </span>
+              {% if tech.first_detected %}
+              <div class="text-muted small mt-1" style="font-size:0.7rem;">{{ tech.first_detected.strftime('%Y-%m-%d') }}</div>
+              {% endif %}
+            {% else %}
+              <span class="badge" style="background:rgba(255,255,255,0.03);color:var(--text-muted);border:1px solid var(--border);">
+                No Alert
+              </span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if tech.rule_written %}
+              <span class="badge" style="background:rgba(14,165,233,0.15);color:var(--info);border:1px solid rgba(14,165,233,0.3);">
+                <i class="bi bi-file-earmark-code"></i> Authored
+              </span>
+              {% if tech.last_reviewed %}
+              <div class="text-muted small mt-1" style="font-size:0.7rem;">{{ tech.last_reviewed.strftime('%Y-%m-%d') }}</div>
+              {% endif %}
+            {% else %}
+              <span class="badge" style="background:rgba(255,255,255,0.03);color:var(--text-muted);border:1px solid var(--border);">
+                None
+              </span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Empty state if no coverage at all -->
+{% if total_techniques == 0 %}
+<div class="admin-card text-center py-5">
+  <div style="width:64px;height:64px;border-radius:18px;background:rgba(99,102,241,0.1);display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;color:var(--primary);">
+    <i class="bi bi-grid-3x3-gap-fill" style="font-size:2rem;"></i>
+  </div>
+  <h5 style="font-weight:700;color:var(--text-primary);">No ATT&CK Coverage Recorded Yet</h5>
+  <p class="text-muted small mb-3" style="max-width:400px;margin:0 auto;">
+    Complete purple team VM exercises or log your own tests manually to populate your enterprise coverage matrix.
+  </p>
+  <a href="{{ url_for('purple_team.log_new') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i> Log First Exercise
+  </a>
+</div>
+{% endif %}
+{% endblock %}

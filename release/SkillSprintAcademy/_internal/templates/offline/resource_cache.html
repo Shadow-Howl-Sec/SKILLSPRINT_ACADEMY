@@ -1,0 +1,68 @@
+{% extends "base_cybersec.html" %}
+
+{% block title %}Resource Cache Status{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-database me-2"></i>Resource Cache</h2>
+                <a href="{{ url_for('dashboard.today') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-house-door me-1"></i>Dashboard
+                </a>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">What Is the Resource Cache?</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">The resource cache stores offline copies of external documentation, articles, PDFs, and videos referenced by the curriculum. This enables fully offline learning — no internet required to access reference materials.</p>
+                    <p class="small text-muted"><strong>Location:</strong> <code>instance/resource_cache/</code></p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Cache Status</h5>
+                    <span class="badge bg-secondary">Manual sync required</span>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">Run the sync script to populate the cache:</p>
+                    <pre class="bg-dark text-light p-3 rounded small"><code>pwsh scripts/sync_resource_cache.ps1</code></pre>
+                    <p class="small text-muted mt-2">This script fetches URLs defined in the curriculum and saves them locally. Re-run periodically to update cached content.</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Cached Resources</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Type</th>
+                                    <th>Original URL</th>
+                                    <th>Fetched</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-info-circle me-1"></i>No cached resources yet. Run the sync script to populate.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

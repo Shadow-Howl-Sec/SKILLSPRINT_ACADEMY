@@ -1,0 +1,121 @@
+{% extends "base_cybersec.html" %}
+
+{% block title %}{% if log %}Edit{% else %}Log New{% endif %} Exercise — Purple Team{% endblock %}
+{% set active = "log_new" %}
+
+{% block page_title %}{% if log %}Edit Exercise Log{% else %}Log New Exercise{% endif %}{% endblock %}
+{% block page_subtitle %}{% if log %}Update your attack → detect → document entry{% else %}Record an ad-hoc exercise (Atomic Red Team, manual test, etc.){% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="admin-card p-4" style="border-radius:14px;">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label for="technique_title" class="form-label fw-bold">Technique Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="technique_title" name="technique_title"
+                   value="{{ log.technique_title if log else '' }}" placeholder="e.g., Kerberoasting against GOAD" required
+                   style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+            <div class="form-text" style="color:var(--text-dim);">Descriptive name for this exercise</div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="mitre_id" class="form-label">MITRE ATT&CK ID</label>
+              <input type="text" class="form-control" id="mitre_id" name="mitre_id"
+                     value="{{ log.mitre_id if log else '' }}" placeholder="e.g., T1558.003" pattern="T\d{4}(\.\d{3})?"
+                     style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+              <div class="form-text" style="color:var(--text-dim);">Format: TXXXX or TXXXX.XXX (e.g., T1558.003)</div>
+            </div>
+            <div class="col-md-6">
+              <label for="lab_id" class="form-label">Associated Lab (optional)</label>
+              <select class="form-select" id="lab_id" name="lab_id"
+                      style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+                <option value="">— Manual entry (no lab) —</option>
+                {% for lab in labs %}
+                <option value="{{ lab.id }}" {% if log and log.lab_id == lab.id %}selected{% endif %}>
+                  {{ lab.title }} ({{ lab.topic.skill_area.name if lab.topic and lab.topic.skill_area else 'General' }})
+                </option>
+                {% endfor %}
+              </select>
+              <div class="form-text" style="color:var(--text-dim);">Link to a curriculum lab if applicable</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Exercise Outcomes</label>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="attack_succeeded" name="attack_succeeded"
+                         {% if log and log.attack_succeeded %}checked{% endif %}>
+                  <label class="form-check-label fw-bold" for="attack_succeeded">
+                    <i class="bi bi-bug-fill text-danger me-1"></i> Attack Succeeded
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="detected" name="detected"
+                         {% if log and log.detected %}checked{% endif %}>
+                  <label class="form-check-label fw-bold" for="detected">
+                    <i class="bi bi-shield-fill-check text-success me-1"></i> Detected
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="rule_written" name="rule_written"
+                         {% if log and log.rule_written %}checked{% endif %}>
+                  <label class="form-check-label fw-bold" for="rule_written">
+                    <i class="bi bi-file-earmark-code text-info me-1"></i> Rule Written
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="notes" class="form-label fw-bold">Notes / Write-up <span class="text-muted">(markdown supported)</span></label>
+            <textarea class="form-control" id="notes" name="notes" rows="8"
+                      placeholder="Document what you did, commands run, observations, detection logic, rule syntax, challenges faced, screenshots paths, etc."
+                      style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">{{ log.notes if log else '' }}</textarea>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{{ url_for('purple_team.log_list') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-lg me-1"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i> {% if log %}Update{% else %}Save{% endif %} Exercise
+            </button>
+          </div>
+        </form>
+    </div>
+
+    <!-- Quick Reference -->
+    <div class="admin-card p-4 mt-4" style="border-radius:14px;">
+        <h6 class="mb-3" style="font-weight:700;color:var(--text-primary);"><i class="bi bi-info-circle me-1 text-primary"></i> MITRE ATT&CK Quick Reference</h6>
+        <div class="row g-2 text-small">
+          <div class="col-6 col-md-3"><code>T1558.003</code> Kerberoasting</div>
+          <div class="col-6 col-md-3"><code>T1558.004</code> AS-REP Roasting</div>
+          <div class="col-6 col-md-3"><code>T1550.002</code> Pass-the-Hash</div>
+          <div class="col-6 col-md-3"><code>T1003.001</code> LSASS Memory</div>
+          <div class="col-6 col-md-3"><code>T1087.002</code> Account Discovery</div>
+          <div class="col-6 col-md-3"><code>T1082</code> System Info Discovery</div>
+          <div class="col-6 col-md-3"><code>T1046</code> Network Service Scanning</div>
+          <div class="col-6 col-md-3"><code>T1016</code> DNS Enumeration</div>
+          <div class="col-6 col-md-3"><code>T1190</code> Exploit Public-Facing App</div>
+          <div class="col-6 col-md-3"><code>T1059.001</code> PowerShell</div>
+          <div class="col-6 col-md-3"><code>T1059.007</code> JavaScript/JScript</div>
+          <div class="col-6 col-md-3"><code>T1055</code> Process Injection</div>
+          <div class="col-6 col-md-3"><code>T1486</code> Data Encrypted for Impact</div>
+          <div class="col-6 col-md-3"><code>T1078.004</code> Cloud Account</div>
+          <div class="col-6 col-md-3"><code>T1027</code> Obfuscated Files/Info</div>
+        </div>
+        <p class="text-muted small mb-0 mt-2">Full matrix: <a href="https://attack.mitre.org" target="_blank" rel="noopener">attack.mitre.org</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

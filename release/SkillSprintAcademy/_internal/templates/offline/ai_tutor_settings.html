@@ -1,0 +1,172 @@
+{% extends "base_cybersec.html" %}
+{% set active = "ai_settings" %}
+{% block title %}AI Mentor Settings — SkillSprint Academy{% endblock %}
+{% block page_title %}Local AI Mentor Settings{% endblock %}
+{% block page_subtitle %}Ollama local LLM connection & rules-based offline fallback configuration{% endblock %}
+
+{% block head_extra %}
+<style nonce="{{ csp_nonce }}">
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .model-item {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    transition: var(--t-fast);
+  }
+  .model-item:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(99,102,241,0.3);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--primary);border:1px solid rgba(99,102,241,0.3);padding:0.4rem 0.8rem;border-radius:8px;">
+          <i class="bi bi-cpu me-1"></i> LLM Engine
+        </span>
+        <span class="text-muted small">Port 11434 · Host-Only Egress</span>
+      </div>
+      <a href="{{ url_for('assistant.chat') }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-robot me-1"></i> Open AI Mentor
+      </a>
+    </div>
+
+    <!-- Status Alert if tested -->
+    {% if ollama_alive is not none %}
+    <div class="alert alert-{{ 'success' if ollama_alive else 'warning' }} d-flex align-items-center gap-3 mb-4" role="alert">
+      <i class="bi bi-{{ 'check-circle-fill text-success' if ollama_alive else 'exclamation-triangle-fill text-warning' }}" style="font-size:1.5rem;"></i>
+      <div>
+        <div class="fw-bold">{{ 'Ollama is reachable and responding.' if ollama_alive else 'Ollama is currently unreachable.' }}</div>
+        <div class="small opacity-85">
+          {% if ollama_alive %}
+            Successfully connected to local service. Discovered {{ models|length }} local model(s).
+          {% else %}
+            Start the Ollama daemon via <code>ollama serve</code> or run <code>scripts/setup_ollama.ps1</code>. Offline rules-based mode is active.
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- LLM Configuration Card -->
+    <div class="admin-card p-4 mb-4" style="border-radius:14px;">
+      <h6 style="font-weight:700;color:var(--text-primary);margin-bottom:1.25rem;">
+        <i class="bi bi-sliders me-2 text-primary"></i>Ollama Local Model Selection
+      </h6>
+
+      <form method="POST" action="{{ url_for('offline.ai_tutor_settings') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-light" for="ollamaUrl">Local Service Endpoint</label>
+          <input type="url" id="ollamaUrl" class="form-control form-control-sm font-monospace" value="{{ base_url }}" readonly
+                 style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+          <div class="form-text" style="color:var(--text-dim);font-size:0.75rem;">Default: <code>http://127.0.0.1:11434</code>. Modify in <code>.env</code> if running on an alternate port.</div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold text-light" for="modelSelect">Active LLM Model</label>
+          <div class="input-group input-group-sm">
+            <select class="form-select font-monospace" name="model" id="modelSelect"
+                    style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+              <option value="" {% if not current_model %}selected{% endif %}>Select a model...</option>
+              <option value="llama3.1:8b-instruct" {% if current_model == 'llama3.1:8b-instruct' %}selected{% endif %}>llama3.1:8b-instruct (Recommended)</option>
+              <option value="llama3.2:3b-instruct" {% if current_model == 'llama3.2:3b-instruct' %}selected{% endif %}>llama3.2:3b-instruct (Fast / Low RAM)</option>
+              <option value="codellama:7b-instruct" {% if current_model == 'codellama:7b-instruct' %}selected{% endif %}>codellama:7b-instruct (Code & Exploit Dev)</option>
+              <option value="mistral:7b-instruct" {% if current_model == 'mistral:7b-instruct' %}selected{% endif %}>mistral:7b-instruct</option>
+              {% for m in models %}
+              {% if m not in ['llama3.1:8b-instruct', 'llama3.2:3b-instruct', 'codellama:7b-instruct', 'mistral:7b-instruct'] %}
+              <option value="{{ m }}" {% if current_model == m %}selected{% endif %}>{{ m }}</option>
+              {% endif %}
+              {% endfor %}
+            </select>
+            <button type="button" class="btn btn-outline-secondary" id="refreshModelsBtn" title="Probe Ollama for installed models">
+              <i class="bi bi-arrow-clockwise"></i> Probe
+            </button>
+          </div>
+          <div class="small mt-2" style="color:var(--text-muted);">
+            Current selection: <code style="color:var(--accent-cyan);font-weight:700;">{{ current_model }}</code>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <button type="submit" class="btn btn-primary btn-sm px-4">
+            <i class="bi bi-save me-1"></i> Save Model Choice
+          </button>
+          <a href="{{ url_for('offline.ai_tutor_settings', test=1) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-wifi me-1"></i> Test Connection
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Installed Models List -->
+    <div class="admin-card p-4 mb-4" style="border-radius:14px;">
+      <h6 style="font-weight:700;color:var(--text-primary);margin-bottom:0.75rem;">
+        <i class="bi bi-collection me-2 text-primary"></i>Installed Models on System
+      </h6>
+      {% if models %}
+      <div class="d-flex flex-column gap-2 mt-3">
+        {% for m in models %}
+        <div class="model-item d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-box text-primary"></i>
+            <code style="font-size:0.88rem;color:var(--text-primary);">{{ m }}</code>
+            {% if current_model == m %}
+            <span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);border:1px solid rgba(16,185,129,0.3);font-size:0.68rem;">Active</span>
+            {% endif %}
+          </div>
+          {% if current_model != m %}
+          <form method="POST" class="mb-0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="model" value="{{ m }}">
+            <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:0.75rem;">Activate</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="p-3 rounded small text-muted" style="background:rgba(255,255,255,0.02);border:1px solid var(--border);">
+        No models found from active Ollama daemon. To pull a model locally, run:
+        <pre class="p-2 rounded mt-2 mb-0" style="background:rgba(0,0,0,0.5);border:1px solid var(--border);color:var(--accent-cyan);font-size:0.78rem;"><code>ollama pull llama3.1:8b-instruct</code></pre>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Fallback Architecture Info -->
+    <div class="admin-card p-4" style="border-radius:14px;">
+      <h6 style="font-weight:700;color:var(--text-primary);margin-bottom:0.75rem;">
+        <i class="bi bi-shield-check me-2 text-success"></i>Zero-Dependency Fallback Engine
+      </h6>
+      <p class="small text-muted mb-2">When Ollama is not active or during air-gapped operations, the mentor seamlessly provides:</p>
+      <ul class="small text-muted mb-0 ps-3">
+        <li class="mb-1">Progressive, multi-tier hints that never leak flags or solutions directly.</li>
+        <li class="mb-1">Structured MITRE ATT&CK guidance and detection query recipes.</li>
+        <li class="mb-1">Topic summaries and practice task recommendations.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+  const refreshBtn = document.getElementById('refreshModelsBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Probing...';
+      refreshBtn.disabled = true;
+      window.location.href = '{{ url_for("offline.ai_tutor_settings", test=1) }}';
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SkillSprint Academy — Zero to Purple Team Mastery, Fully Offline">
+  <title>{% block title %}SkillSprint Academy{% endblock %}</title>
+  <link rel="icon" type="image/png" href="/static/img/skill_logo.png">
+  <link rel="apple-touch-icon" href="/static/img/skill_logo.png">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  {% if OFFLINE_MODE %}
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/static/vendor/fonts/fonts.css" rel="stylesheet">
+  {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  {% endif %}
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+<div class="d-flex" style="min-height:100vh; background:var(--bg-dark);">
+
+  <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+  <nav class="dash-sidebar">
+    <!-- Brand -->
+    <div class="dash-side-header">
+      <a href="/" class="d-flex align-items-center gap-2" style="text-decoration:none;">
+        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent-purple));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px var(--primary-glow);">
+          <img src="/static/img/skill_logo.png" alt="SkillSprint" width="22" style="filter:brightness(10);">
+        </div>
+        <div>
+          <div class="dash-side-brand-name">SkillSprint</div>
+          <div class="dash-side-brand-tag">Purple Team Mastery</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Nav items -->
+    <div style="overflow-y:auto; flex:1; padding:0.5rem 0;">
+      <div class="dash-nav-section">Curriculum & Roadmap</div>
+      <a href="{{ url_for('dashboard.today') }}" class="dash-nav-link {% if active == 'today' %}active{% endif %}">
+        <i class="bi bi-speedometer2"></i><span>Today's Schedule</span>
+      </a>
+      <a href="{{ url_for('roadmap.view') }}" class="dash-nav-link {% if active == 'roadmap' %}active{% endif %}">
+        <i class="bi bi-signpost-2"></i><span>Roadmap Overview</span>
+      </a>
+      <a href="{{ url_for('roadmap.calendar') }}" class="dash-nav-link {% if active == 'calendar' %}active{% endif %}">
+        <i class="bi bi-calendar3"></i><span>Timetable</span>
+      </a>
+
+      <div class="dash-nav-section">Purple Team Practice</div>
+      <a href="{{ url_for('labs.browse') }}" class="dash-nav-link {% if active == 'labs' %}active{% endif %}">
+        <i class="bi bi-terminal-fill"></i><span>Purple Labs</span>
+      </a>
+      <a href="{{ url_for('purple_team.coverage') }}" class="dash-nav-link {% if active == 'coverage' %}active{% endif %}">
+        <i class="bi bi-grid-3x3-gap-fill"></i><span>ATT&CK Matrix</span>
+      </a>
+      <a href="{{ url_for('purple_team.log_list') }}" class="dash-nav-link {% if active == 'purple_team_log' %}active{% endif %}">
+        <i class="bi bi-journal-code"></i><span>Exercise Log</span>
+      </a>
+
+      <div class="dash-nav-section">Tools & Environment</div>
+      <a href="{{ url_for('assistant.chat') }}" class="dash-nav-link {% if active == 'assistant' %}active{% endif %}">
+        <i class="bi bi-robot"></i><span>AI Mentor</span>
+      </a>
+      <a href="{{ url_for('offline.lab_setup') }}" class="dash-nav-link {% if active == 'lab_setup' %}active{% endif %}">
+        <i class="bi bi-pc-display"></i><span>VirtualBox Setup</span>
+      </a>
+    </div>
+
+    <!-- Sidebar footer — user info -->
+    <div class="dash-side-footer">
+      <div class="d-flex align-items-center gap-2">
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;">
+          {{ current_user.first_name[0] if current_user and current_user.first_name else 'O' }}
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:0.8rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {{ current_user.first_name if current_user and current_user.first_name else 'Operator' }}
+          </div>
+          <div style="font-size:0.65rem;color:var(--text-dim);">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--success);margin-right:4px;vertical-align:middle;box-shadow:0 0 6px var(--success-glow);"></span>Offline · Secure
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════ MAIN AREA ═══════════════════ -->
+  <div class="flex-grow-1 d-flex flex-column" style="min-width:0; overflow:hidden;">
+
+    <!-- Topbar -->
+    <header class="dash-topbar">
+      <div class="d-flex align-items-center justify-content-between gap-3">
+        <div style="min-width:0;">
+          <h5 style="margin:0;font-family:'Outfit',sans-serif;font-weight:700;color:var(--text-primary);font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {% block page_title %}{% endblock %}
+          </h5>
+          <span style="font-size:0.775rem;color:var(--text-muted);">{% block page_subtitle %}{% endblock %}</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+          {% if streak is defined and streak and streak.current_streak %}
+          <span class="pill pill-warning" style="font-size:0.72rem;">
+            <i class="bi bi-fire streak-fire"></i>{{ streak.current_streak }}d streak
+          </span>
+          {% endif %}
+
+          {% if xp is defined and xp %}
+          <span class="pill pill-primary">
+            <i class="bi bi-stars"></i>{{ xp }} XP
+          </span>
+          {% endif %}
+
+          {% if update_info and update_info.update_available %}
+          <span class="pill pill-warning" title="Update available">
+            <i class="bi bi-arrow-up-circle"></i>Update
+          </span>
+          {% endif %}
+
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2"
+                    type="button" data-bs-toggle="dropdown" id="userMenuBtn">
+              <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;font-weight:700;">
+                {{ current_user.first_name[0] if current_user and current_user.first_name else 'O' }}
+              </div>
+              <span style="font-size:0.82rem;font-weight:600;">{{ current_user.first_name if current_user and current_user.first_name else 'Operator' }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <a class="dropdown-item" href="{{ url_for('dashboard.progress') }}">
+                  <i class="bi bi-person me-2" style="color:var(--primary-light);"></i>Skill Progress
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('offline.ai_tutor_settings') }}">
+                  <i class="bi bi-cpu me-2" style="color:var(--accent-cyan);"></i>AI Settings
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('offline.lab_setup') }}">
+                  <i class="bi bi-pc-display me-2" style="color:var(--accent-purple);"></i>Lab Setup
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('offline.about') }}">
+                  <i class="bi bi-info-circle me-2" style="color:var(--text-muted);"></i>Offline Info
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div style="flex:1;overflow-y:auto;padding:1.75rem;" class="dash-content">
+
+      <!-- Update banner (hidden in offline mode) -->
+      {% if not OFFLINE_MODE %}
+      <div id="update-banner" class="alert alert-info alert-dismissible fade show mb-4" style="display:none;" role="alert">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div>
+            <strong><i class="bi bi-arrow-up-circle me-2"></i>Update Available</strong>
+            <span id="update-version-text" class="ms-2" style="font-size:0.85rem;"></span>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm" data-action="apply-update">
+              <i class="bi bi-download me-1"></i>Install Now
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" data-action="dismiss-update">
+              <i class="bi bi-x me-1"></i>Later
+            </button>
+          </div>
+        </div>
+        <div id="update-release-notes" class="mt-2" style="display:none;font-size:0.8rem;opacity:0.8;"></div>
+      </div>
+      {% endif %}
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-3" role="alert">
+              {% if category == 'success' %}<i class="bi bi-check-circle me-2"></i>
+              {% elif category == 'error' or category == 'danger' %}<i class="bi bi-exclamation-triangle me-2"></i>
+              {% elif category == 'warning' %}<i class="bi bi-exclamation-circle me-2"></i>
+              {% else %}<i class="bi bi-info-circle me-2"></i>{% endif %}
+              {{ message | safe }}
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+<!-- Floating AI Mentor Button -->
+{% if active != 'assistant' %}
+<a href="{{ url_for('assistant.chat') }}" class="ai-float-btn" title="Ask the AI Mentor" id="aiFloatBtn">
+  <i class="bi bi-robot"></i>
+</a>
+{% endif %}
+
+<!-- Scripts -->
+{% if OFFLINE_MODE %}
+  <script nonce="{{ csp_nonce }}" src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+  <script nonce="{{ csp_nonce }}" src="/static/vendor/chartjs/chart.min.js"></script>
+{% else %}
+  <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endif %}
+<script nonce="{{ csp_nonce }}">
+  // Server-injected runtime config — required before main.js loads
+  window.OFFLINE_MODE = {{ 'true' if OFFLINE_MODE else 'false' }};
+</script>
+<script nonce="{{ csp_nonce }}" src="/static/js/update_checker.js"></script>
+<script nonce="{{ csp_nonce }}" src="/static/js/main.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -29,7 +29,7 @@ $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..") | Select-Object -Expa
 $distPath    = Join-Path $projectRoot "dist"
 $buildPath   = Join-Path $projectRoot "build"
 $releasePath = Join-Path $projectRoot "release"
-$specFile    = Join-Path $projectRoot "SkillSprintAcademy.spec"
+$specFile    = Join-Path $projectRoot "build_exe.spec"
 
 function Write-Step($msg)  { Write-Host "== $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)    { Write-Host "   ok: $msg" -ForegroundColor Green }
@@ -76,13 +76,20 @@ Write-Ok "Build completed"
 # Copy additional files to release folder
 # ---------------------------------------------------------------------------
 Write-Step "Preparing release folder..."
+# Clean and recreate release folder
+if (Test-Path $releasePath) { Remove-Item $releasePath -Recurse -Force }
 New-Item -ItemType Directory $releasePath | Out-Null
 
-# Copy executable
-$exeSrc = Join-Path $distPath "SkillSprintAcademy.exe"
-$exeDst = Join-Path $releasePath "SkillSprintAcademy.exe"
-Copy-Item $exeSrc $exeDst -Force
-Write-Ok "Executable copied to release/"
+# Copy entire onedir output (folder containing exe + dependencies)
+$onedirSrc = Join-Path $distPath "SkillSprintAcademy"
+$onedirDst = Join-Path $releasePath "SkillSprintAcademy"
+if (Test-Path $onedirSrc) {
+    Copy-Item $onedirSrc $onedirDst -Recurse -Force
+    Write-Ok "Onedir build copied to release/SkillSprintAcademy/"
+} else {
+    Write-Error "Onedir build not found at $onedirSrc"
+    exit 1
+}
 
 # Copy bundles for lab challenges
 $bundlesSrc = Join-Path $projectRoot "bundles"
@@ -107,6 +114,7 @@ echo Starting SkillSprintAcademy...
 echo The app will open at http://127.0.0.1:5000
 echo Press Ctrl+C to stop the server
 echo.
+cd /d "%~dp0SkillSprintAcademy"
 SkillSprintAcademy.exe
 pause
 "@
@@ -173,12 +181,13 @@ Write-Host ""
 Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host " BUILD COMPLETE" -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
-Write-Host " Executable: release\SkillSprintAcademy.exe"
-Write-Host " Bundles:    release\bundles\"
-Write-Host " Scripts:    release\scripts\"
-Write-Host " Launcher:   release\Start-SkillSprintAcademy.bat"
-Write-Host " README:     release\README.txt"
+Write-Host " Onedir build: release\SkillSprintAcademy\"
+Write-Host " Bundles:      release\bundles\"
+Write-Host " Scripts:      release\scripts\"
+Write-Host " Launcher:     release\Start-SkillSprintAcademy.bat"
+Write-Host " README:       release\README.txt"
 Write-Host ""
-Write-Host " To run: Double-click SkillSprintAcademy.exe or Start-SkillSprintAcademy.bat"
+Write-Host " To run: Double-click Start-SkillSprintAcademy.bat"
+Write-Host "         Or run: release\SkillSprintAcademy\SkillSprintAcademy.exe"
 Write-Host " The app creates its own instance/ folder on first run."
 Write-Host "===================================================" -ForegroundColor Cyan

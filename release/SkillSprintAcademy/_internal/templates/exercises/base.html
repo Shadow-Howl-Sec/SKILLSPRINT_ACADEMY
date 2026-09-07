@@ -1,0 +1,132 @@
+{% extends "base_cybersec.html" %}
+
+{% block title %}{{ exercise.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="bi bi-terminal me-2"></i>{{ exercise.title }}</h2>
+                    <p class="text-muted mb-0">Interactive Exercise • {{ exercise.estimated_minutes or 30 }} min</p>
+                </div>
+                <a href="{{ url_for('labs.browse') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Labs
+                </a>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Exercise Instructions</h5>
+                </div>
+                <div class="card-body">
+                    {{ exercise.body_markdown | markdown | safe }}
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Your Solution</h5>
+                    <span class="badge bg-secondary">{{ spec.kind or 'interactive' }}</span>
+                </div>
+                <div class="card-body">
+                    {% include kind_template %}
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end gap-2">
+                <button class="btn btn-outline-secondary" id="resetBtn">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                </button>
+                <button class="btn btn-primary" id="submitBtn">
+                    <i class="bi bi-check-circle me-1"></i>Submit Solution
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+const exerciseSpec = {{ spec_json | safe }};
+const exerciseId = {{ exercise.id }};
+
+function resetExercise() {
+    if (confirm('Reset your solution? This cannot be undone.')) {
+        location.reload();
+    }
+}
+
+function submitExercise() {
+    // Collect solution based on exercise kind
+    let solution = {};
+    const kind = exerciseSpec.kind || 'code_py';
+
+    if (kind === 'code_py' || kind === 'code_js') {
+        // Get code from editor (if using Monaco/CodeMirror)
+        const editor = window.editor || document.getElementById('code-editor');
+        solution.code = editor.value || editor.getValue?.() || '';
+    } else if (kind === 'quiz_interactive') {
+        // Collect quiz answers
+        solution.answers = {};
+        document.querySelectorAll('[name^="quiz_"]').forEach(el => {
+            solution.answers[el.name] = el.type === 'checkbox' ? el.checked : el.value;
+        });
+    } else if (kind === 'regex_lab') {
+        solution.pattern = document.getElementById('regex-pattern')?.value || '';
+        solution.test_string = document.getElementById('regex-test')?.value || '';
+    } else if (kind === 'cipher_lab') {
+        solution.ciphertext = document.getElementById('cipher-input')?.value || '';
+        solution.key = document.getElementById('cipher-key')?.value || '';
+    } else if (kind === 'pcap_challenge') {
+        solution.findings = document.getElementById('pcap-findings')?.value || '';
+    } else if (kind === 'binary_inspector') {
+        solution.analysis = document.getElementById('binary-analysis')?.value || '';
+    }
+
+    // Store in localStorage for persistence
+    localStorage.setItem(`exercise_${exerciseId}`, JSON.stringify(solution));
+
+    // Submit to server (roadmap item completion)
+    const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = metaCsrf ? metaCsrf.getAttribute('content') : '';
+    fetch('{{ url_for("dashboard.complete_item", item_id=0).replace("/0", "") }}' + '/' + exerciseId + '/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ solution })
+    }).then(r => {
+        if (r.ok || r.redirected) {
+            alert('Exercise submitted! XP awarded.');
+            if (r.redirected) window.location.href = r.url;
+        } else {
+            alert('Submission failed. Please try again.');
+        }
+    });
+}
+
+// Load saved solution on page load
+window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem(`exercise_${exerciseId}`);
+    if (saved) {
+        try {
+            const solution = JSON.parse(saved);
+            // Restore to UI based on kind
+            const kind = exerciseSpec.kind || 'code_py';
+            if (kind === 'code_py' || kind === 'code_js') {
+                const editor = window.editor || document.getElementById('code-editor');
+                if (editor) editor.value = solution.code || '';
+            }
+            // ... add other kinds as needed
+        } catch (e) {
+            console.warn('Failed to restore saved solution:', e);
+        }
+    }
+    
+    // Bind buttons
+    const resetBtn = document.getElementById('resetBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    if (resetBtn) resetBtn.addEventListener('click', resetExercise);
+    if (submitBtn) submitBtn.addEventListener('click', submitExercise);
+});
+</script>
+{% endblock %}

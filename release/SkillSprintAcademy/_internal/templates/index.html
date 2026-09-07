@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SkillSprint Academy — Zero to Purple Team Mastery, Fully Offline">
+  <link rel="icon" type="image/png" href="/static/img/skill_logo.png">
+  <link rel="apple-touch-icon" href="/static/img/skill_logo.png">
+  {% if OFFLINE_MODE %}
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/vendor/fonts/fonts.css" rel="stylesheet">
+    <link href="/static/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  {% endif %}
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style nonce="{{ csp_nonce }}">
+    /* ── Command Center Specific Styles ── */
+    :root {
+      --idx-bg: #060610;
+      --idx-card: #0d0d1f;
+      --idx-border: rgba(99,102,241,0.12);
+    }
+
+    body { background: var(--idx-bg); }
+
+    /* Hero cyber grid */
+    .hero-bg {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+    }
+    .hero-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .hero-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%);
+    }
+
+    /* Topnav */
+    .cmd-topnav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(6,6,16,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(99,102,241,0.12);
+      padding: 0.85rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .cmd-brand {
+      display: flex; align-items: center; gap: 0.75rem;
+      text-decoration: none;
+    }
+
+    .cmd-brand-logo {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.4);
+      flex-shrink: 0;
+    }
+
+    .cmd-brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800; font-size: 1.1rem;
+      color: #fff; letter-spacing: -0.01em;
+    }
+
+    .cmd-brand-tag {
+      font-size: 0.6rem; color: #818cf8;
+      text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700;
+    }
+
+    .cmd-nav { display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
+
+    .cmd-nav-link {
+      display: flex; align-items: center; gap: 0.35rem;
+      color: #8892b0; text-decoration: none;
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px; font-size: 0.82rem; font-weight: 500;
+      transition: all 0.2s;
+    }
+    .cmd-nav-link:hover, .cmd-nav-link.active {
+      background: rgba(99,102,241,0.12);
+      color: #818cf8;
+    }
+    .cmd-nav-link i { font-size: 0.95rem; }
+
+    .cmd-user-badge {
+      display: flex; align-items: center; gap: 0.6rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 30px;
+      padding: 0.35rem 1rem 0.35rem 0.5rem;
+    }
+
+    .cmd-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 0.72rem;
+    }
+
+    /* Main layout */
+    .cmd-main { position: relative; z-index: 1; max-width: 1380px; margin: 0 auto; padding: 2rem; }
+
+    /* Hero section */
+    .cmd-hero {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.07));
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .cmd-hero::before {
+      content: '';
+      position: absolute; right: -60px; top: -60px;
+      width: 250px; height: 250px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%);
+    }
+    .cmd-hero-eyebrow {
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: #818cf8; margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .cmd-hero-eyebrow::before {
+      content: '';
+      display: inline-block; width: 20px; height: 2px;
+      background: linear-gradient(90deg, #6366f1, #a855f7);
+      border-radius: 2px;
+    }
+    .cmd-hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800; font-size: 2rem;
+      color: #fff; margin: 0 0 0.6rem;
+      letter-spacing: -0.03em;
+    }
+    .cmd-hero h1 span {
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cmd-hero p { color: #8892b0; font-size: 0.92rem; margin: 0 0 1.5rem; max-width: 600px; }
+
+    .cmd-hero-badges { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .cmd-hero-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 30px; font-size: 0.72rem; font-weight: 600;
+      border: 1px solid; letter-spacing: 0.02em;
+    }
+
+    /* Stats row */
+    .cmd-stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .cmd-stat {
+      background: var(--idx-card);
+      border: 1px solid var(--idx-border);
+      border-radius: 14px; padding: 1.25rem;
+      text-align: center; transition: all 0.25s;
+      position: relative; overflow: hidden;
+    }
+    .cmd-stat::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--grad-c, #6366f1), transparent);
+      opacity: 0; transition: opacity 0.25s;
+    }
+    .cmd-stat:hover { transform: translateY(-3px); border-color: rgba(99,102,241,0.3); }
+    .cmd-stat:hover::after { opacity: 1; }
+
+    .cmd-stat-num {
+      font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 2.2rem;
+      line-height: 1;
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cmd-stat-label { font-size: 0.75rem; color: #8892b0; margin-top: 0.35rem; font-weight: 500; }
+
+    /* Section title */
+    .cmd-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700; font-size: 1rem;
+      color: #fff; margin: 2rem 0 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .cmd-section-title i { color: #818cf8; font-size: 1.05rem; }
+    .cmd-section-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, rgba(99,102,241,0.2), transparent);
+      margin-left: 0.75rem;
+    }
+
+    /* Quick access tools */
+    .cmd-tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem; margin-bottom: 2rem;
+    }
+    .cmd-tool {
+      background: var(--idx-card);
+      border: 1px solid var(--idx-border);
+      border-radius: 12px; padding: 1rem 1.1rem;
+      text-decoration: none; color: #c7d2fe;
+      transition: all 0.25s;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .cmd-tool:hover {
+      border-color: rgba(99,102,241,0.3);
+      background: rgba(13,13,31,0.9);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      color: #fff;
+    }
+    .cmd-tool-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .cmd-tool span { font-size: 0.83rem; font-weight: 600; }
+
+    /* Learning track cards */
+    .cmd-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .cmd-card {
+      background: var(--idx-card);
+      border: 1px solid var(--idx-border);
+      border-radius: 16px; padding: 1.4rem;
+      text-decoration: none; color: #c7d2fe;
+      transition: all 0.25s;
+      display: flex; flex-direction: column; gap: 0.75rem;
+      position: relative; overflow: hidden;
+    }
+    .cmd-card:hover {
+      border-color: rgba(99,102,241,0.35);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4), 0 0 20px rgba(99,102,241,0.1);
+      color: #e0e7ff;
+    }
+    .cmd-card-head { display: flex; align-items: flex-start; gap: 0.85rem; }
+    .cmd-card-icon {
+      width: 48px; height: 48px; border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .cmd-card-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700; font-size: 1rem; color: #fff;
+    }
+    .cmd-card-desc { font-size: 0.82rem; color: #8892b0; line-height: 1.55; margin: 0; }
+
+    /* Roadmap progress preview */
+    .cmd-roadmap-card {
+      background: var(--idx-card);
+      border: 1px solid var(--idx-border);
+      border-radius: 16px; padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .cmd-phase-row {
+      margin-bottom: 1.25rem;
+    }
+    .cmd-phase-label {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 0.6rem;
+    }
+    .cmd-progress-bar {
+      height: 6px; background: rgba(255,255,255,0.06);
+      border-radius: 99px; overflow: hidden;
+    }
+    .cmd-progress-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, #6366f1, #a855f7);
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+      position: relative; overflow: hidden;
+    }
+    .cmd-progress-fill::after {
+      content: ''; position: absolute;
+      top: 0; left: -100%; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      animation: shimmer 2.5s infinite;
+    }
+    @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
+
+    /* Phase curriculum cards */
+    .cmd-curriculum-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .cmd-curr-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--idx-border);
+      border-radius: 12px; padding: 1.25rem;
+    }
+    .cmd-curr-card:hover { border-color: rgba(99,102,241,0.2); }
+    .cmd-curr-head { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.6rem; }
+    .cmd-curr-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .cmd-curr-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700; font-size: 0.9rem; color: #fff;
+    }
+    .cmd-curr-sub { font-size: 0.72rem; color: #8892b0; }
+    .cmd-curr-desc { font-size: 0.8rem; color: #8892b0; line-height: 1.5; margin: 0; }
+
+    /* System status */
+    .cmd-status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem; margin-bottom: 2rem;
+    }
+    .cmd-status-item {
+      background: var(--idx-card);
+      border: 1px solid var(--idx-border);
+      border-radius: 10px; padding: 0.85rem 1rem;
+      display: flex; align-items: center; gap: 0.65rem;
+    }
+    .cmd-status-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .status-ok   { background: #10b981; box-shadow: 0 0 8px rgba(16,185,129,0.5); animation: pulse-dot 2s ease-in-out infinite; }
+    .status-info { background: #6366f1; box-shadow: 0 0 8px rgba(99,102,241,0.4); }
+    .status-warn { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+    @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+    .cmd-status-label { font-size: 0.82rem; color: #c7d2fe; font-weight: 500; }
+
+    /* Footer */
+    .cmd-footer {
+      text-align: center; padding: 2rem;
+      border-top: 1px solid rgba(99,102,241,0.08);
+      color: #4a5568; font-size: 0.78rem; margin-top: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .cmd-main { padding: 1rem; }
+      .cmd-topnav { padding: 0.75rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+      .cmd-nav { display: none; }
+      .cmd-hero { padding: 1.5rem; }
+      .cmd-hero h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Hero Background -->
+<div class="hero-bg"></div>
+
+<!-- ═══════ TOPNAV ═══════ -->
+<nav class="cmd-topnav">
+  <a href="/" class="cmd-brand">
+    <div class="cmd-brand-logo">
+      <img src="/static/img/skill_logo.png" alt="SkillSprint" width="22" style="filter:brightness(10);">
+    </div>
+    <div>
+      <div class="cmd-brand-name">SkillSprint Academy</div>
+      <div class="cmd-brand-tag">Purple Team Mastery</div>
+    </div>
+  </a>
+
+  <nav class="cmd-nav">
+    <a href="/" class="cmd-nav-link active"><i class="bi bi-house-fill"></i>Home</a>
+    <a href="{{ url_for('roadmap.view') }}" class="cmd-nav-link"><i class="bi bi-signpost-2"></i>Roadmap</a>
+    <a href="{{ url_for('labs.browse') }}" class="cmd-nav-link"><i class="bi bi-terminal-fill"></i>Labs</a>
+    <a href="{{ url_for('purple_team.coverage') }}" class="cmd-nav-link"><i class="bi bi-grid-3x3-gap-fill"></i>ATT&CK</a>
+    <a href="{{ url_for('assistant.chat') }}" class="cmd-nav-link"><i class="bi bi-robot"></i>AI Mentor</a>
+    <a href="{{ url_for('offline.lab_setup') }}" class="cmd-nav-link"><i class="bi bi-pc-display"></i>Lab Setup</a>
+  </nav>
+
+  <div class="cmd-user-badge">
+    <div class="cmd-avatar">
+      {{ current_user.first_name[0] if current_user and current_user.first_name else 'O' }}
+    </div>
+    <span style="font-size:0.82rem;font-weight:600;color:#c7d2fe;">
+      {{ current_user.first_name if current_user and current_user.first_name else 'Operator' }}
+    </span>
+    <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,0.6);"></span>
+  </div>
+</nav>
+
+<!-- ═══════ MAIN ═══════ -->
+<main class="cmd-main">
+
+  <!-- Hero Banner -->
+  <div class="cmd-hero animate-fade-up">
+    <div class="cmd-hero-eyebrow"><i class="bi bi-shield-lock-fill"></i>Operational Command Center</div>
+    <h1>Zero to <span>Purple Team</span> Mastery</h1>
+    <p>Offline-first 2-phase cybersecurity training program. <strong>Phase 1 (Months 1–3)</strong> qualifies you for cybersecurity internships and jobs such as Network Administrator and Security Support. <strong>Phase 2</strong> elevates you into a full Purple Team specialist.</p>
+    <div class="cmd-hero-badges">
+      <span class="cmd-hero-badge" style="background:rgba(16,185,129,0.1);color:#34d399;border-color:rgba(16,185,129,0.25);">
+        <i class="bi bi-wifi-off"></i>100% Offline
+      </span>
+      <span class="cmd-hero-badge" style="background:rgba(99,102,241,0.1);color:#818cf8;border-color:rgba(99,102,241,0.25);">
+        <i class="bi bi-shield-check"></i>No Telemetry
+      </span>
+      <span class="cmd-hero-badge" style="background:rgba(245,158,11,0.1);color:#fbbf24;border-color:rgba(245,158,11,0.25);">
+        <i class="bi bi-robot"></i>Local AI Mentor
+      </span>
+      <span class="cmd-hero-badge" style="background:rgba(168,85,247,0.1);color:#c084fc;border-color:rgba(168,85,247,0.25);">
+        <i class="bi bi-diagram-3"></i>MITRE ATT&CK
+      </span>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="cmd-stats">
+    <div class="cmd-stat animate-fade-up animate-delay-1" style="--grad-c:#6366f1;">
+      <div class="cmd-stat-num">{{ xp if xp else '0' }}</div>
+      <div class="cmd-stat-label"><i class="bi bi-stars" style="color:#818cf8;"></i> Total XP</div>
+    </div>
+    <div class="cmd-stat animate-fade-up animate-delay-2" style="--grad-c:#f59e0b;">
+      <div class="cmd-stat-num">{{ streak.current_streak if streak and streak.current_streak else '0' }}</div>
+      <div class="cmd-stat-label"><i class="bi bi-fire" style="color:#fb923c;"></i> Day Streak</div>
+    </div>
+    <div class="cmd-stat animate-fade-up animate-delay-3" style="--grad-c:#10b981;">
+      <div class="cmd-stat-num">68</div>
+      <div class="cmd-stat-label"><i class="bi bi-book" style="color:#34d399;"></i> Curriculum Topics</div>
+    </div>
+    <div class="cmd-stat animate-fade-up animate-delay-4" style="--grad-c:#a855f7;">
+      <div class="cmd-stat-num">20</div>
+      <div class="cmd-stat-label"><i class="bi bi-layers" style="color:#c084fc;"></i> Skill Areas</div>
+    </div>
+  </div>
+
+  <!-- Quick Access -->
+  <div class="cmd-section-title"><i class="bi bi-lightning-charge-fill"></i> Quick Access</div>
+  <div class="cmd-tools-grid">
+    <a href="{{ url_for('dashboard.today') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(99,102,241,0.15);color:#818cf8;"><i class="bi bi-speedometer2"></i></div>
+      <span>Today's Schedule</span>
+    </a>
+    <a href="{{ url_for('roadmap.view') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(16,185,129,0.15);color:#34d399;"><i class="bi bi-map"></i></div>
+      <span>Roadmap Overview</span>
+    </a>
+    <a href="{{ url_for('roadmap.calendar') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24;"><i class="bi bi-calendar3"></i></div>
+      <span>Calendar</span>
+    </a>
+    <a href="{{ url_for('labs.browse') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(6,182,212,0.15);color:#22d3ee;"><i class="bi bi-terminal-fill"></i></div>
+      <span>Purple Labs</span>
+    </a>
+    <a href="{{ url_for('purple_team.coverage') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(168,85,247,0.15);color:#c084fc;"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+      <span>ATT&CK Matrix</span>
+    </a>
+    <a href="{{ url_for('purple_team.log_list') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(16,185,129,0.15);color:#34d399;"><i class="bi bi-journal-code"></i></div>
+      <span>Exercise Log</span>
+    </a>
+    <a href="{{ url_for('purple_team.export') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24;"><i class="bi bi-file-earmark-arrow-down"></i></div>
+      <span>Export Portfolio</span>
+    </a>
+    <a href="{{ url_for('assistant.chat') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(99,102,241,0.15);color:#818cf8;"><i class="bi bi-robot"></i></div>
+      <span>AI Mentor</span>
+    </a>
+    <a href="{{ url_for('dashboard.progress') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(16,185,129,0.15);color:#34d399;"><i class="bi bi-graph-up-arrow"></i></div>
+      <span>Skill Radar</span>
+    </a>
+    <a href="{{ url_for('offline.lab_setup') }}" class="cmd-tool">
+      <div class="cmd-tool-icon" style="background:rgba(168,85,247,0.15);color:#c084fc;"><i class="bi bi-pc-display"></i></div>
+      <span>VirtualBox Setup</span>
+    </a>
+  </div>
+
+  <!-- Guided Onboarding Flow for New Users -->
+  {% if not has_roadmap %}
+  <div class="cmd-roadmap-card" style="background:linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08));border:1px solid rgba(99,102,241,0.3);margin-bottom:2rem;">
+    <div class="cmd-roadmap-card" style="background:transparent;border:none;padding:0;">
+      <div style="text-align:center;padding:2rem;">
+        <div style="width:72px;height:72px;border-radius:50%;margin:0 auto 1.5rem;background:linear-gradient(135deg, #6366f1, #a855f7);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(99,102,241,0.4);">
+          <i class="bi bi-rocket-takeoff" style="font-size:1.75rem;color:#fff;"></i>
+        </div>
+        <h3 style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.5rem;color:#fff;margin-bottom:0.5rem;">Start Your Purple Team Journey</h3>
+        <p style="color:#8892b0;font-size:0.95rem;max-width:550px;margin:0 auto 2rem;">Fast-track your career in 2 streamlined phases: Phase 1 gets you job/internship-ready in 3 months (Network Administrator & Cybersecurity Support), followed by Phase 2 Purple Team mastery.</p>
+        <a href="{{ url_for('roadmap.start') }}" class="btn btn-primary btn-lg" style="padding:0.875rem 2.25rem;font-size:1rem;font-weight:600;">
+          <i class="bi bi-lightning-charge-fill me-2"></i>Start Purple Team Journey
+        </a>
+      </div>
+      
+      <div style="border-top:1px solid rgba(99,102,241,0.2);margin-top:2rem;padding-top:2rem;">
+        <p style="color:#8892b0;font-size:0.85rem;margin-bottom:1rem;"><strong>Your 2-Phase Career Progression:</strong></p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;text-align:left;">
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> <strong>Phase 1 (3 Months):</strong> Network Admin & Cyber Job Ready</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-info"></i> <strong>Phase 2:</strong> Advanced Purple Team & Attack/Defend</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> Comprehensive Theory, Video Lectures, Labs & Quizzes</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-check-circle-fill text-success"></i> MITRE ATT&CK Matrix & Hands-On Exercises</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <!-- Roadmap Progress Preview -->
+  <div class="cmd-section-title"><i class="bi bi-signpost-2-fill"></i> Roadmap Progress</div>
+  <div class="cmd-roadmap-card">
+    <div class="cmd-phase-row">
+      <div class="cmd-phase-label">
+        <div>
+          <strong style="color:#fff;font-size:0.9rem;">Phase 1: Zero to Job-Ready</strong>
+          <span style="color:#8892b0;font-size:0.78rem;margin-left:0.5rem;">Weeks 1–12</span>
+        </div>
+        <span class="cmd-hero-badge" style="background:rgba(16,185,129,0.1);color:#34d399;border-color:rgba(16,185,129,0.25);">
+          <i class="bi bi-flag-fill"></i>Months 1–3
+        </span>
+      </div>
+      <div class="cmd-progress-bar">
+        <div class="cmd-progress-fill" style="width:0%;"></div>
+      </div>
+      <div style="font-size:0.75rem;color:#8892b0;margin-top:0.4rem;">Start your roadmap to track progress here.</div>
+    </div>
+    <div class="cmd-phase-row">
+      <div class="cmd-phase-label">
+        <div>
+          <strong style="color:#fff;font-size:0.9rem;">Phase 2: Purple Team Mastery</strong>
+          <span style="color:#8892b0;font-size:0.78rem;margin-left:0.5rem;">Weeks 13+</span>
+        </div>
+        <span class="cmd-hero-badge" style="background:rgba(168,85,247,0.1);color:#c084fc;border-color:rgba(168,85,247,0.25);">
+          <i class="bi bi-flag-fill"></i>Advanced
+        </span>
+      </div>
+      <div class="cmd-progress-bar">
+        <div class="cmd-progress-fill" style="width:0%;background:linear-gradient(90deg,#a855f7,#6366f1);"></div>
+      </div>
+      <div style="font-size:0.75rem;color:#8892b0;margin-top:0.4rem;">Unlocks after completing Phase 1.</div>
+    </div>
+    <a href="{{ url_for('roadmap.view') }}" class="btn btn-primary btn-sm mt-2">
+      <i class="bi bi-arrow-right-circle me-1"></i>View Full Roadmap
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Learning Tracks -->
+  <div class="cmd-section-title"><i class="bi bi-collection-fill"></i> Learning Tracks</div>
+  <div class="cmd-cards-grid">
+    <a href="{{ url_for('roadmap.view') }}" class="cmd-card">
+      <div class="cmd-card-head">
+        <div class="cmd-card-icon" style="background:rgba(99,102,241,0.15);color:#818cf8;"><i class="bi bi-mortarboard-fill"></i></div>
+        <div>
+          <div class="cmd-card-title">Purple Team Roadmap</div>
+          <span class="cmd-hero-badge" style="font-size:0.65rem;background:rgba(16,185,129,0.1);color:#34d399;border-color:rgba(16,185,129,0.2);">
+            <i class="bi bi-flag"></i>12-Week Curriculum
+          </span>
+        </div>
+      </div>
+      <p class="cmd-card-desc">Structured path from foundations to job-ready. Covers networking, Linux/Windows, AD, web security, SIEM, and detection engineering.</p>
+    </a>
+
+    <a href="{{ url_for('labs.browse') }}" class="cmd-card">
+      <div class="cmd-card-head">
+        <div class="cmd-card-icon" style="background:rgba(16,185,129,0.15);color:#34d399;"><i class="bi bi-terminal-fill"></i></div>
+        <div>
+          <div class="cmd-card-title">Purple Labs</div>
+          <span class="cmd-hero-badge" style="font-size:0.65rem;background:rgba(245,158,11,0.1);color:#fbbf24;border-color:rgba(245,158,11,0.2);">
+            <i class="bi bi-hdd-stack"></i>VM-Based
+          </span>
+        </div>
+      </div>
+      <p class="cmd-card-desc">Hands-on attack & detect exercises against GOAD, Metasploitable2, and DVWA. Every lab maps to MITRE ATT&CK techniques.</p>
+    </a>
+
+    <a href="{{ url_for('purple_team.coverage') }}" class="cmd-card">
+      <div class="cmd-card-head">
+        <div class="cmd-card-icon" style="background:rgba(168,85,247,0.15);color:#c084fc;"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+        <div>
+          <div class="cmd-card-title">ATT&CK Coverage Map</div>
+          <span class="cmd-hero-badge" style="font-size:0.65rem;background:rgba(168,85,247,0.1);color:#c084fc;border-color:rgba(168,85,247,0.2);">
+            <i class="bi bi-diagram-3"></i>Purple Team
+          </span>
+        </div>
+      </div>
+      <p class="cmd-card-desc">Visual matrix of MITRE ATT&CK techniques you've attacked, detected, and built rules for. Track your coverage across all tactics.</p>
+    </a>
+
+
+    <a href="{{ url_for('assistant.chat') }}" class="cmd-card">
+      <div class="cmd-card-head">
+        <div class="cmd-card-icon" style="background:rgba(6,182,212,0.15);color:#22d3ee;"><i class="bi bi-robot"></i></div>
+        <div>
+          <div class="cmd-card-title">Local AI Mentor</div>
+          <span class="cmd-hero-badge" style="font-size:0.65rem;background:rgba(6,182,212,0.1);color:#22d3ee;border-color:rgba(6,182,212,0.2);">
+            <i class="bi bi-cpu"></i>100% Offline
+          </span>
+        </div>
+      </div>
+      <p class="cmd-card-desc">Get hints, explanations, and guidance from the built-in AI tutor. Works via local Ollama or rules-based fallback.</p>
+    </a>
+
+    <a href="{{ url_for('offline.lab_setup') }}" class="cmd-card">
+      <div class="cmd-card-head">
+        <div class="cmd-card-icon" style="background:rgba(244,63,94,0.15);color:#fb7185;"><i class="bi bi-pc-display-horizontal"></i></div>
+        <div>
+          <div class="cmd-card-title">Lab Environment</div>
+          <span class="cmd-hero-badge" style="font-size:0.65rem;background:rgba(245,158,11,0.1);color:#fbbf24;border-color:rgba(245,158,11,0.2);">
+            <i class="bi bi-gear"></i>VirtualBox
+          </span>
+        </div>
+      </div>
+      <p class="cmd-card-desc">Configure your VMs: Kali, GOAD, Metasploitable2, DVWA, Wazuh. All running on host-only networking.</p>
+    </a>
+  </div>
+
+  <!-- Phase 1 Curriculum -->
+  <div class="cmd-section-title"><i class="bi bi-briefcase-fill" style="color:#34d399;"></i> Phase 1: Zero to Job & Internship Ready (Months 1–3)</div>
+  <div class="cmd-curriculum-grid">
+    <div class="cmd-curr-card">
+      <div class="cmd-curr-head">
+        <div class="cmd-curr-icon" style="background:rgba(99,102,241,0.15);color:#818cf8;"><i class="bi bi-wifi"></i></div>
+        <div>
+          <div class="cmd-curr-title">Weeks 1–2: Foundations</div>
+          <div class="cmd-curr-sub">Networking & SysAdmin</div>
+        </div>
+      </div>
+      <p class="cmd-curr-desc">TCP/IP, subnetting, DNS, Wireshark packet capture, Linux & Windows system administration — essential for Network Administrator & IT Support jobs.</p>
+      <div class="cmd-progress-bar" style="margin-top:0.75rem;"><div class="cmd-progress-fill" style="width:0%;"></div></div>
+    </div>
+    <div class="cmd-curr-card">
+      <div class="cmd-curr-head">
+        <div class="cmd-curr-icon" style="background:rgba(16,185,129,0.15);color:#34d399;"><i class="bi bi-globe2"></i></div>
+        <div>
+          <div class="cmd-curr-title">Week 3: Web App Security</div>
+          <div class="cmd-curr-sub">OWASP Top 10</div>
+        </div>
+      </div>
+      <p class="cmd-curr-desc">HTTP mechanics, OWASP Top 10, SQLi, XSS, Burp Suite, authentication & session attacks against DVWA.</p>
+      <div class="cmd-progress-bar" style="margin-top:0.75rem;"><div class="cmd-progress-fill" style="width:0%;"></div></div>
+    </div>
+    <div class="cmd-curr-card">
+      <div class="cmd-curr-head">
+        <div class="cmd-curr-icon" style="background:rgba(244,63,94,0.15);color:#fb7185;"><i class="bi bi-diagram-3"></i></div>
+        <div>
+          <div class="cmd-curr-title">Weeks 4–7: AD Attacks</div>
+          <div class="cmd-curr-sub">Active Directory</div>
+        </div>
+      </div>
+      <p class="cmd-curr-desc">AD enumeration, Kerberoasting, AS-REP roasting, Pass-the-Hash, lateral movement, persistence, C2 & exfiltration.</p>
+      <div class="cmd-progress-bar" style="margin-top:0.75rem;"><div class="cmd-progress-fill" style="width:0%;background:linear-gradient(90deg,#f43f5e,#fb7185);"></div></div>
+    </div>
+    <div class="cmd-curr-card">
+      <div class="cmd-curr-head">
+        <div class="cmd-curr-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24;"><i class="bi bi-shield-exclamation"></i></div>
+        <div>
+          <div class="cmd-curr-title">Weeks 8–11: Detection Eng.</div>
+          <div class="cmd-curr-sub">Blue Team</div>
+        </div>
+      </div>
+      <p class="cmd-curr-desc">SIEM queries, Sigma rule development, threat hunting, SOC playbooks, incident response, malware analysis basics.</p>
+      <div class="cmd-progress-bar" style="margin-top:0.75rem;"><div class="cmd-progress-fill" style="width:0%;background:linear-gradient(90deg,#f59e0b,#fbbf24);"></div></div>
+    </div>
+    <div class="cmd-curr-card">
+      <div class="cmd-curr-head">
+        <div class="cmd-curr-icon" style="background:rgba(168,85,247,0.15);color:#c084fc;"><i class="bi bi-trophy-fill"></i></div>
+        <div>
+          <div class="cmd-curr-title">Week 12: Capstone</div>
+          <div class="cmd-curr-sub">Full Purple Chain</div>
+        </div>
+      </div>
+      <p class="cmd-curr-desc">End-to-end: attack GOAD via Kerberoasting → PTH → Lateral Movement, detect each stage via Wazuh/Sigma, document professionally.</p>
+      <div class="cmd-progress-bar" style="margin-top:0.75rem;"><div class="cmd-progress-fill" style="width:0%;background:linear-gradient(90deg,#a855f7,#c084fc);"></div></div>
+    </div>
+  </div>
+
+  <!-- Phase 2 Preview -->
+  <div class="cmd-section-title"><i class="bi bi-flag-fill" style="color:#c084fc;"></i> Phase 2: Purple Team Mastery (Advanced)</div>
+  <div class="cmd-cards-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));">
+    <div class="cmd-card" style="cursor:default;">
+      <div class="cmd-card-head">
+        <div class="cmd-card-icon" style="background:rgba(244,63,94,0.15);color:#fb7185;"><i class="bi bi-bug-fill"></i></div>
+        <div>
+          <div class="cmd-card-title">Weeks 13–16: Advanced Offense</div>
+          <span class="cmd-hero-badge" style="font-size:0.65rem;background:rgba(244,63,94,0.1);color:#fb7185;border-color:rgba(244,63,94,0.2);"><i class="bi bi-crosshair"></i>Red Team</span>
+        </div>
+      </div>
+      <p class="cmd-card-desc">AD delegation & trust abuse, advanced web exploitation (SSRF, deserialization), malware analysis & RE, exploit development.</p>
+    </div>
+    <div class="cmd-card" style="cursor:default;">
+      <div class="cmd-card-head">
+        <div class="cmd-card-icon" style="background:rgba(6,182,212,0.15);color:#22d3ee;"><i class="bi bi-cloud-fill"></i></div>
+        <div>
+          <div class="cmd-card-title">Weeks 17–18: Cloud Security</div>
+          <span class="cmd-hero-badge" style="font-size:0.65rem;background:rgba(6,182,212,0.1);color:#22d3ee;border-color:rgba(6,182,212,0.2);"><i class="bi bi-cloud"></i>Cloud</span>
+        </div>
+      </div>
+      <p class="cmd-card-desc">Cloud IAM abuse, Kubernetes attack paths, Terraform misconfig hunting, container escape techniques, supply chain attacks.</p>
+    </div>
+    <div class="cmd-card" style="cursor:default;">
+      <div class="cmd-card-head">
+        <div class="cmd-card-icon" style="background:rgba(16,185,129,0.15);color:#34d399;"><i class="bi bi-eye-fill"></i></div>
+        <div>
+          <div class="cmd-card-title">Weeks 19–23: Advanced Detection</div>
+          <span class="cmd-hero-badge" style="font-size:0.65rem;background:rgba(16,185,129,0.1);color:#34d399;border-color:rgba(16,185,129,0.2);"><i class="bi bi-shield-fill-check"></i>Advanced Blue</span>
+        </div>
+      </div>
+      <p class="cmd-card-desc">Multi-stage detection logic, behavioral analytics, detection-as-code CI/CD, purple team automation, threat intelligence.</p>
+    </div>
+  </div>
+
+  <!-- System Status -->
+  <div class="cmd-section-title"><i class="bi bi-activity"></i> System Status</div>
+  <div class="cmd-status-grid">
+    <div class="cmd-status-item">
+      <div class="cmd-status-dot status-ok"></div>
+      <span class="cmd-status-label">Database: Connected</span>
+    </div>
+    <div class="cmd-status-item">
+      <div class="cmd-status-dot status-ok"></div>
+      <span class="cmd-status-label">Mode: Fully Offline</span>
+    </div>
+    <div class="cmd-status-item">
+      <div class="cmd-status-dot status-info"></div>
+      <span class="cmd-status-label">CSP: Self-Only</span>
+    </div>
+    <div class="cmd-status-item">
+      <div class="cmd-status-dot status-warn"></div>
+      <span class="cmd-status-label">AI: Ollama / Fallback</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="cmd-footer">
+    <div style="margin-bottom:0.25rem;">SkillSprint Academy — Purple Team Mastery Platform</div>
+    <div>Fully offline &nbsp;·&nbsp; No telemetry &nbsp;·&nbsp; Your data stays local</div>
+  </div>
+</main>
+
+{% if OFFLINE_MODE %}
+<script nonce="{{ csp_nonce }}" src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+{% else %}
+<script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endif %}
+<script nonce="{{ csp_nonce }}">
+  // Server-injected runtime config — required before main.js loads
+  window.OFFLINE_MODE = {{ 'true' if OFFLINE_MODE else 'false' }};
+</script>
+<script nonce="{{ csp_nonce }}" src="/static/js/update_checker.js"></script>
+<script nonce="{{ csp_nonce }}" src="/static/js/main.js"></script>
+</body>
+</html>
