@@ -8,14 +8,14 @@
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 style="font-weight:700;color:var(--text-primary);"><i class="bi bi-calendar-week me-2 text-primary"></i>Daily Schedule Blocks</h2>
+                <h2 class="fw-bold text-white"><i class="bi bi-calendar-week me-2 text-primary"></i>Daily Schedule Blocks</h2>
                 <a href="{{ url_for('roadmap.calendar') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-arrow-left me-1"></i>Back to Calendar
                 </a>
             </div>
 
-            <div class="admin-card p-4" style="border-radius:14px;">
-                <h5 class="mb-4" style="font-weight:700;color:var(--text-primary);">Configure Your Study Time Blocks (2-3 hours each)</h5>
+            <div class="admin-card library-card p-4">
+                <h5 class="mb-4 fw-bold text-white">Configure Your Study Time Blocks (2-3 hours each)</h5>
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <p class="text-muted small mb-4">
@@ -24,35 +24,39 @@
                     </p>
 
                     {% for day_idx in range(7) %}
-                    <div class="admin-card mb-3 p-3" style="border-radius:10px;background:rgba(255,255,255,0.02);border-color:var(--border);">
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2" style="border-bottom:1px solid var(--border);">
-                            <h6 class="mb-0" style="font-weight:700;color:var(--text-primary);">{{ days_names[day_idx] }}</h6>
+                    <div class="admin-card availability-day-card mb-3 p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                            <h6 class="mb-0 fw-bold text-white">{{ days_names[day_idx] }}</h6>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="day_{{ day_idx }}_enabled" checked disabled style="accent-color:var(--primary);">
+                                <input class="form-check-input" type="checkbox" id="day_{{ day_idx }}_enabled" checked disabled>
                                 <label class="form-check-label small text-muted" for="day_{{ day_idx }}_enabled">Active</label>
                             </div>
                         </div>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label small" style="color:var(--text-secondary);">Morning Block</label>
+                                <label class="form-label small text-secondary">Morning Block</label>
                                 <div class="input-group input-group-sm">
-                                    <span class="input-group-text" style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-muted);"><i class="bi bi-clock"></i></span>
-                                    <input type="time" class="form-control" name="day_{{ day_idx }}_b1_start" value="{{ availability[day_idx][0].start if availability[day_idx] else '09:00' }}"
-                                           style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
-                                    <span class="input-group-text" style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-muted);">to</span>
-                                    <input type="time" class="form-control" name="day_{{ day_idx }}_b1_end" value="{{ availability[day_idx][0].end if availability[day_idx] else '11:30' }}"
-                                           style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+                                    <span class="input-group-text availability-addon-text"><i class="bi bi-clock"></i></span>
+                                    <input type="time" class="form-control availability-time-input" name="day_{{ day_idx }}_b1_start" 
+                                           value="{{ availability[day_idx][0].start if availability[day_idx] else '09:00' }}"
+                                           aria-label="{{ days_names[day_idx] }} Morning start time">
+                                    <span class="input-group-text availability-addon-text">to</span>
+                                    <input type="time" class="form-control availability-time-input" name="day_{{ day_idx }}_b1_end" 
+                                           value="{{ availability[day_idx][0].end if availability[day_idx] else '11:30' }}"
+                                           aria-label="{{ days_names[day_idx] }} Morning end time">
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small" style="color:var(--text-secondary);">Afternoon Block</label>
+                                <label class="form-label small text-secondary">Afternoon Block</label>
                                 <div class="input-group input-group-sm">
-                                    <span class="input-group-text" style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-muted);"><i class="bi bi-clock"></i></span>
-                                    <input type="time" class="form-control" name="day_{{ day_idx }}_b2_start" value="{{ availability[day_idx][1].start if availability[day_idx]|length > 1 else '14:00' }}"
-                                           style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
-                                    <span class="input-group-text" style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-muted);">to</span>
-                                    <input type="time" class="form-control" name="day_{{ day_idx }}_b2_end" value="{{ availability[day_idx][1].end if availability[day_idx]|length > 1 else '16:30' }}"
-                                           style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+                                    <span class="input-group-text availability-addon-text"><i class="bi bi-clock"></i></span>
+                                    <input type="time" class="form-control availability-time-input" name="day_{{ day_idx }}_b2_start" 
+                                           value="{{ availability[day_idx][1].start if availability[day_idx]|length > 1 else '14:00' }}"
+                                           aria-label="{{ days_names[day_idx] }} Afternoon start time">
+                                    <span class="input-group-text availability-addon-text">to</span>
+                                    <input type="time" class="form-control availability-time-input" name="day_{{ day_idx }}_b2_end" 
+                                           value="{{ availability[day_idx][1].end if availability[day_idx]|length > 1 else '16:30' }}"
+                                           aria-label="{{ days_names[day_idx] }} Afternoon end time">
                                 </div>
                             </div>
                         </div>

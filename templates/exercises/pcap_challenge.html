@@ -14,12 +14,12 @@
 
 <div class="row g-3 mb-3">
     <div class="col-md-6">
-        <label class="form-label">Packet Filter (Wireshark syntax)</label>
+        <label class="form-label" for="pcap-filter">Packet Filter (Wireshark syntax)</label>
         <input type="text" id="pcap-filter" class="form-control form-control-sm font-monospace" 
                placeholder="tcp.port == 80 || dns" value="{{ exerciseSpec.filter or '' }}">
     </div>
     <div class="col-md-6">
-        <label class="form-label">Analysis Focus</label>
+        <label class="form-label" for="pcap-focus">Analysis Focus</label>
         <select id="pcap-focus" class="form-select form-select-sm">
             <option value="overview">Protocol Overview</option>
             <option value="http">HTTP Traffic</option>
@@ -32,25 +32,27 @@
 </div>
 
 <div class="d-flex gap-2 mb-3">
-    <button class="btn btn-outline-primary btn-sm" id="analyzePcapBtn">
+    <button type="button" class="btn btn-outline-primary btn-sm" id="analyzePcapBtn">
         <i class="bi bi-search me-1"></i>Analyze
     </button>
-    <button class="btn btn-outline-secondary btn-sm" id="exportFindingsBtn">
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="exportFindingsBtn">
         <i class="bi bi-file-earmark-text me-1"></i>Export Findings
     </button>
 </div>
 
-<div class="card" id="pcapResults" style="display: none;">
+<div class="card panel-hidden" id="pcapResults">
     <div class="card-header bg-dark text-white"><i class="bi bi-terminal me-1"></i>Analysis Results</div>
     <div class="card-body p-0">
-        <pre id="pcapOutput" class="mb-0 p-3 bg-dark text-light" style="max-height: 400px; overflow: auto;"></pre>
+        <pre id="pcapOutput" class="mb-0 p-3 bg-dark text-light code-output-pre-md"></pre>
     </div>
 </div>
 
 <div class="card mt-3">
     <div class="card-header bg-light"><i class="bi bi-pencil me-1"></i>Your Findings</div>
     <div class="card-body">
+        <label for="pcap-findings" class="visually-hidden">Your Findings</label>
         <textarea id="pcap-findings" class="form-control font-monospace" rows="8" 
+                  aria-label="Your Findings"
                   placeholder="Document your findings here...">{{ exerciseSpec.findings_template or '' }}</textarea>
     </div>
 </div>

@@ -1,14 +1,14 @@
 <!-- cipher_lab.html - Cipher Lab Exercise -->
 <div class="row g-3">
     <div class="col-md-6">
-        <label class="form-label">Ciphertext</label>
+        <label class="form-label" for="cipher-input">Ciphertext</label>
         <textarea id="cipher-input" class="form-control font-monospace" rows="6" 
                   placeholder="Paste ciphertext here...">{{ exerciseSpec.ciphertext or '' }}</textarea>
     </div>
     <div class="col-md-6">
         <label class="form-label">Key / Parameters</label>
         <div class="mb-2">
-            <label class="form-label small">Algorithm</label>
+            <label class="form-label small" for="cipher-algo">Algorithm</label>
             <select id="cipher-algo" class="form-select form-select-sm">
                 <option value="caesar">Caesar Shift</option>
                 <option value="vigenere">Vigenère</option>
@@ -19,7 +19,7 @@
             </select>
         </div>
         <div class="mb-2">
-            <label class="form-label small">Key</label>
+            <label class="form-label small" for="cipher-key">Key</label>
             <input type="text" id="cipher-key" class="form-control form-control-sm font-monospace" 
                    placeholder="Shift value, keyword, or XOR key" 
                    value="{{ exerciseSpec.key or '' }}">
@@ -32,28 +32,28 @@
 </div>
 
 <div class="d-flex gap-2 mb-3">
-    <button class="btn btn-outline-primary btn-sm" id="decryptBtn">
+    <button type="button" class="btn btn-outline-primary btn-sm" id="decryptBtn">
         <i class="bi bi-unlock me-1"></i>Decrypt
     </button>
-    <button class="btn btn-outline-secondary btn-sm" id="encryptBtn">
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="encryptBtn">
         <i class="bi bi-lock me-1"></i>Encrypt
     </button>
-    <button class="btn btn-outline-info btn-sm" id="analyzeBtn">
+    <button type="button" class="btn btn-outline-info btn-sm" id="analyzeBtn">
         <i class="bi bi-graph-up me-1"></i>Frequency Analysis
     </button>
 </div>
 
-<div class="card" id="cipherOutput" style="display: none;">
+<div class="card panel-hidden" id="cipherOutput">
     <div class="card-header bg-dark text-white"><i class="bi bi-terminal me-1"></i>Result</div>
     <div class="card-body p-0">
-        <pre id="cipherResult" class="mb-0 p-3 bg-dark text-light" style="max-height: 300px; overflow: auto;"></pre>
+        <pre id="cipherResult" class="mb-0 p-3 bg-dark text-light code-output-pre-sm"></pre>
     </div>
 </div>
 
-<div class="card mt-3" id="freqAnalysis" style="display: none;">
+<div class="card mt-3 panel-hidden" id="freqAnalysis">
     <div class="card-header bg-info text-white"><i class="bi bi-bar-chart me-1"></i>Frequency Analysis</div>
     <div class="card-body">
-        <div id="freqChart" style="height: 200px;"></div>
+        <div id="freqChart" class="chart-container-sm"></div>
     </div>
 </div>
 

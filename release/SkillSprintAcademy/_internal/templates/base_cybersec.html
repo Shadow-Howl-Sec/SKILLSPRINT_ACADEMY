@@ -21,15 +21,15 @@
   {% block head_extra %}{% endblock %}
 </head>
 <body>
-<div class="d-flex" style="min-height:100vh; background:var(--bg-dark);">
+<div class="d-flex dash-app-wrapper">
 
   <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
   <nav class="dash-sidebar">
     <!-- Brand -->
     <div class="dash-side-header">
-      <a href="/" class="d-flex align-items-center gap-2" style="text-decoration:none;">
-        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent-purple));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px var(--primary-glow);">
-          <img src="/static/img/skill_logo.png" alt="SkillSprint" width="22" style="filter:brightness(10);">
+      <a href="/" class="d-flex align-items-center gap-2 text-decoration-none">
+        <div class="dash-brand-icon">
+          <img src="/static/img/skill_logo.png" alt="SkillSprint" width="22">
         </div>
         <div>
           <div class="dash-side-brand-name">SkillSprint</div>
@@ -39,7 +39,7 @@
     </div>
 
     <!-- Nav items -->
-    <div style="overflow-y:auto; flex:1; padding:0.5rem 0;">
+    <div class="dash-nav-scroll">
       <div class="dash-nav-section">Curriculum & Roadmap</div>
       <a href="{{ url_for('dashboard.today') }}" class="dash-nav-link {% if active == 'today' %}active{% endif %}">
         <i class="bi bi-speedometer2"></i><span>Today's Schedule</span>
@@ -74,15 +74,15 @@
     <!-- Sidebar footer — user info -->
     <div class="dash-side-footer">
       <div class="d-flex align-items-center gap-2">
-        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;">
+        <div class="dash-avatar-icon-sm">
           {{ current_user.first_name[0] if current_user and current_user.first_name else 'O' }}
         </div>
-        <div style="min-width:0;">
-          <div style="font-size:0.8rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        <div class="min-w-0">
+          <div class="dash-user-label">
             {{ current_user.first_name if current_user and current_user.first_name else 'Operator' }}
           </div>
-          <div style="font-size:0.65rem;color:var(--text-dim);">
-            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--success);margin-right:4px;vertical-align:middle;box-shadow:0 0 6px var(--success-glow);"></span>Offline · Secure
+          <div class="dash-user-status">
+            <span class="status-dot-secure"></span>Offline · Secure
           </div>
         </div>
       </div>
@@ -90,21 +90,21 @@
   </nav>
 
   <!-- ═══════════════════ MAIN AREA ═══════════════════ -->
-  <div class="flex-grow-1 d-flex flex-column" style="min-width:0; overflow:hidden;">
+  <div class="flex-grow-1 d-flex flex-column overflow-hidden min-w-0">
 
     <!-- Topbar -->
     <header class="dash-topbar">
       <div class="d-flex align-items-center justify-content-between gap-3">
-        <div style="min-width:0;">
-          <h5 style="margin:0;font-family:'Outfit',sans-serif;font-weight:700;color:var(--text-primary);font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        <div class="min-w-0">
+          <h5 class="dash-page-heading">
             {% block page_title %}{% endblock %}
           </h5>
-          <span style="font-size:0.775rem;color:var(--text-muted);">{% block page_subtitle %}{% endblock %}</span>
+          <span class="dash-page-sub">{% block page_subtitle %}{% endblock %}</span>
         </div>
 
         <div class="d-flex align-items-center gap-2 flex-shrink-0">
           {% if streak is defined and streak and streak.current_streak %}
-          <span class="pill pill-warning" style="font-size:0.72rem;">
+          <span class="pill pill-warning fs-xs">
             <i class="bi bi-fire streak-fire"></i>{{ streak.current_streak }}d streak
           </span>
           {% endif %}
@@ -124,31 +124,31 @@
           <div class="dropdown">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2"
                     type="button" data-bs-toggle="dropdown" id="userMenuBtn">
-              <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;font-weight:700;">
+              <div class="dash-avatar-btn-icon">
                 {{ current_user.first_name[0] if current_user and current_user.first_name else 'O' }}
               </div>
-              <span style="font-size:0.82rem;font-weight:600;">{{ current_user.first_name if current_user and current_user.first_name else 'Operator' }}</span>
+              <span class="fw-semibold">{{ current_user.first_name if current_user and current_user.first_name else 'Operator' }}</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
               <li>
                 <a class="dropdown-item" href="{{ url_for('dashboard.progress') }}">
-                  <i class="bi bi-person me-2" style="color:var(--primary-light);"></i>Skill Progress
+                  <i class="bi bi-person me-2 text-primary"></i>Skill Progress
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="{{ url_for('offline.ai_tutor_settings') }}">
-                  <i class="bi bi-cpu me-2" style="color:var(--accent-cyan);"></i>AI Settings
+                  <i class="bi bi-cpu me-2 text-info"></i>AI Settings
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="{{ url_for('offline.lab_setup') }}">
-                  <i class="bi bi-pc-display me-2" style="color:var(--accent-purple);"></i>Lab Setup
+                  <i class="bi bi-pc-display me-2 text-purple"></i>Lab Setup
                 </a>
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
                 <a class="dropdown-item" href="{{ url_for('offline.about') }}">
-                  <i class="bi bi-info-circle me-2" style="color:var(--text-muted);"></i>Offline Info
+                  <i class="bi bi-info-circle me-2 text-muted"></i>Offline Info
                 </a>
               </li>
             </ul>
@@ -158,7 +158,7 @@
     </header>
 
     <!-- Main Content -->
-    <div style="flex:1;overflow-y:auto;padding:1.75rem;" class="dash-content">
+    <div class="dash-content">
 
       <!-- Update banner (hidden in offline mode) -->
       {% if not OFFLINE_MODE %}
