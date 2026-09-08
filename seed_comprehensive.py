@@ -1012,17 +1012,27 @@ def seed_all_topic_learning_modules(topics_by_title: dict[str, Topic]) -> int:
     for title, topic in topics_by_title.items():
         slug = slugify(title)
         data = _get_module_content_for_topic(title, slug)
+        video_url = data["video_url"] or (
+            f"https://www.youtube.com/results?search_query=cybersecurity+"
+            f"{slug.replace('-', '+')}"
+        )
+        video_title = data["video_title"] or f"{title} — Lecture & Hands-On Deep Dive"
+        video_source = data["video_source"] or "YouTube Cybersecurity"
 
         existing = TopicLearningModule.query.filter_by(topic_id=topic.id).first()
         if existing:
+            if not existing.video_url:
+                existing.video_url = video_url
+                existing.video_title = video_title
+                existing.video_source = video_source
             continue
 
         module = TopicLearningModule(
             topic_id=topic.id,
             theory_md=data["theory_md"],
-            video_url=data["video_url"] or None,
-            video_title=data["video_title"] or None,
-            video_source=data["video_source"] or None,
+            video_url=video_url,
+            video_title=video_title,
+            video_source=video_source,
             lab_guide_md=data["lab_guide_md"],
             lab_prerequisites=data["lab_prerequisites"],
             assessment_md=data["assessment_md"],
