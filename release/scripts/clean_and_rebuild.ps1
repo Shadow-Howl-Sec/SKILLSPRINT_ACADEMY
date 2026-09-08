@@ -126,5 +126,5 @@ Write-Host ""
 Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host " CLEANUP AND REBUILD COMPLETE" -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
-Write-Host " New executable: release\SkillSprintAcademy.exe"
+Write-Host " New executable: release\SkillSprintAcademy\SkillSprintAcademy.exe"
 Write-Host "===================================================" -ForegroundColor Cyan

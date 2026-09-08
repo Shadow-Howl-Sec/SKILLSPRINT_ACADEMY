@@ -84,7 +84,6 @@ misc_hidden_imports = [
     'markdown.extensions.fenced_code',
     'markdown.extensions.tables',
     'markdown.extensions.codehilite',
-    'waitress',
     'jinja2',
     'jinja2.ext',
     'sqlite3',

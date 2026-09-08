@@ -6,6 +6,7 @@ Ensures every topic has:
 from app import app
 from extensions import db
 from models import Topic, TopicLearningModule, AssessmentQuestion
+from urllib.parse import quote_plus
 
 CURATED_VIDEOS = {
     # Foundations & Networking
@@ -432,6 +433,19 @@ CURATED_VIDEOS = {
         "The Definitive Cybersecurity Certification Roadmap (2024-2026)",
         "Paul Jerimy / Cyber Work"
     ),
+}
+
+# The original table contained hand-entered video IDs that were not verified.
+# Use YouTube search pages instead, so the seed never claims an exact video is
+# a particular lecture while still giving learners a relevant starting point.
+CURATED_VIDEOS = {
+    slug: (
+        f"https://www.youtube.com/results?search_query="
+        f"{quote_plus(source + ' ' + title)}",
+        title,
+        source,
+    )
+    for slug, (_unused_url, title, source) in CURATED_VIDEOS.items()
 }
 
 QUESTIONS_FOR_SOFT_SKILLS = {

@@ -65,7 +65,7 @@ def inject_nonce():
     return {'csp_nonce': getattr(g, 'csp_nonce', None)}
 
 # ---------------------------------------------------------------------------
-# Blueprints — ZeroCipher Purple Team only
+# Blueprints — SkillSprint Purple Team only
 # ---------------------------------------------------------------------------
 from blueprints.roadmap.routes import roadmap_bp
 from blueprints.dashboard.routes import dashboard_bp
@@ -108,9 +108,9 @@ def load_default_user():
         user = User.query.first()
         if user is None:
             user = User(
-                username='operator',
-                email='operator@skillsprint.local',
-                first_name='Operator',
+                username='Shubham',
+                email='shubham@skillsprint.local',
+                first_name='Shubham',
                 last_name='',
                 email_verified=True,
                 is_active=True,
@@ -180,7 +180,7 @@ def inject_globals():
         "OFFLINE_MODE": True,
         "current_user": g.get('user'),
         "APP_NAME": app.config.get('APP_NAME', 'SkillSprint Academy'),
-        "APP_TAGLINE": app.config.get('APP_TAGLINE', 'Zero to Purple Team Mastery — Fully Offline'),
+        "APP_TAGLINE": app.config.get('APP_TAGLINE', 'Zero to Purple Team Mastery'),
         "update_info": update_info,
     }
 
@@ -308,7 +308,7 @@ if __name__ == '__main__':
         bind_host = app.config.get('OFFLINE_BIND_HOST', '127.0.0.1')
         bind_port = int(app.config.get('OFFLINE_BIND_PORT', 5000))
         url = f"http://{bind_host}:{bind_port}"
-        print(f" {app.config.get('APP_NAME', 'ZeroCipher')} starting...")
+        print(f" {app.config.get('APP_NAME', 'skillsprint')} starting...")
         print(f" [OFFLINE MODE] binding to {url}")
         
         # Open browser in a background thread after 1.5 seconds
@@ -320,6 +320,6 @@ if __name__ == '__main__':
         threading.Thread(target=open_browser, daemon=True).start()
         app.run(debug=False, host=bind_host, port=bind_port)
     except KeyboardInterrupt:
-        print(f"\n {app.config.get('APP_NAME', 'ZeroCipher')} stopped by user")
+        print(f"\n {app.config.get('APP_NAME', 'skillsprint')} stopped by user")
     except Exception as e:
         print(f"Error starting application: {e}")

@@ -1582,7 +1582,7 @@ Active Directory is the authentication backbone of 90%+ of enterprise environmen
 
 ```bash
 # Step 1: Collect AD data with SharpHound (from compromised Windows host)
-.\SharpHound.exe -c All --zipfilename bloodhound_data.zip
+.\\SharpHound.exe -c All --zipfilename bloodhound_data.zip
 
 # Step 2: Linux alternative — bloodhound-python
 bloodhound-python -d north.sevenkingdoms.local -u jon.snow -p KingInTheNorth -c All -ns 192.168.56.11
@@ -2199,12 +2199,12 @@ detection:
 
 | Modifier | Description | Example |
 |---------|------------|---------|
-| `contains` | Substring match | `CommandLine\|contains: 'base64'` |
-| `startswith` | Prefix match | `Image\|startswith: 'C:\\'` |
-| `endswith` | Suffix match | `Image\|endswith: '.dll'` |
-| `re` | Regex match | `CommandLine\|re: '[A-Z]{10,}'` |
-| `all` | All items must match | `CommandLine\|contains\|all:` |
-| `windash` | Match both / and - | `CommandLine\|windash\|contains: '-enc'` |
+| `contains` | Substring match | `CommandLine\\|contains: 'base64'` |
+| `startswith` | Prefix match | `Image\\|startswith: 'C:\\'` |
+| `endswith` | Suffix match | `Image\\|endswith: '.dll'` |
+| `re` | Regex match | `CommandLine\\|re: '[A-Z]{10,}'` |
+| `all` | All items must match | `CommandLine\\|contains\\|all:` |
+| `windash` | Match both / and - | `CommandLine\\|windash\\|contains: '-enc'` |
 
 ### The Detection Engineering Lifecycle
 

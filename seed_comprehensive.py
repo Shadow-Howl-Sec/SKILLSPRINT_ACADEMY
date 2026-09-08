@@ -24,7 +24,7 @@ from models import (
 )
 from seed import (
     slugify, get_or_create, seed_skill_areas, seed_topics, seed_capstones,
-    seed_roles, seed_curriculum_weeks,
+    seed_roles, seed_curriculum_weeks, seed_questions, seed_labs,
 )
 
 # ---------------------------------------------------------------------------
@@ -541,6 +541,23 @@ TOPIC_QUESTIONS = {
     ],
 }
 
+PURPLE_TEAM_DEFAULT_TRACK = [
+    "Networking Basics", "Linux Fundamentals", "Windows Fundamentals",
+    "Security Mindset & Ethics", "MITRE ATT&CK Overview", "TCP/IP & Subnetting",
+    "DNS & HTTP", "Packet Analysis & Wireshark", "Python for Security",
+    "Parsing Logs & Automation", "Building a Basic Port Scanner",
+    "Web App Basics & HTTP", "OWASP Top 10 Overview", "SQL Injection",
+    "Cross-Site Scripting (XSS)", "Burp Suite Essentials",
+    "Active Directory Fundamentals", "Kerberos & BloodHound", "Windows Internals",
+    "Log Analysis & journald", "Firewalls & Network Hardening",
+    "Packet Forensics at Scale", "SIEM Queries & Sigma Rules",
+    "Threat Hunting at Scale", "SOC Playbooks", "Linux Hardening & Audit",
+    "Linux Disk & Memory Forensics", "Malware Static Analysis",
+    "Malware Dynamic Analysis & Sandboxing", "YARA & AV Evasion (detect)",
+    "Cloud IAM & S3 Security", "Kubernetes Security Basics", "Cloud IAM Abuse",
+    "Kubernetes Attack Paths", "Terraform Misconfig Hunting",
+]
+
 
 def _get_generic_questions_for_topic(topic: Topic) -> list[tuple[str, list[str], str, str]]:
     """Generate two quality checkpoint quiz questions for any topic."""
@@ -568,6 +585,15 @@ def _get_generic_questions_for_topic(topic: Topic) -> list[tuple[str, list[str],
             "Centralized logging and detection signatures enable timely identification of adversary techniques."
         )
     ]
+
+
+# Keep the default track visible in the curated table while retaining the
+# generic fallback for secondary topics that are not on the primary path.
+for _topic_title in PURPLE_TEAM_DEFAULT_TRACK:
+    TOPIC_QUESTIONS.setdefault(
+        _topic_title,
+        _get_generic_questions_for_topic(Topic(title=_topic_title)),
+    )
 
 
 def seed_all_questions(topics_by_title: dict[str, Topic], areas_by_name: dict[str, SkillArea]) -> int:
@@ -1056,6 +1082,15 @@ def main():
         areas = seed_skill_areas()
         topics = seed_topics(areas)
         print(f"[+] Loaded {len(areas)} SkillAreas and {len(topics)} Topics.")
+
+        # Include the baseline CAT bank, curated external labs, and open-source
+        # resources so this entry point is complete on its own.
+        seed_questions(areas)
+        seed_labs(topics)
+        from seed_top_open_source import seed_top_resources
+        n_open_source, n_open_source_skipped = seed_top_resources()
+        print(f"[+] Seeded baseline CAT questions and labs; added {n_open_source} "
+              f"open-source resources ({n_open_source_skipped} skipped).")
 
         # 2. Capstones & Job Roles
         capstones = seed_capstones()

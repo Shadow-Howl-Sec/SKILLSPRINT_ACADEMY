@@ -503,6 +503,83 @@ def seed_roles(topics_by_title, capstones_by_title) -> None:
 # Assessment questions — 5 per area, difficulty 1..5
 # ---------------------------------------------------------------------------
 QUESTIONS = {
+    "Computing Foundations": [
+        ("What is the hexadecimal representation of decimal 255?", "3", "1", ["0x0F", "0x10", "0xF0", "0xFF"]),
+        ("What is the smallest unit of digital information?", "0", "2", ["Bit", "Byte", "Nibble", "Word"]),
+        ("Which component is responsible for executing CPU instructions?", "1", "3", ["RAM", "ALU", "NIC", "SSD"]),
+        ("What does virtual memory allow an operating system to do?", "2", "4", ["Encrypt every file", "Replace the CPU", "Use disk space to extend apparent memory", "Disable paging"]),
+        ("In a little-endian system, which byte is stored at the lowest address?", "1", "5", ["Most significant byte", "Least significant byte", "Parity byte", "Header byte"]),
+    ],
+    "Networking Basics": [
+        ("Which device forwards packets between separate IP networks?", "2", "1", ["Hub", "Layer 2 switch", "Router", "Repeater"]),
+        ("Which protocol automatically assigns IP configuration to clients?", "1", "2", ["DNS", "DHCP", "ARP", "NTP"]),
+        ("What does ARP resolve on an IPv4 local network?", "0", "3", ["An IP address to a MAC address", "A hostname to a port", "A MAC address to a password", "A port to a process"]),
+        ("Which address range is link-local IPv4?", "3", "4", ["10.0.0.0/8", "127.0.0.0/8", "192.168.0.0/16", "169.254.0.0/16"]),
+        ("Why is a default gateway needed by a host?", "2", "5", ["To resolve DNS names", "To assign a hostname", "To reach destinations outside its local subnet", "To encrypt traffic"]),
+    ],
+    "Windows Fundamentals": [
+        ("Which Windows tool displays running processes from the command line?", "2", "1", ["ipconfig", "whoami", "tasklist", "netstat"]),
+        ("What is the Windows Registry primarily used to store?", "0", "2", ["Configuration settings", "Packet captures", "Compiler output", "DNS zone transfers"]),
+        ("Which Windows service manager command can start a service?", "1", "3", ["route", "sc", "arp", "cipher"]),
+        ("Which Windows log records many authentication events?", "3", "4", ["Application", "Setup", "System", "Security"]),
+        ("What security boundary separates a standard user from administrative actions?", "2", "5", ["DNS delegation", "File extension", "User Account Control", "Screen resolution"]),
+    ],
+    "Security Mindset": [
+        ("What does the confidentiality part of the CIA triad protect?", "1", "1", ["Availability", "Information from unauthorized disclosure", "System uptime", "Audit speed"]),
+        ("What is the first step in a useful threat model?", "3", "2", ["Buy a scanner", "Disable logging", "Write an exploit", "Identify assets and trust boundaries"]),
+        ("What does least privilege mean?", "0", "3", ["Grant only the access required for the task", "Give everyone administrator access", "Remove all authentication", "Allow permanent access"]),
+        ("Why is authorization testing required before a security assessment?", "2", "4", ["It improves bandwidth", "It hides findings", "It defines legal scope and permitted actions", "It bypasses remediation"]),
+        ("Which risk treatment reduces likelihood or impact with a safeguard?", "1", "5", ["Acceptance", "Mitigation", "Avoidance by ignoring it", "Disclosure"]),
+    ],
+    "Linux Hardening & Forensics": [
+        ("Which file commonly controls SSH daemon configuration?", "2", "1", ["/etc/hosts", "/etc/passwd", "/etc/ssh/sshd_config", "/var/log/dpkg.log"]),
+        ("What does the principle of secure file permissions minimize?", "0", "2", ["Unauthorized read, write, or execute access", "DNS latency", "CPU temperature", "Screen locking"]),
+        ("Which tool is commonly used to inspect Linux block devices and partitions?", "3", "3", ["curl", "dig", "strings", "fdisk"]),
+        ("Why preserve a forensic image before analysis?", "1", "4", ["To make it boot faster", "To keep the original evidence unchanged", "To remove timestamps", "To rotate passwords"]),
+        ("Which artifact is especially useful for investigating a user's shell history?", "2", "5", ["/etc/resolv.conf", "/proc/cpuinfo", "~/.bash_history", "/boot/grub.cfg"]),
+    ],
+    "Packet Forensics": [
+        ("What does a PCAP file contain?", "0", "1", ["Captured network packets", "User passwords only", "Disk sectors only", "Registry hives only"]),
+        ("Which filter shows DNS traffic in Wireshark?", "1", "2", ["http", "dns", "tcp.port == 22", "icmp"]),
+        ("What can an unusual periodic beacon indicate?", "3", "3", ["A disk failure", "A valid certificate", "A subnet mask", "Command-and-control activity"]),
+        ("Why are TCP stream reassembly and timestamps useful in packet analysis?", "2", "4", ["They change source IPs", "They disable encryption", "They reconstruct conversations and sequence events", "They delete retransmissions"]),
+        ("Which observation is a strong exfiltration signal?", "1", "5", ["A single ARP request", "A sustained unusual outbound transfer", "A local loopback packet", "A normal DHCP lease"]),
+    ],
+    "Exploit Development": [
+        ("What is a stack buffer overflow?", "2", "1", ["A DNS failure", "A packet capture", "Writing beyond a stack buffer's bounds", "A valid TLS handshake"]),
+        ("What does ASLR randomize?", "0", "2", ["Memory locations", "Usernames", "File permissions", "DNS records"]),
+        ("What is the purpose of a NOP sled?", "3", "3", ["Encrypt shellcode", "Patch a kernel", "Resolve a hostname", "Increase landing tolerance for control flow"]),
+        ("What does a ROP chain reuse?", "1", "4", ["Unused disk sectors", "Instruction sequences already present in executable memory", "DNS TXT records", "Firewall policies"]),
+        ("Which practice makes exploit research safer?", "2", "5", ["Testing unknown code on production", "Disabling snapshots", "Using an isolated, resettable lab", "Publishing credentials"]),
+    ],
+    "Red Team Operations": [
+        ("What does C2 stand for in red team operations?", "0", "1", ["Command and Control", "Credential to Credential", "Cloud and Container", "Code and Compiler"]),
+        ("What is the purpose of operational security (OPSEC)?", "1", "2", ["Maximize noise", "Reduce exposure and protect the operation", "Disable all telemetry", "Avoid documenting scope"]),
+        ("Which activity best represents lateral movement?", "3", "3", ["Hashing a file", "Creating a local backup", "Updating a patch", "Using access to reach another host"]),
+        ("Why should red team actions be mapped to ATT&CK techniques?", "2", "4", ["To guarantee exploitation", "To replace authorization", "To provide a shared language for testing and detection", "To hide activity"]),
+        ("What should a rules-of-engagement document define?", "0", "5", ["Scope, timing, contacts, and prohibited actions", "Only the attacker's tools", "An unbounded target list", "A promise to avoid all evidence"]),
+    ],
+    "Malware Analysis": [
+        ("What is static malware analysis?", "1", "1", ["Executing malware on a production host", "Examining a sample without executing it", "Deleting the sample", "Blocking a firewall port"]),
+        ("Which artifact can reveal embedded human-readable strings?", "3", "2", ["ARP", "DHCP", "NTP", "strings output"]),
+        ("Why use a sandbox for dynamic analysis?", "0", "3", ["To observe behavior in an isolated environment", "To guarantee the sample is benign", "To publish the sample", "To bypass all controls"]),
+        ("What is a YARA rule primarily used for?", "2", "4", ["Routing packets", "Managing users", "Pattern-based file and memory identification", "Creating certificates"]),
+        ("Which behavior may indicate process injection?", "1", "5", ["A normal DHCP renewal", "One process writing executable memory into another", "A file being renamed by its owner", "A successful DNS lookup"]),
+    ],
+    "Cloud & Container Pentesting": [
+        ("What is the security risk of an overly broad cloud IAM policy?", "2", "1", ["Faster DNS", "Lower storage cost", "Excessive permissions and blast radius", "Better encryption"]),
+        ("Which Kubernetes object commonly controls pod-level network access?", "0", "2", ["NetworkPolicy", "ConfigMap", "ServiceAccount token", "Namespace label"]),
+        ("What should a container image scan identify?", "3", "3", ["Keyboard layout", "User's browser history", "Wi-Fi signal", "Known vulnerable packages and misconfigurations"]),
+        ("Why should cloud metadata endpoints be protected?", "1", "4", ["They host public documentation", "They may expose instance credentials or configuration", "They replace IAM", "They improve image size"]),
+        ("What is the safest approach to a cloud penetration test?", "2", "5", ["Probe any public tenant", "Use shared credentials", "Obtain provider and owner authorization with defined scope", "Disable audit logging"]),
+    ],
+    "Blue Team / Detection Engineering": [
+        ("What is the purpose of a detection rule?", "3", "1", ["Encrypt backups", "Assign IP addresses", "Create user accounts", "Identify suspicious activity in telemetry"]),
+        ("What does a SIEM primarily provide?", "0", "2", ["Centralized collection, correlation, and analysis of logs", "A replacement for endpoint agents", "Source code compilation", "Physical access control"]),
+        ("Why tune a detection for false positives?", "1", "3", ["To hide every alert", "To improve analyst focus while retaining useful coverage", "To delete evidence", "To disable collection"]),
+        ("What is Sigma?", "2", "4", ["A packet capture format", "A cloud identity provider", "A vendor-neutral detection rule format", "A password hash"]),
+        ("What should validate a new detection rule?", "3", "5", ["A title only", "A random screenshot", "A disabled data source", "Known-good and known-bad test telemetry"]),
+    ],
     "Networking": [
         ("Which OSI layer does TCP operate on?", "3", "1", [
             "Application", "Transport", "Network", "Data Link"]),
