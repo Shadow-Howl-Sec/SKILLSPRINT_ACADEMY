@@ -24,7 +24,7 @@ def today():
         user_id=g.user.id, status="active").first()
     if roadmap is None:
         flash("Start your Purple Team journey first.", "info")
-        return redirect(url_for("index"))
+        return redirect(url_for("roadmap.start"))
 
     today_date = date.today()
     today_items = sorted(

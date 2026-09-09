@@ -181,6 +181,7 @@ def inject_globals():
         "current_user": g.get('user'),
         "APP_NAME": app.config.get('APP_NAME', 'SkillSprint Academy'),
         "APP_TAGLINE": app.config.get('APP_TAGLINE', 'Zero to Purple Team Mastery'),
+        "UPDATE_RELEASES_URL": "https://github.com/Shadow-Howl-Sec/SKILLSPRINT_ACADEMY/releases",
         "update_info": update_info,
     }
 

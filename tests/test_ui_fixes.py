@@ -1,5 +1,6 @@
 """Unit tests for Phase 1 UI fixes and API endpoint resolutions."""
 import unittest
+from unittest.mock import patch
 from app import app
 from extensions import db
 from models import User, Topic, AssessmentQuestion
@@ -58,6 +59,30 @@ class TestUIFixes(unittest.TestCase):
         self.assertIn('window.OFFLINE_MODE =', html)
         self.assertIn('/static/js/update_checker.js', html)
         self.assertIn('/static/js/main.js', html)
+
+    def test_roadmap_without_plan_starts_onboarding(self):
+        """A missing roadmap must not bounce the user back to the home page."""
+        with patch('blueprints.roadmap.routes._active_roadmap', return_value=None):
+            res = self.client.get('/roadmap')
+
+        self.assertEqual(res.status_code, 302)
+        self.assertTrue(res.location.endswith('/roadmap/start'))
+
+    def test_dashboard_without_plan_starts_onboarding(self):
+        """The dashboard should use the same onboarding entry point."""
+        with patch('blueprints.dashboard.routes.Roadmap.query') as roadmap_query:
+            roadmap_query.filter_by.return_value.first.return_value = None
+            res = self.client.get('/dashboard')
+
+        self.assertEqual(res.status_code, 302)
+        self.assertTrue(res.location.endswith('/roadmap/start'))
+
+    def test_update_actions_are_available_in_navigation(self):
+        res = self.client.get('/roadmap')
+        self.assertEqual(res.status_code, 200)
+        html = res.get_data(as_text=True)
+        self.assertIn('data-action="check-update"', html)
+        self.assertIn('Download latest release', html)
 
     def test_quiz_has_client_side_validation_script(self):
         """Fix 6: Ensure checkpoint_quiz.html includes client-side validation script for MCQs."""

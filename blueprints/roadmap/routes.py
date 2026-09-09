@@ -33,7 +33,7 @@ def view():
     roadmap = _active_roadmap()
     if roadmap is None:
         flash("Start your Purple Team journey to get going.", "info")
-        return redirect(url_for("index"))
+        return redirect(url_for("roadmap.start"))
 
     # Group items by topic
     groups: OrderedDict[int, dict] = OrderedDict()
@@ -57,7 +57,7 @@ def view():
 def calendar():
     roadmap = _active_roadmap()
     if roadmap is None:
-        return redirect(url_for("index"))
+        return redirect(url_for("roadmap.start"))
 
     # 14-day forward calendar view with time blocks
     start = date.today()

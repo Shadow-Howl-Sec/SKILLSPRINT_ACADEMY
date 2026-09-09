@@ -116,9 +116,9 @@
           {% endif %}
 
           {% if update_info and update_info.update_available %}
-          <span class="pill pill-warning" title="Update available">
+          <button type="button" class="pill pill-warning border-0" data-action="check-update" title="Check for updates">
             <i class="bi bi-arrow-up-circle"></i>Update
-          </span>
+          </button>
           {% endif %}
 
           <div class="dropdown">
@@ -149,6 +149,16 @@
               <li>
                 <a class="dropdown-item" href="{{ url_for('offline.about') }}">
                   <i class="bi bi-info-circle me-2 text-muted"></i>Offline Info
+                </a>
+              </li>
+              <li>
+                <button class="dropdown-item" type="button" data-action="check-update">
+                  <i class="bi bi-arrow-repeat me-2 text-warning"></i>Check for updates
+                </button>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{{ UPDATE_RELEASES_URL }}" target="_blank" rel="noopener">
+                  <i class="bi bi-box-arrow-up-right me-2 text-info"></i>Download latest release
                 </a>
               </li>
             </ul>

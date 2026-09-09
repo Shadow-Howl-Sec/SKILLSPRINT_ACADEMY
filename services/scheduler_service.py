@@ -222,7 +222,7 @@ def check_for_updates(app, force=False):
         import os
         from services.update_checker import check_for_update
         
-        base_path = os.path.dirname(os.path.abspath(__file__ + "/.."))
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         update_info = check_for_update(base_path)
         
         _last_update_check = time.time()

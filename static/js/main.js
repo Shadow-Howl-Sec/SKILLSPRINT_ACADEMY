@@ -125,9 +125,15 @@ function dismissUpdateBanner() {
 document.addEventListener('DOMContentLoaded', () => {
   const applyBtn = document.querySelector('[data-action="apply-update"]');
   const dismissBtn = document.querySelector('[data-action="dismiss-update"]');
+  const checkUpdateBtns = document.querySelectorAll('[data-action="check-update"]');
 
   if (applyBtn) applyBtn.addEventListener('click', applyUpdate);
   if (dismissBtn) dismissBtn.addEventListener('click', dismissUpdateBanner);
+  checkUpdateBtns.forEach(btn => btn.addEventListener('click', () => {
+    if (typeof window._forceUpdateCheck === 'function') {
+      window._forceUpdateCheck();
+    }
+  }));
 });
 
 // ------------------------------------------------------------------

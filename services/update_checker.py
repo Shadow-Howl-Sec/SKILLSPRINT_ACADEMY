@@ -4,7 +4,7 @@ import requests
 import logging
 
 # Update these for your actual repository
-GITHUB_REPO = os.environ.get("UPDATE_GITHUB_REPO", "your-org/SKILLSPRINT_ACADEMY")
+GITHUB_REPO = os.environ.get("UPDATE_GITHUB_REPO", "Shadow-Howl-Sec/SKILLSPRINT_ACADEMY")
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 GITHUB_RELEASES_URL = f"https://github.com/{GITHUB_REPO}/releases"
 
