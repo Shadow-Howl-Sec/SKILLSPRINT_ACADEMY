@@ -2916,41 +2916,39 @@ git add . && git commit -m "Initial portfolio setup"
         print(f"[+] Topics seeded: {len(all_topics)} topics across 6 pillars.")
 
         # ── MASTER PURPLE TEAM EXPERT JOB ROLE ───────────────────────────
-        # Ensure 'Master Purple Team Expert' is the single job role track
-        JobRoleTopic.query.delete()
-        JobRole.query.delete()
-        db.session.flush()
-
-        role = JobRole(
-            slug="master-purple-team-expert",
-            name="Master Purple Team Expert",
-            description=(
+        # Upsert this track without removing other roles or user progress.
+        role, _ = _get_or_create(JobRole, {"slug": "master-purple-team-expert"}, {
+            "name": "Master Purple Team Expert",
+            "description": (
                 "The Master Purple Team Expert track bridges offensive (Red Team) and defensive (Blue Team) "
                 "disciplines into a unified mastery path. Learn host & network attack vectors, Active Directory "
                 "exploitation, threat hunting, Sigma rule development, and incident response."
             ),
-            avg_salary_note="₹12-35 LPA (India) | $90-180k (US) | £60-120k (UK)",
-            recommended_certs=json.dumps([
+            "avg_salary_note": "₹12-35 LPA (India) | $90-180k (US) | £60-120k (UK)",
+            "recommended_certs": json.dumps([
                 "eJPT", "BTL1", "PNPT", "CRTP", "SC-200", "OSCP", "CRTO", "Certified Purple Team Professional"
             ]),
-            icon_url="/static/img/skill_logo.ico",
-            icon_emoji="🟣",
-            color_hex="#a855f7",
-            difficulty_label="Mastery",
-            is_default=True,
-            is_active=True,
-        )
-        db.session.add(role)
+            "icon_url": "/static/img/skill_logo.ico",
+            "icon_emoji": "🟣",
+            "color_hex": "#a855f7",
+            "difficulty_label": "Mastery",
+            "is_default": True,
+            "is_active": True,
+        })
+        role.name = "Master Purple Team Expert"
+        role.is_default = True
+        role.is_active = True
         db.session.flush()
 
         # Map all topics to the role in order
         for idx, topic in enumerate(all_topics):
-            db.session.add(JobRoleTopic(
-                job_role_id=role.id,
-                topic_id=topic.id,
-                order_index=idx,
-                is_core=True,
-            ))
+            mapping = JobRoleTopic.query.filter_by(
+                job_role_id=role.id, topic_id=topic.id).first()
+            if mapping is None:
+                mapping = JobRoleTopic(job_role_id=role.id, topic_id=topic.id)
+                db.session.add(mapping)
+            mapping.order_index = idx
+            mapping.is_core = True
 
         db.session.commit()
 

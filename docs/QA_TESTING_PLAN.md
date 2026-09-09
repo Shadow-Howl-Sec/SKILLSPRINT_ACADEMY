@@ -7,7 +7,7 @@
 - **Version:** 1.0
 - **Date:** September 2026
 - **Scope:** Full application testing for SkillSprint Academy Purple Team Platform
-- **Test Environment:** Local development server (127.0.0.1:5000)
+- **Test Environment:** Local development server (127.0.0.1:52837)
 
 ---
 

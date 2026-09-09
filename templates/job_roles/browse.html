@@ -31,7 +31,12 @@
     </div>
   </div>
   {% else %}
-  <div class="col-12"><div class="admin-card text-center p-5"><p>No job roles seeded yet.</p></div></div>
+  <div class="col-12">
+    <div class="admin-card text-center p-5">
+      <h5>No curriculum tracks are available</h5>
+      <p class="text-muted mb-0">Seed the database with <code>py seed_comprehensive.py</code>, then return here to start your roadmap.</p>
+    </div>
+  </div>
   {% endfor %}
 </div>
 {% endblock %}

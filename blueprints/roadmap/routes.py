@@ -164,7 +164,7 @@ def start():
         role = JobRole.query.filter_by(is_active=True).first()
     if not role:
         flash("No curriculum data found. Please seed the database first.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("job_roles.browse"))
 
     generate_roadmap(user_id=g.user.id, job_role_id=role.id)
     db.session.commit()

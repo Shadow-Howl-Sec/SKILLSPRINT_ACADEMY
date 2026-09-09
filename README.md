@@ -12,7 +12,7 @@ SkillSprint Academy is an offline-first Flask learning platform for cybersecurit
 - A local AI tutor using Ollama when available, with a deterministic rules-based fallback.
 - XP, streaks, skill profiles, dashboards, resource caching, and update checks.
 
-The application defaults to offline mode and binds to `127.0.0.1:5000`.
+The application defaults to offline mode and binds to `127.0.0.1:52837`.
 
 ## Requirements
 
@@ -33,7 +33,7 @@ py -m pip install -r requirements.txt
 py app.py
 ```
 
-Open <http://127.0.0.1:5000>.
+Open <http://127.0.0.1:52837>.
 
 On first startup the application creates the database tables and the local default user. The database is stored in the configured SQLite location and is ignored by Git.
 
@@ -76,7 +76,7 @@ Configuration is loaded from environment variables and optional `.env` values. I
 | --- | --- | --- |
 | `OFFLINE_MODE` | `True` | Disable external services and external resource fetching. |
 | `OFFLINE_BIND_HOST` | `127.0.0.1` | Local server bind address. |
-| `OFFLINE_BIND_PORT` | `5000` | Local server port. |
+| `OFFLINE_BIND_PORT` | `52837` | Local server port. |
 | `DATABASE_URL` | SQLite | SQLAlchemy database URL. |
 | `AI_TUTOR_PROVIDER` | `auto` | `auto`, `ollama`, `anthropic`, or `rules`. |
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Ollama server URL. |

@@ -1,4 +1,5 @@
 """Unit tests for Phase 2 Purple Team curriculum seed and data integrity."""
+import os
 import unittest
 from app import app
 from extensions import db
@@ -55,6 +56,13 @@ class TestPurpleTeamCurriculum(unittest.TestCase):
 
     def test_purple_team_seed_file_integrity(self):
         """Verify seed_purple_team_curriculum script exists and is importable."""
-        import os
         seed_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'seed_purple_team_curriculum.py'))
         self.assertTrue(os.path.exists(seed_path))
+
+    def test_purple_team_seed_does_not_delete_roles(self):
+        """The curriculum seed must preserve existing roles and roadmaps."""
+        seed_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'seed_purple_team_curriculum.py'))
+        with open(seed_path, encoding='utf-8') as seed_file:
+            source = seed_file.read()
+        self.assertNotIn('JobRoleTopic.query.delete()', source)
+        self.assertNotIn('JobRole.query.delete()', source)

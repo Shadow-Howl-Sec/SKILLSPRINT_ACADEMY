@@ -19,7 +19,7 @@ class Config:
 
     OFFLINE_MODE = True
     OFFLINE_BIND_HOST = os.environ.get('OFFLINE_BIND_HOST', '127.0.0.1')
-    OFFLINE_BIND_PORT = int(os.environ.get('OFFLINE_BIND_PORT', 5000))
+    OFFLINE_BIND_PORT = int(os.environ.get('OFFLINE_BIND_PORT', 52837))
 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///skillsprint.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False

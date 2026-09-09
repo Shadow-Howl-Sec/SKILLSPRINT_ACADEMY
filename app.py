@@ -62,7 +62,7 @@ csrf.init_app(app)
 # ---------------------------------------------------------------------------
 @app.context_processor
 def inject_nonce():
-    return {'csp_nonce': getattr(g, 'csp_nonce', None)}
+    return {'csp_nonce': getattr(request, 'csp_nonce', '')}
 
 # ---------------------------------------------------------------------------
 # Blueprints — SkillSprint Purple Team only
@@ -307,7 +307,7 @@ if __name__ == '__main__':
     try:
         create_tables()
         bind_host = app.config.get('OFFLINE_BIND_HOST', '127.0.0.1')
-        bind_port = int(app.config.get('OFFLINE_BIND_PORT', 5000))
+        bind_port = int(app.config.get('OFFLINE_BIND_PORT', 52837))
         url = f"http://{bind_host}:{bind_port}"
         print(f" {app.config.get('APP_NAME', 'skillsprint')} starting...")
         print(f" [OFFLINE MODE] binding to {url}")

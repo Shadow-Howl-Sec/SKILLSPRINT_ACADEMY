@@ -1,5 +1,6 @@
 """Unit tests for Phase 1 UI fixes and API endpoint resolutions."""
 import unittest
+import re
 from unittest.mock import patch
 from app import app
 from extensions import db
@@ -50,6 +51,9 @@ class TestUIFixes(unittest.TestCase):
         self.assertIn('window.OFFLINE_MODE =', html)
         self.assertIn('/static/js/update_checker.js', html)
         self.assertIn('/static/js/main.js', html)
+        self.assertNotIn('nonce="None"', html)
+        nonce = re.search(r'nonce="([^"]+)" src="/static/js/main.js"', html).group(1)
+        self.assertRegex(res.headers['Content-Security-Policy'], rf"'nonce-{re.escape(nonce)}'")
 
     def test_offline_mode_injected_in_index(self):
         """Fix 5: Ensure index.html includes scripts and window.OFFLINE_MODE runtime injection."""
@@ -60,6 +64,11 @@ class TestUIFixes(unittest.TestCase):
         self.assertIn('/static/js/update_checker.js', html)
         self.assertIn('/static/js/main.js', html)
 
+    def test_bootstrap_icons_font_is_served(self):
+        """The vendored Bootstrap Icons stylesheet must resolve its relative fonts."""
+        res = self.client.get('/static/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2')
+        self.assertEqual(res.status_code, 200)
+
     def test_roadmap_without_plan_starts_onboarding(self):
         """A missing roadmap must not bounce the user back to the home page."""
         with patch('blueprints.roadmap.routes._active_roadmap', return_value=None):
@@ -67,6 +76,18 @@ class TestUIFixes(unittest.TestCase):
 
         self.assertEqual(res.status_code, 302)
         self.assertTrue(res.location.endswith('/roadmap/start'))
+
+    def test_roadmap_start_without_curriculum_has_no_home_loop(self):
+        """Missing curriculum data must land on the role-selection page."""
+        with patch('blueprints.roadmap.routes._active_roadmap', return_value=None), patch('models.JobRole') as job_role:
+            job_role.query.filter_by.return_value.first.return_value = None
+            res = self.client.get('/roadmap/start', follow_redirects=False)
+
+        self.assertEqual(res.status_code, 302)
+        self.assertTrue(res.location.endswith('/job-roles'))
+
+        role_page = self.client.get('/job-roles')
+        self.assertEqual(role_page.status_code, 200)
 
     def test_dashboard_without_plan_starts_onboarding(self):
         """The dashboard should use the same onboarding entry point."""

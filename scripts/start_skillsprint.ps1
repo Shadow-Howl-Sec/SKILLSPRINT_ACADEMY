@@ -7,7 +7,7 @@
       2. Creates/activates a venv if missing.
       3. Installs requirements. Falls back to vendored wheels when offline.
       4. Forces OFFLINE_MODE=true in .env if not present.
-      5. Boots Flask on http://127.0.0.1:5000 (offline bind host).
+    5. Boots Flask on http://127.0.0.1:52837 (offline bind host).
       6. Opens the browser to that URL.
 
     Usage:
@@ -119,7 +119,7 @@ Write-Ok "seed ok"
 # ---------------------------------------------------------------------------
 # 6. Launch
 # ---------------------------------------------------------------------------
-$bind = "http://127.0.0.1:5000"
+$bind = "http://127.0.0.1:52837"
 Write-Step "Starting Flask on $bind (Ctrl+C to stop)"
 if (-not $NoBrowser) {
     try { Start-Process $bind } catch { Write-Warn2 "Open $bind manually" }

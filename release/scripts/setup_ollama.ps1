@@ -97,4 +97,4 @@ if (Test-Path $envFile) {
 
 Write-Host ""
 Write-Host "AI tutor will now use $Model. To verify inside the app, open:" -ForegroundColor Cyan
-Write-Host "  http://127.0.0.1:5000/offline/settings/ai-tutor?test=1"       -ForegroundColor Cyan
+Write-Host "  http://127.0.0.1:52837/offline/settings/ai-tutor?test=1"       -ForegroundColor Cyan
