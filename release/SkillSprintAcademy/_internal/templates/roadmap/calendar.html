@@ -91,14 +91,14 @@
     <div class="calendar-day-card {% if day.date == now[:10] %}today{% endif %}" id="day-{{ day.date.isoformat() }}">
       <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
         <div>
-          <h6 style="margin:0;font-weight:700;font-size:0.9rem;">
+          <h6 class="calendar-title">
             {{ day.date.strftime('%a %b %d') }}
           </h6>
-          <span class="text-muted" style="font-size:0.72rem;">
+          <span class="text-muted calendar-time">
             {% if day.date.isoformat() == now[:10] %}Today{% endif %}
           </span>
         </div>
-        <span class="badge bg-primary rounded-pill" style="font-size:0.7rem;">
+        <span class="badge bg-primary rounded-pill calendar-count">
           {{ day.tasks | length }} tasks
         </span>
       </div>
@@ -120,83 +120,83 @@
             <span class="task-type-badge type-{{ it.item_type }}">
               {{ it.item_type | replace('_', ' ') }}
             </span>
-            <span class="text-muted" style="font-size:0.7rem;">
+            <span class="text-muted calendar-item-type">
               <i class="bi bi-hourglass-split me-1"></i>{{ it.estimated_minutes }}m
             </span>
           </div>
 
-          <div class="fw-semibold mb-1" style="font-size:0.84rem;line-height:1.35;color:var(--text-primary);">
+          <div class="fw-semibold mb-1 calendar-item-title">
             {% if it.item_type == 'checkpoint_quiz' %}
-              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="text-decoration-none" style="color:var(--text-primary);">
+              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="text-decoration-none calendar-item-link">
                 <i class="bi bi-patch-question-fill text-warning me-1"></i>
                 {{ it.topic.title if it.topic else 'Checkpoint Quiz' }}
               </a>
             {% elif it.item_type == 'lab' and it.lab %}
-              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="text-decoration-none" style="color:var(--text-primary);">
+              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="text-decoration-none calendar-item-link">
                 <i class="bi bi-flag-fill text-danger me-1"></i> {{ it.lab.title }}
               </a>
             {% elif it.topic %}
-              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="text-decoration-none" style="color:var(--text-primary);">
+              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="text-decoration-none calendar-item-link">
                 <i class="bi bi-book-fill text-info me-1"></i> {{ it.topic.title }}
               </a>
             {% elif it.content_item %}
-              <span style="color:var(--text-primary);"><i class="bi bi-book-fill text-primary me-1"></i> {{ it.content_item.title }}</span>
+              <span class="calendar-item-label"><i class="bi bi-book-fill text-primary me-1"></i> {{ it.content_item.title }}</span>
             {% else %}
-              <span style="color:var(--text-primary);">{{ it.topic.title if it.topic else 'Task' }}</span>
+              <span class="calendar-item-label">{{ it.topic.title if it.topic else 'Task' }}</span>
             {% endif %}
           </div>
 
           {% if it.time_slot %}
-          <div class="text-muted small mb-1" style="font-size:0.7rem;">
+          <div class="text-muted small mb-1 calendar-meta">
             <i class="bi bi-geo-alt me-1"></i>{{ it.time_slot }}
           </div>
           {% endif %}
 
           {% if it.status != 'done' %}
           <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
-            <button class="btn btn-sm btn-link p-0 text-primary" style="font-size:0.72rem;text-decoration:none;"
+            <button class="btn btn-sm btn-link p-0 text-primary calendar-action"
                     data-bs-toggle="collapse" data-bs-target="#edit_slot_{{ it.id }}">
               <i class="bi bi-pencil-square me-1"></i>Reschedule
             </button>
 
             {% if it.item_type == 'checkpoint_quiz' and it.topic_id %}
-              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="btn btn-sm btn-warning py-0 px-2" style="font-size:0.7rem;">Take Quiz</a>
+              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="btn btn-sm btn-warning py-0 px-2 calendar-action-button">Take Quiz</a>
             {% elif it.item_type == 'lab' and it.lab_id %}
-              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:0.7rem;">Start Lab</a>
+              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="btn btn-sm btn-outline-primary py-0 px-2 calendar-action-button">Start Lab</a>
             {% endif %}
             {% if it.topic_id and it.item_type != 'checkpoint_quiz' %}
-              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="btn btn-sm btn-outline-info py-0 px-2" style="font-size:0.7rem;">Learn</a>
+              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="btn btn-sm btn-outline-info py-0 px-2 calendar-action-button">Learn</a>
             {% endif %}
             {% if it.status != 'done' and it.item_type != 'checkpoint_quiz' and it.item_type != 'lab' and not it.topic_id %}
               <form method="post" action="{{ url_for('dashboard.complete_item', item_id=it.id) }}" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size:0.7rem;">Done</button>
+                <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2 calendar-done-button">Done</button>
               </form>
             {% endif %}
           </div>
 
           <!-- Inline Edit / Move Form -->
           <div class="collapse mt-2" id="edit_slot_{{ it.id }}">
-            <form method="post" action="{{ url_for('roadmap.move_item', item_id=it.id) }}" style="background:rgba(15,23,42,0.95);border:1px solid var(--border);border-radius:10px;padding:0.75rem;">
+            <form method="post" action="{{ url_for('roadmap.move_item', item_id=it.id) }}" class="calendar-move-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <label class="form-label mb-1 text-muted" for="new_date_{{ it.id }}" style="font-size:0.7rem;">Target Date</label>
-              <input type="date" id="new_date_{{ it.id }}" name="new_date" value="{{ day.date.isoformat() }}" class="form-control form-control-sm mb-2" style="background:rgba(255,255,255,0.05);border-color:var(--border);color:var(--text-primary);" aria-label="Target Date" title="Target Date">
+              <label class="form-label mb-1 text-muted calendar-form-label" for="new_date_{{ it.id }}">Target Date</label>
+              <input type="date" id="new_date_{{ it.id }}" name="new_date" value="{{ day.date.isoformat() }}" class="form-control form-control-sm mb-2 calendar-form-input" aria-label="Target Date" title="Target Date">
 
-              <label class="form-label mb-1 text-muted" for="time_slot_{{ it.id }}" style="font-size:0.7rem;">Time Block Slot</label>
-              <select id="time_slot_{{ it.id }}" name="time_slot" class="form-select form-select-sm mb-2" style="background:rgba(255,255,255,0.05);border-color:var(--border);color:var(--text-primary);" aria-label="Time Block Slot" title="Time Block Slot">
+              <label class="form-label mb-1 text-muted calendar-form-label" for="time_slot_{{ it.id }}">Time Block Slot</label>
+              <select id="time_slot_{{ it.id }}" name="time_slot" class="form-select form-select-sm mb-2 calendar-form-input" aria-label="Time Block Slot" title="Time Block Slot">
                 <option value="09:00-11:30 (Morning Block)" {% if '09:00' in (it.time_slot or '') %}selected{% endif %}>09:00-11:30 (Morning Block)</option>
                 <option value="14:00-16:30 (Afternoon Block)" {% if '14:00' in (it.time_slot or '') %}selected{% endif %}>14:00-16:30 (Afternoon Block)</option>
                 <option value="19:00-21:30 (Evening Block)" {% if '19:00' in (it.time_slot or '') %}selected{% endif %}>19:00-21:30 (Evening Block)</option>
               </select>
 
-              <button type="submit" class="btn btn-sm btn-primary w-100 py-1" style="font-size:0.75rem;">Save Change</button>
+              <button type="submit" class="btn btn-sm btn-primary w-100 py-1 calendar-save">Save Change</button>
             </form>
           </div>
           {% endif %}
         </div>
         {% else %}
-        <div class="text-center py-4 text-muted small rounded" style="border:1px dashed var(--border);background:rgba(255,255,255,0.015);">
-          <i class="bi bi-calendar-check d-block mb-1" style="font-size:1.3rem;color:var(--text-muted);opacity:0.6;"></i>
+        <div class="text-center py-4 text-muted small rounded calendar-empty">
+          <i class="bi bi-calendar-check d-block mb-1 calendar-empty-icon"></i>
           No tasks scheduled
         </div>
         {% endfor %}
