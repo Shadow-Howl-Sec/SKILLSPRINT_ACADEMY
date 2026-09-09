@@ -31,7 +31,7 @@ labs_bp = Blueprint("labs", __name__)
 
 
 # Providers that require the public internet — hidden in OFFLINE_MODE (plan §5.4).
-_ONLINE_PROVIDERS = {"tryhackme", "htb", "portswigger", "overthewire", "picoctf"}
+_ONLINE_PROVIDERS = {"tryhackme", "htb", "portswigger", "overthewire", "picoctf", "pwncollege"}
 
 
 def _offline_mode() -> bool:

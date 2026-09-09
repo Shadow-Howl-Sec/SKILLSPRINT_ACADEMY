@@ -162,11 +162,11 @@
 
       <!-- Update banner (hidden in offline mode) -->
       {% if not OFFLINE_MODE %}
-      <div id="update-banner" class="alert alert-info alert-dismissible fade show mb-4" style="display:none;" role="alert">
+      <div id="update-banner" class="alert alert-info alert-dismissible fade show mb-4" role="alert">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div>
             <strong><i class="bi bi-arrow-up-circle me-2"></i>Update Available</strong>
-            <span id="update-version-text" class="ms-2" style="font-size:0.85rem;"></span>
+            <span id="update-version-text" class="ms-2 update-banner-version"></span>
           </div>
           <div class="d-flex gap-2">
             <button class="btn btn-primary btn-sm" data-action="apply-update">
@@ -177,7 +177,7 @@
             </button>
           </div>
         </div>
-        <div id="update-release-notes" class="mt-2" style="display:none;font-size:0.8rem;opacity:0.8;"></div>
+        <div id="update-release-notes" class="mt-2 update-release-notes"></div>
       </div>
       {% endif %}
 

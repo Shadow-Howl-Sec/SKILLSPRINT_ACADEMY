@@ -20,21 +20,21 @@
           <div>This is an offline bundled challenge — no internet required. Download the artifact(s) below and work on them locally (or inside your Kali VM).</div>
         </div>
 
-        <h6 style="font-weight:700;margin:1.25rem 0 .5rem;color:var(--text-primary);">
+        <h6 class="lab-detail-heading">
           <i class="bi bi-file-earmark-arrow-down me-2 text-primary"></i>Challenge Artifacts
         </h6>
         {% set clean_bundle_path = (lab.url_or_container_ref or '').replace('bundles/labs/', '').strip('/') %}
-        <p class="small text-muted mb-3">Bundle folder: <code style="color:var(--primary-light);">bundles/labs/{{ clean_bundle_path }}</code></p>
+        <p class="small text-muted mb-3">Bundle folder: <code class="lab-detail-path">bundles/labs/{{ clean_bundle_path }}</code></p>
 
         {% if bundle_files %}
         <div class="d-flex flex-column gap-2 mb-4">
           {% for f in bundle_files %}
           <div class="d-flex align-items-center justify-content-between p-3 rounded"
-               style="background:rgba(255,255,255,0.03);border:1px solid var(--border);">
+               class="lab-artifact">
             <div class="d-flex align-items-center gap-3">
-              <i class="bi {{ 'bi-file-text text-info' if f.is_readme else 'bi-file-earmark-code text-warning' }}" style="font-size:1.4rem;"></i>
+              <i class="bi {{ 'bi-file-text text-info' if f.is_readme else 'bi-file-earmark-code text-warning' }} lab-artifact-icon"></i>
               <div>
-                <div style="font-weight:600;font-size:0.88rem;color:var(--text-primary);">{{ f.filename }}</div>
+                <div class="lab-artifact-name">{{ f.filename }}</div>
                 <div class="small text-muted">{{ f.size_str }}</div>
               </div>
             </div>
@@ -75,7 +75,7 @@
       {% endif %}
 
       {% if not (OFFLINE_MODE and not lab.is_offline_available) %}
-      <h6 style="font-weight:700;margin-bottom:.5rem;">Submit proof of completion</h6>
+      <h6 class="lab-submit-heading">Submit proof of completion</h6>
       <p class="small text-muted">Proof type: <strong>{{ lab.proof_type }}</strong>
       {% if lab.proof_type == 'flag' %}— enter the flag you found.{% elif lab.proof_type == 'self_report' %}— write a brief sentence about what you did.{% else %}— paste a screenshot URL / write-up link.{% endif %}
       </p>
@@ -94,12 +94,12 @@
 
   <div class="col-lg-4">
     <div class="admin-card p-4">
-      <h6 style="font-weight:700;margin:0 0 .5rem;">Reward</h6>
-      <div style="font-size:2rem;font-weight:800;color:var(--accent);">+{{ lab.xp_reward }} XP</div>
+      <h6 class="lab-reward-heading">Reward</h6>
+      <div class="lab-reward">+{{ lab.xp_reward }} XP</div>
       {% if lab.mitre_techniques %}
         <div class="small text-muted mt-3">MITRE technique tags:</div>
         {% set techniques = (lab.mitre_techniques | from_json) or [] %}
-        {% for t in techniques %}<span class="badge bg-light text-secondary me-1" style="font-size:.65rem;">{{ t }}</span>{% endfor %}
+        {% for t in techniques %}<span class="badge bg-light text-secondary me-1 lab-technique">{{ t }}</span>{% endfor %}
       {% endif %}
       {% if OFFLINE_MODE %}
       <hr class="my-3">

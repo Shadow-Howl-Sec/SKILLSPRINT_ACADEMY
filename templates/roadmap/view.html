@@ -25,7 +25,7 @@
   <div class="admin-card p-4 mb-3">
     <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
       <div>
-        <h6 style="margin:0;font-weight:700;font-size:1rem;color:var(--text-primary);">
+        <h6 class="roadmap-title">
           {% if phase.topic %}
             <i class="bi bi-collection-fill me-2 text-primary"></i>{{ phase.topic.title }}
           {% else %}
@@ -36,7 +36,7 @@
           <span class="small text-muted">{{ phase.topic.skill_area.name }} · Difficulty {{ phase.topic.difficulty }}/5</span>
         {% endif %}
       </div>
-      <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--accent-light);border:1px solid rgba(99,102,241,0.3);font-size:0.75rem;padding:0.3rem 0.75rem;">
+      <span class="badge roadmap-badge">
         {{ phase.done }} / {{ phase.total }} Complete
       </span>
     </div>
@@ -45,42 +45,42 @@
       <div class="ps-2">
       {% for it in phase['items'] %}
       <div class="d-flex align-items-center gap-3 py-2 border-bottom border-secondary-subtle {% if it.status == 'done' %}text-muted{% endif %}">
-        <i class="bi {% if it.status == 'done' %}bi-check-circle-fill text-success{% else %}bi-circle{% endif %}" style="font-size:1.1rem;"></i>
+        <i class="bi {% if it.status == 'done' %}bi-check-circle-fill text-success{% else %}bi-circle{% endif %} roadmap-status-icon"></i>
         <div class="flex-grow-1">
           {% if it.topic_id %}
-            <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" style="font-weight:500;font-size:0.9rem;{% if it.status == 'done' %}text-decoration:line-through;opacity:0.6;{% endif %}">
+            <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="roadmap-item-title {% if it.status == 'done' %}text-decoration-line-through opacity-60{% endif %}">
               {{ it.content_item.title if it.content_item else (it.lab.title if it.lab else (it.user_resource.title if it.user_resource else 'Topic Checkpoint Quiz')) }}
             </a>
           {% else %}
-            <span style="font-weight:500;font-size:0.9rem;{% if it.status == 'done' %}text-decoration:line-through;opacity:0.6;{% endif %}">
+            <span class="roadmap-item-title {% if it.status == 'done' %}text-decoration-line-through opacity-60{% endif %}">
               {{ it.content_item.title if it.content_item else (it.lab.title if it.lab else (it.user_resource.title if it.user_resource else 'Topic Checkpoint Quiz')) }}
             </span>
           {% endif %}
           {% if it.time_slot %}
-          <span class="ms-2 badge bg-dark text-muted border border-secondary" style="font-size:0.68rem;">{{ it.time_slot }}</span>
+          <span class="ms-2 badge bg-dark text-muted border border-secondary roadmap-slot">{{ it.time_slot }}</span>
           {% endif %}
         </div>
         <div class="d-flex align-items-center gap-3">
-          <span class="small text-muted" style="font-size:0.75rem;">
+          <span class="small text-muted roadmap-date">
             {% if it.scheduled_date %}<i class="bi bi-calendar-event me-1"></i>{{ it.scheduled_date.strftime('%b %d') }}{% endif %}
             · {{ it.estimated_minutes }}m
           </span>
-          <span class="badge bg-dark text-secondary border border-secondary" style="font-size:0.65rem;">
+          <span class="badge bg-dark text-secondary border border-secondary roadmap-type">
             {{ it.item_type | replace('_', ' ') }}
           </span>
           {% if it.status != 'done' %}
             {% if it.item_type == 'lab' and it.lab_id %}
-              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:0.72rem;">Lab</a>
+              <a href="{{ url_for('labs.detail', lab_id=it.lab_id) }}" class="btn btn-sm btn-outline-primary py-0 px-2 roadmap-action">Lab</a>
             {% elif it.item_type == 'checkpoint_quiz' and it.topic_id %}
-              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="btn btn-sm btn-warning py-0 px-2" style="font-size:0.72rem;">Quiz</a>
+              <a href="{{ url_for('assessment.topic_quiz', topic_id=it.topic_id) }}" class="btn btn-sm btn-warning py-0 px-2 roadmap-action">Quiz</a>
             {% endif %}
             {% if it.topic_id %}
-              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="btn btn-sm btn-outline-info py-0 px-2" style="font-size:0.72rem;">Learn</a>
+              <a href="{{ url_for('topics.detail', topic_id=it.topic_id) }}" class="btn btn-sm btn-outline-info py-0 px-2 roadmap-action">Learn</a>
             {% endif %}
             {% if it.item_type != 'lab' and it.item_type != 'checkpoint_quiz' and not it.topic_id %}
               <form method="post" action="{{ url_for('dashboard.complete_item', item_id=it.id) }}" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size:0.72rem;">Done</button>
+                <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2 roadmap-action">Done</button>
               </form>
             {% endif %}
           {% endif %}
@@ -93,7 +93,7 @@
   {% endfor %}
 {% else %}
   <div class="admin-card text-center p-5">
-    <i class="bi bi-signpost-2" style="font-size:3.5rem;color:var(--text-muted);"></i>
+    <i class="bi bi-signpost-2 roadmap-empty-icon"></i>
     <h5 class="mt-3">Your Roadmap is empty</h5>
     <p class="text-muted small">Generating your comprehensive Zero-to-Mastery Purple Team roadmap...</p>
     <form method="post" action="{{ url_for('roadmap.replan') }}">

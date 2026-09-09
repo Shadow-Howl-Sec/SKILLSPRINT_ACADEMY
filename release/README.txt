@@ -9,6 +9,9 @@ QUICK START:
    OR
 2. Double-click Start-SkillSprintAcademy.bat
 
+The launcher installs the signed-update helper to
+%LOCALAPPDATA%\SkillSprintAcademy before starting the app.
+
 The app will start a local web server at http://127.0.0.1:5000
 and open it in your default browser.
 

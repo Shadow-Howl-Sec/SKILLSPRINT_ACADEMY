@@ -7,7 +7,7 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-8">
-    <div class="admin-card p-4" style="border-radius:14px;">
+    <div class="admin-card p-4 library-panel">
       <form method="post" action="{{ url_for('library.add') }}" id="addResourceForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -15,11 +15,11 @@
           <label class="form-label small fw-semibold text-light" for="resourceUrl">Resource URL <span class="text-danger">*</span></label>
           <input class="form-control" name="url" id="resourceUrl" required type="url" 
                  placeholder="https://attack.mitre.org/techniques/..." 
-                 style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+                 class="form-control library-input">
         </div>
 
         <div class="p-3 mb-3 rounded small d-flex align-items-center gap-2" 
-             style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.2);color:var(--text-secondary);">
+             class="p-3 mb-3 rounded small d-flex align-items-center gap-2 library-help">
           <i class="bi bi-info-circle text-info"></i>
           <span>Title & thumbnail will be auto-fetched from page metadata or local offline cache. Override below if needed.</span>
         </div>
@@ -28,14 +28,14 @@
           <label class="form-label small fw-semibold text-light" for="resourceTitle">Custom Title (optional — auto-detected)</label>
           <input class="form-control" name="title" id="resourceTitle" 
                  placeholder="e.g. Kerberoasting and AS-REP Roasting Cheatsheet"
-                 style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+                 class="form-control library-input">
         </div>
 
         <div class="row g-3 mb-3">
           <div class="col-md-6">
             <label class="form-label small fw-semibold text-light" for="resource_type">Resource Format / Type</label>
             <select name="resource_type" id="resource_type" class="form-select"
-                    style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+                    class="form-select library-input">
               <option value="article">Technical Article / Blog</option>
               <option value="video">Video Walkthrough / Talk</option>
               <option value="course">Structured Course / Module</option>
@@ -48,7 +48,7 @@
           <div class="col-md-6">
             <label class="form-label small fw-semibold text-light" for="skillAreaSelect">Skill Area (optional)</label>
             <select name="skill_area_id" id="skillAreaSelect" class="form-select"
-                    style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+                    class="form-select library-input">
               <option value="">— Unassigned / General —</option>
               {% for a in areas %}
                 <option value="{{ a.id }}">{{ a.name }}</option>
@@ -60,14 +60,14 @@
         <div class="mb-3">
           <label class="form-label small fw-semibold text-light" for="estimatedMinutes">Estimated Study Duration (minutes)</label>
           <input class="form-control" name="estimated_minutes" id="estimatedMinutes" type="number" min="5" max="1200" value="30"
-                 style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);">
+                 class="form-control library-input">
         </div>
 
         <div class="mb-4">
           <label class="form-label small fw-semibold text-light" for="resourceNotes">Personal Notes / Why are you saving this? (optional)</label>
           <textarea class="form-control" name="notes" id="resourceNotes" rows="3" 
                     placeholder="Key takeaways, relevant tools (mimikatz, rubeus, wazuh rules), or target techniques..."
-                    style="background:rgba(255,255,255,0.04);border-color:var(--border);color:var(--text-primary);"></textarea>
+                    class="form-control library-input"></textarea>
         </div>
 
         <div class="d-flex align-items-center gap-3">

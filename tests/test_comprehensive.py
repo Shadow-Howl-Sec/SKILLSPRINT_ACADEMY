@@ -268,6 +268,21 @@ class TestLabsBlueprint(unittest.TestCase):
         res = self.client.get('/labs')
         self.assertEqual(res.status_code, 200)
 
+    def test_pwncollege_labs_are_online_resources(self):
+        from seed import LABS
+
+        pwn_labs = [lab for lab in LABS if lab[2] == 'pwncollege']
+        self.assertGreater(len(pwn_labs), 0)
+        self.assertTrue(all(lab[3].startswith('https://pwn.college/') for lab in pwn_labs))
+
+        self.app.config['OFFLINE_MODE'] = False
+        try:
+            res = self.client.get('/labs?provider=pwncollege')
+        finally:
+            self.app.config['OFFLINE_MODE'] = True
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b'pwn.college', res.data)
+
     def test_lab_detail_redirect_without_vm(self):
         lab = Lab.query.first()
         res = self.client.get(f'/lab/{lab.id}', follow_redirects=False)

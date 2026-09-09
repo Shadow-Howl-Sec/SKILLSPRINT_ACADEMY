@@ -4,7 +4,8 @@
     Build SkillSprintAcademy as a standalone Windows executable (.exe)
 
 .DESCRIPTION
-    Uses PyInstaller with a .spec file to create a single-file executable that includes:
+    Uses PyInstaller with a .spec file to create an onedir executable and a
+    separate updater executable that includes:
     - Python runtime
     - All dependencies (Flask, SQLAlchemy, etc.)
     - Static assets (templates, vendor CSS/JS)
@@ -58,7 +59,7 @@ try {
 }
 
 # ---------------------------------------------------------------------------
-# Build using .spec file
+# Build the main application using the .spec file
 # ---------------------------------------------------------------------------
 Write-Step "Building executable using .spec file (this may take 2-5 minutes)..."
 Write-Host "Spec file: $specFile" -ForegroundColor Gray
@@ -71,6 +72,24 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Ok "Build completed"
+
+# ---------------------------------------------------------------------------
+# Build the external updater
+# ---------------------------------------------------------------------------
+Write-Step "Building updater executable..."
+$updaterBuildPath = Join-Path $buildPath "updater"
+$updaterDistPath  = Join-Path $distPath "updater"
+& py -3 -m PyInstaller --clean --noconfirm --onefile --name updater `
+    --distpath="$updaterDistPath" --workpath="$updaterBuildPath" `
+    --hidden-import="cryptography.hazmat.primitives.asymmetric.ed25519" `
+    (Join-Path $projectRoot "updater.py")
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Updater build failed with exit code $LASTEXITCODE"
+    exit 1
+}
+
+Write-Ok "Updater build completed"
 
 # ---------------------------------------------------------------------------
 # Copy additional files to release folder
@@ -88,6 +107,16 @@ if (Test-Path $onedirSrc) {
     Write-Ok "Onedir build copied to release/SkillSprintAcademy/"
 } else {
     Write-Error "Onedir build not found at $onedirSrc"
+    exit 1
+}
+
+$updaterSrc = Join-Path $updaterDistPath "updater.exe"
+$updaterDst = Join-Path $releasePath "updater.exe"
+if (Test-Path $updaterSrc) {
+    Copy-Item $updaterSrc $updaterDst -Force
+    Write-Ok "Updater executable copied to release/updater.exe"
+} else {
+    Write-Error "Updater executable not found at $updaterSrc"
     exit 1
 }
 
@@ -110,6 +139,9 @@ if (Test-Path $scriptsSrc) {
 # Create a simple launcher batch file for convenience
 $launcherBat = @"
 @echo off
+set "UPDATER_DIR=%LOCALAPPDATA%\SkillSprintAcademy"
+if not exist "%UPDATER_DIR%" mkdir "%UPDATER_DIR%"
+copy /Y "%~dp0updater.exe" "%UPDATER_DIR%\updater.exe" >nul
 echo Starting SkillSprintAcademy...
 echo The app will open at http://127.0.0.1:5000
 echo Press Ctrl+C to stop the server
@@ -133,6 +165,9 @@ QUICK START:
 1. Double-click SkillSprintAcademy.exe
    OR
 2. Double-click Start-SkillSprintAcademy.bat
+
+The launcher installs the signed-update helper to
+%LOCALAPPDATA%\SkillSprintAcademy before starting the app.
 
 The app will start a local web server at http://127.0.0.1:5000
 and open it in your default browser.
@@ -182,6 +217,7 @@ Write-Host "===================================================" -ForegroundColo
 Write-Host " BUILD COMPLETE" -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host " Onedir build: release\SkillSprintAcademy\"
+Write-Host " Updater:      release\updater.exe"
 Write-Host " Bundles:      release\bundles\"
 Write-Host " Scripts:      release\scripts\"
 Write-Host " Launcher:     release\Start-SkillSprintAcademy.bat"
