@@ -1,5 +1,7 @@
 import os
+import sys
 from dotenv import load_dotenv
+from paths import get_data_root
 
 load_dotenv()
 
@@ -21,7 +23,11 @@ class Config:
     OFFLINE_BIND_HOST = os.environ.get('OFFLINE_BIND_HOST', '127.0.0.1')
     OFFLINE_BIND_PORT = int(os.environ.get('OFFLINE_BIND_PORT', 52837))
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///skillsprint.db')
+    _default_database = os.path.join(
+        get_data_root() if getattr(sys, 'frozen', False) else os.getcwd(),
+        'skillsprint.db'
+    ).replace('\\', '/')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///' + _default_database)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     SESSION_COOKIE_HTTPONLY = True

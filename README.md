@@ -124,7 +124,7 @@ Get-ChildItem -Recurse -Force -Directory |
 
 ## Build the Windows Application
 
-The repository uses PyInstaller in **onedir** mode. The output is a folder containing the executable and its runtime files, not a single self-contained EXE.
+The repository uses PyInstaller in **onedir** mode. The output is a folder containing the executable and its runtime files, not a single self-contained EXE. When Inno Setup is installed, the build also creates a per-user installer that registers SkillSprint Academy in Windows Installed apps and creates Start Menu/Desktop shortcuts.
 
 ```powershell
 .\scripts\build_exe.ps1
@@ -137,6 +137,9 @@ The script:
 3. Copies the onedir application to `release/SkillSprintAcademy/`.
 4. Copies bundles and helper scripts.
 5. Creates `release/Start-SkillSprintAcademy.bat` and `release/README.txt`.
+6. Creates `release/SkillSprintAcademy-Setup.exe` when `ISCC.exe` is available.
+
+Install Inno Setup before running the build if you want the registered Windows application installer.
 
 Run the packaged application with:
 
@@ -149,6 +152,8 @@ Or launch the executable directly:
 ```powershell
 .\release\SkillSprintAcademy\SkillSprintAcademy.exe
 ```
+
+For a normal installed application, run `release\SkillSprintAcademy-Setup.exe`. User data is stored in `%LOCALAPPDATA%\SkillSprintAcademy\data` and is retained when the application is updated or uninstalled.
 
 The EXE creates its writable database and configuration data on first run. Do not delete the `_internal` directory beside the executable.
 

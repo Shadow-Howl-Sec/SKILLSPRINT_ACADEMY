@@ -172,6 +172,10 @@ The launcher installs the signed-update helper to
 The app will start a local web server at http://127.0.0.1:52837
 and open it in your default browser.
 
+INSTALLER:
+- Run SkillSprintAcademy-Setup.exe to register the app in Windows Installed apps.
+- The installer creates Start Menu and optional desktop shortcuts.
+
 FIRST RUN:
 - Creates instance/ folder for SQLite database and config
 - Seeds the 2-stage purple team curriculum (Stage 1: Months 1-3, Stage 2: Ongoing)
@@ -209,6 +213,22 @@ Check /offline/lab-setup for Kali VM setup guide.
 $readme | Out-File -FilePath (Join-Path $releasePath "README.txt") -Encoding utf8
 Write-Ok "README created"
 
+# Build a per-user installer when Inno Setup is installed.
+$iscc = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+if ($null -ne $iscc) {
+    Write-Step "Building Windows installer..."
+    $appVersion = (Get-Content (Join-Path $projectRoot "VERSION") -Raw).Trim()
+    & $iscc.Source "/DMyAppVersion=$appVersion" (Join-Path $projectRoot "installer.iss")
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Inno Setup build failed with exit code $LASTEXITCODE"
+        exit 1
+    }
+    Write-Ok "Installer created in release/"
+} else {
+    Write-Warn "ISCC.exe not found; portable release created without an installer"
+    Write-Warn "Install Inno Setup and rerun this script to create SkillSprintAcademy-Setup.exe"
+}
+
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
@@ -222,6 +242,7 @@ Write-Host " Bundles:      release\bundles\"
 Write-Host " Scripts:      release\scripts\"
 Write-Host " Launcher:     release\Start-SkillSprintAcademy.bat"
 Write-Host " README:       release\README.txt"
+if ($null -ne $iscc) { Write-Host " Installer:    release\SkillSprintAcademy-Setup.exe" }
 Write-Host ""
 Write-Host " To run: Double-click Start-SkillSprintAcademy.bat"
 Write-Host "         Or run: release\SkillSprintAcademy\SkillSprintAcademy.exe"

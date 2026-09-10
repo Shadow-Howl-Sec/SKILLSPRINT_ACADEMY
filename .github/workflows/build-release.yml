@@ -27,6 +27,10 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller==6.10.0
 
+      - name: Install Inno Setup
+        shell: powershell
+        run: choco install innosetup --no-progress --yes
+
       - name: Extract version number from the git tag
         id: get_version
         shell: bash
@@ -36,8 +40,9 @@ jobs:
         shell: bash
         run: echo "${{ steps.get_version.outputs.VERSION }}" > VERSION
 
-      - name: Build the executable with PyInstaller
-        run: pyinstaller build_exe.spec
+      - name: Build the Windows application and installer
+        shell: powershell
+        run: .\scripts\build_exe.ps1
 
       - name: Zip the build output
         shell: powershell
@@ -55,5 +60,6 @@ jobs:
             Download the zip below, extract it, and run SkillSprintAcademy.exe.
           files: |
             SkillSprintAcademy-${{ steps.get_version.outputs.VERSION }}-windows.zip
+            release\SkillSprintAcademy-Setup.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

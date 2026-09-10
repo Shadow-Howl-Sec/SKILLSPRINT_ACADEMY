@@ -15,6 +15,10 @@ The launcher installs the signed-update helper to
 The app will start a local web server at http://127.0.0.1:52837
 and open it in your default browser.
 
+INSTALLER:
+- Run SkillSprintAcademy-Setup.exe to register the app in Windows Installed apps.
+- The installer creates Start Menu and optional desktop shortcuts.
+
 FIRST RUN:
 - Creates instance/ folder for SQLite database and config
 - Seeds the 2-stage purple team curriculum (Stage 1: Months 1-3, Stage 2: Ongoing)
