@@ -2,9 +2,9 @@ import os
 import sys
 import json
 import secrets
-import webbrowser
 import threading
 import atexit
+from urllib.parse import urlparse
 from datetime import datetime, timezone
 from flask import (Flask, render_template, request, jsonify, redirect,
                    url_for, flash, abort, g)
@@ -212,6 +212,21 @@ def health_check():
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
 
 
+@app.route('/open-external')
+def open_external():
+    """Open a web resource inside the desktop webview.
+
+    The server only redirects; it never fetches the remote resource. Keeping
+    the scheme validation here prevents javascript:, file:, and other unsafe
+    targets from being opened by the native application window.
+    """
+    target = request.args.get('url', '').strip()
+    parsed = urlparse(target)
+    if parsed.scheme not in {'http', 'https'} or not parsed.netloc:
+        abort(400, description='Only HTTP and HTTPS external links are allowed.')
+    return redirect(target)
+
+
 @app.route('/health/vm')
 def vm_health_check():
     """Verify VM connectivity for labs."""
@@ -312,14 +327,27 @@ if __name__ == '__main__':
         print(f" {app.config.get('APP_NAME', 'skillsprint')} starting...")
         print(f" [OFFLINE MODE] binding to {url}")
         
-        # Open browser in a background thread after 1.5 seconds
-        def open_browser():
-            import time
-            time.sleep(1.5)
-            webbrowser.open(url)
+        def run_server():
+            app.run(debug=False, host=bind_host, port=bind_port, use_reloader=False)
 
-        threading.Thread(target=open_browser, daemon=True).start()
-        app.run(debug=False, host=bind_host, port=bind_port)
+        server_thread = threading.Thread(target=run_server, daemon=True)
+        server_thread.start()
+
+        try:
+            import webview
+            webview.create_window(
+                app.config.get('APP_NAME', 'SkillSprint Academy'),
+                url,
+                width=1440,
+                height=920,
+                min_size=(1024, 700),
+                text_select=True,
+            )
+            webview.start()
+        except ImportError:
+            import webbrowser
+            webbrowser.open(url)
+            server_thread.join()
     except KeyboardInterrupt:
         print(f"\n {app.config.get('APP_NAME', 'skillsprint')} stopped by user")
     except Exception as e:

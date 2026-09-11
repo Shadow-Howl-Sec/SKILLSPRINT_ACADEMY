@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Uses PyInstaller with a .spec file to create an onedir executable and a
-    separate updater executable that includes:
+    onedir executable that includes:
     - Python runtime
     - All dependencies (Flask, SQLAlchemy, etc.)
     - Static assets (templates, vendor CSS/JS)
@@ -74,24 +74,6 @@ if ($LASTEXITCODE -ne 0) {
 Write-Ok "Build completed"
 
 # ---------------------------------------------------------------------------
-# Build the external updater
-# ---------------------------------------------------------------------------
-Write-Step "Building updater executable..."
-$updaterBuildPath = Join-Path $buildPath "updater"
-$updaterDistPath  = Join-Path $distPath "updater"
-& py -3 -m PyInstaller --clean --noconfirm --onefile --name updater `
-    --distpath="$updaterDistPath" --workpath="$updaterBuildPath" `
-    --hidden-import="cryptography.hazmat.primitives.asymmetric.ed25519" `
-    (Join-Path $projectRoot "updater.py")
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Updater build failed with exit code $LASTEXITCODE"
-    exit 1
-}
-
-Write-Ok "Updater build completed"
-
-# ---------------------------------------------------------------------------
 # Copy additional files to release folder
 # ---------------------------------------------------------------------------
 Write-Step "Preparing release folder..."
@@ -107,16 +89,6 @@ if (Test-Path $onedirSrc) {
     Write-Ok "Onedir build copied to release/SkillSprintAcademy/"
 } else {
     Write-Error "Onedir build not found at $onedirSrc"
-    exit 1
-}
-
-$updaterSrc = Join-Path $updaterDistPath "updater.exe"
-$updaterDst = Join-Path $releasePath "updater.exe"
-if (Test-Path $updaterSrc) {
-    Copy-Item $updaterSrc $updaterDst -Force
-    Write-Ok "Updater executable copied to release/updater.exe"
-} else {
-    Write-Error "Updater executable not found at $updaterSrc"
     exit 1
 }
 
@@ -139,9 +111,6 @@ if (Test-Path $scriptsSrc) {
 # Create a simple launcher batch file for convenience
 $launcherBat = @"
 @echo off
-set "UPDATER_DIR=%LOCALAPPDATA%\SkillSprintAcademy"
-if not exist "%UPDATER_DIR%" mkdir "%UPDATER_DIR%"
-copy /Y "%~dp0updater.exe" "%UPDATER_DIR%\updater.exe" >nul
 echo Starting SkillSprintAcademy...
 echo The app will open at http://127.0.0.1:52837
 echo Press Ctrl+C to stop the server
@@ -166,20 +135,17 @@ QUICK START:
    OR
 2. Double-click Start-SkillSprintAcademy.bat
 
-The launcher installs the signed-update helper to
-%LOCALAPPDATA%\SkillSprintAcademy before starting the app.
-
-The app will start a local web server at http://127.0.0.1:52837
-and open it in your default browser.
+The app opens a native desktop window backed by its local web server.
+Signed updates are downloaded, verified, and staged by the application.
 
 INSTALLER:
 - Run SkillSprintAcademy-Setup.exe to register the app in Windows Installed apps.
 - The installer creates Start Menu and optional desktop shortcuts.
 
 FIRST RUN:
-- Creates instance/ folder for SQLite database and config
-- Seeds the 2-stage purple team curriculum (Stage 1: Months 1-3, Stage 2: Ongoing)
-- Sets up default user: operator
+- Creates %LOCALAPPDATA%\SkillSprintAcademy\data for the SQLite database
+- Seeds the available reference curriculum when the database is empty
+- Sets up the default local user: Shubham
 
 FEATURES:
 - Two-stage Purple Team roadmap (Job-Ready + Mastery)
@@ -205,9 +171,9 @@ REQUIREMENTS:
 - ~500 MB disk space for app + bundles
 - 8 GB+ RAM recommended (for Ollama AI tutor)
 
-SUPPORT:
-Check /offline/about for offline mode details.
-Check /offline/lab-setup for Kali VM setup guide.
+DATA AND SUPPORT:
+- User data is retained at %LOCALAPPDATA%\SkillSprintAcademy\data.
+- Check /offline/ for offline mode details and lab setup.
 
 "@
 $readme | Out-File -FilePath (Join-Path $releasePath "README.txt") -Encoding utf8
@@ -237,7 +203,6 @@ Write-Host "===================================================" -ForegroundColo
 Write-Host " BUILD COMPLETE" -ForegroundColor Cyan
 Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host " Onedir build: release\SkillSprintAcademy\"
-Write-Host " Updater:      release\updater.exe"
 Write-Host " Bundles:      release\bundles\"
 Write-Host " Scripts:      release\scripts\"
 Write-Host " Launcher:     release\Start-SkillSprintAcademy.bat"
@@ -246,5 +211,5 @@ if ($null -ne $iscc) { Write-Host " Installer:    release\SkillSprintAcademy-Set
 Write-Host ""
 Write-Host " To run: Double-click Start-SkillSprintAcademy.bat"
 Write-Host "         Or run: release\SkillSprintAcademy\SkillSprintAcademy.exe"
-Write-Host " The app creates its own instance/ folder on first run."
+Write-Host " The app stores user data in %LOCALAPPDATA%\SkillSprintAcademy\data."
 Write-Host "===================================================" -ForegroundColor Cyan

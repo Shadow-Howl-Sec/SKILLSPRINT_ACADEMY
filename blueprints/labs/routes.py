@@ -44,11 +44,22 @@ def _check_vm_prerequisites(lab: Lab) -> tuple[bool, list[str]]:
     Returns: (all_ok, missing_vms_list)
     """
     vm = VMConfig.query.filter_by(user_id=g.user.id).first()
-    if not vm:
-        return False, ["No VM configuration found"]
-    
     missing = []
-    vm_dict = vm.get_vm_dict()
+    if vm:
+        vm_dict = vm.get_vm_dict()
+    else:
+        # The setup guide defines a host-only range with these defaults. Use
+        # it for reachability checks until the optional encrypted VM profile
+        # is configured in the database.
+        cfg = current_app.config
+        vm_dict = {
+            'kali': {'ip': cfg.get('VM_KALI_IP'), 'ssh_port': 22},
+            'metasploitable': {'ip': cfg.get('VM_METASPLOITABLE_IP'), 'ssh_port': 22},
+            'dvwa': {'ip': cfg.get('VM_DVWA_IP'), 'port': 80},
+            'goad_dc': {'ip': cfg.get('VM_DC01_IP'), 'winrm_port': 5985},
+            'goad_win10': {'ip': cfg.get('VM_WIN10_IP'), 'winrm_port': 5985},
+            'wazuh': {'ip': cfg.get('VM_WAZUH_IP')},
+        }
     
     # Check attacker VM
     if lab.attacker_vm:
@@ -63,6 +74,8 @@ def _check_vm_prerequisites(lab: Lab) -> tuple[bool, list[str]]:
                 sock.close()
             except Exception:
                 missing.append(f"Attacker VM ({lab.attacker_vm}) unreachable at {cfg['ip']}")
+        elif not attacker_key:
+            missing.append(f"Attacker VM ({lab.attacker_vm}) has no supported connection mapping")
     
     # Check target VM
     if lab.target_vm:
@@ -87,6 +100,8 @@ def _check_vm_prerequisites(lab: Lab) -> tuple[bool, list[str]]:
                 sock.close()
             except Exception:
                 missing.append(f"Target VM ({lab.target_vm}) unreachable at {cfg['ip']}:{port}")
+        elif not target_key:
+            missing.append(f"Target VM ({lab.target_vm}) has no supported connection mapping")
     
     # Check detection VM
     if lab.detection_vm and 'wazuh' in lab.detection_vm.lower():

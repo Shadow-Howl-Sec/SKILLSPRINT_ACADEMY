@@ -5,8 +5,8 @@
 # Windows/Windows VM) — PyInstaller does not cross-compile.
 #
 # Output mode: onedir (a folder, not a single .exe file). This is deliberate —
-# the auto-update system replaces this entire folder wholesale on every update,
-# which only works cleanly with onedir. Do NOT switch this to --onefile.
+# the application-owned updater replaces this entire folder wholesale on every
+# update, which only works cleanly with onedir. Do NOT switch this to --onefile.
 #
 # Build with:
 #   pyinstaller build_exe.spec
@@ -43,7 +43,6 @@ project_datas = [
     ('models.py', '.'),
     ('extensions.py', '.'),
     ('paths.py', '.'),
-    ('updater.py', '.'),
     ('version_info.txt', '.'),
     ('requirements.txt', '.'),
     ('.env', '.'),
@@ -110,7 +109,6 @@ a = Analysis(
         'tkinter',      # incidentally by some other dependency
         'test', 'pytest', 'unittest',
         'notebook', 'jupyter', 'IPython',
-        'webview',      # pywebview NOT used — exclude to save 50MB
         'oracledb',     # unused Oracle driver
         'razorpay',     # unused payment gateway
         'flask_dance',  # unused OAuth

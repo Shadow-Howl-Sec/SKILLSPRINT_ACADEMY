@@ -34,7 +34,6 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 
 [Files]
 Source: "{#ReleaseDir}\SkillSprintAcademy\*"; DestDir: "{app}\SkillSprintAcademy"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#ReleaseDir}\updater.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ReleaseDir}\bundles\*"; DestDir: "{app}\bundles"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#ReleaseDir}\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#ReleaseDir}\README.txt"; DestDir: "{app}"; Flags: ignoreversion

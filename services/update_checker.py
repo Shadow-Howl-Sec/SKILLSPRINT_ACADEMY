@@ -45,11 +45,6 @@ def check_for_update(base_path, timeout=5):
     """
     local_version = get_local_version(base_path)
     
-    # In offline mode, don't attempt network requests
-    if os.environ.get("OFFLINE_MODE", "true").lower() in ("true", "1", "yes", "on"):
-        logger.debug("Offline mode enabled, skipping update check")
-        return {"update_available": None, "current_version": local_version}
-
     try:
         headers = {"Accept": "application/vnd.github.v3+json"}
         resp = requests.get(GITHUB_API_URL, timeout=timeout, headers=headers)
@@ -61,19 +56,25 @@ def check_for_update(base_path, timeout=5):
             logger.warning("No tag_name in GitHub release response")
             return {"update_available": False, "current_version": local_version}
 
-        download_url = data.get("html_url")  # fallback: link to the release page
+        download_url = None
         for asset in data.get("assets", []):
             if asset["name"].endswith(".zip"):
                 download_url = asset["browser_download_url"]
                 break
 
         if _version_tuple(latest_tag) > _version_tuple(local_version):
+            if not download_url:
+                logger.warning("Latest release has no automatic ZIP package")
+                return {"update_available": False, "current_version": local_version,
+                        "latest_version": latest_tag,
+                        "release_url": data.get("html_url", GITHUB_RELEASES_URL)}
             logger.info(f"Update available: {local_version} -> {latest_tag}")
             return {
                 "update_available": True,
                 "current_version": local_version,
                 "latest_version": latest_tag,
                 "download_url": download_url,
+                "signature_url": download_url + ".sig",
                 "release_notes": data.get("body", ""),
                 "release_url": data.get("html_url", GITHUB_RELEASES_URL),
                 "published_at": data.get("published_at"),

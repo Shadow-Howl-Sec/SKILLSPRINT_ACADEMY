@@ -9,20 +9,17 @@ QUICK START:
    OR
 2. Double-click Start-SkillSprintAcademy.bat
 
-The launcher installs the signed-update helper to
-%LOCALAPPDATA%\SkillSprintAcademy before starting the app.
-
-The app will start a local web server at http://127.0.0.1:52837
-and open it in your default browser.
+The app opens a native desktop window backed by its local web server.
+Signed updates are downloaded, verified, and staged by the application.
 
 INSTALLER:
 - Run SkillSprintAcademy-Setup.exe to register the app in Windows Installed apps.
 - The installer creates Start Menu and optional desktop shortcuts.
 
 FIRST RUN:
-- Creates instance/ folder for SQLite database and config
-- Seeds the 2-stage purple team curriculum (Stage 1: Months 1-3, Stage 2: Ongoing)
-- Sets up default user: operator
+- Creates %LOCALAPPDATA%\SkillSprintAcademy\data for the SQLite database
+- Seeds the available reference curriculum when the database is empty
+- Sets up the default local user: Shubham
 
 FEATURES:
 - Two-stage Purple Team roadmap (Job-Ready + Mastery)
@@ -48,7 +45,7 @@ REQUIREMENTS:
 - ~500 MB disk space for app + bundles
 - 8 GB+ RAM recommended (for Ollama AI tutor)
 
-SUPPORT:
-Check /offline/about for offline mode details.
-Check /offline/lab-setup for Kali VM setup guide.
+DATA AND SUPPORT:
+- User data is retained at %LOCALAPPDATA%\SkillSprintAcademy\data.
+- Check /offline/ for offline mode details and lab setup.
 

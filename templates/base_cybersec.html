@@ -170,8 +170,8 @@
     <!-- Main Content -->
     <div class="dash-content">
 
-      <!-- Update banner (hidden in offline mode) -->
-      {% if not OFFLINE_MODE %}
+      <!-- Signed application updates remain available in offline-first mode. -->
+      {% if true %}
       <div id="update-banner" class="alert alert-info alert-dismissible fade show mb-4" role="alert">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div>
@@ -229,6 +229,13 @@
 <script nonce="{{ csp_nonce }}">
   // Server-injected runtime config — required before main.js loads
   window.OFFLINE_MODE = {{ 'true' if OFFLINE_MODE else 'false' }};
+  // Keep external learning resources in the native application window.
+  document.addEventListener('click', function (event) {
+    const link = event.target.closest('a[href]');
+    if (!link || !/^https?:/i.test(link.href)) return;
+    event.preventDefault();
+    window.location.href = '/open-external?url=' + encodeURIComponent(link.href);
+  });
 </script>
 <script nonce="{{ csp_nonce }}" src="/static/js/update_checker.js"></script>
 <script nonce="{{ csp_nonce }}" src="/static/js/main.js"></script>

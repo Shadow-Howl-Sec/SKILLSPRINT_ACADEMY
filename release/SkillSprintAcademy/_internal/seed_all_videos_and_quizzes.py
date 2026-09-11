@@ -6,446 +6,440 @@ Ensures every topic has:
 from app import app
 from extensions import db
 from models import Topic, TopicLearningModule, AssessmentQuestion
-from urllib.parse import quote_plus
 
 CURATED_VIDEOS = {
+    # Every entry links to a real, verified, well-established free/open
+    # cybersecurity education channel (handles confirmed via web search),
+    # using a topic-targeted YouTube search rather than a specific unverified
+    # video ID. This is the safe pattern: it always resolves to genuine
+    # content and never misattributes a video that may not exist.
+    # 'channel' is the real creator/channel name — go explore their full
+    # catalog directly, not just the one search result.
+
     # Foundations & Networking
     "binary-hex-number-systems": (
-        "https://www.youtube.com/watch?v=1RXrJ3PvCVU",
+        "https://www.youtube.com/results?search_query=binary+hexadecimal+number+systems+explained+Professor+Messer",
         "Binary & Hexadecimal for Cybersecurity",
-        "Professor Messer / NetworkChuck"
+        "Professor Messer — https://www.youtube.com/@professormesser"
     ),
     "files-os-concepts": (
-        "https://www.youtube.com/watch?v=sWbEIq1SgwE",
-        "Operating System Concepts & File Systems",
-        "CrashCourse Computer Science"
+        "https://www.youtube.com/results?search_query=operating+system+file+systems+explained+freeCodeCamp.org",
+        "Operating System & File System Concepts",
+        "freeCodeCamp.org — https://www.youtube.com/@freecodecamp"
     ),
     "networking-basics": (
-        "https://www.youtube.com/watch?v=IPvYjXCsTg8",
-        "Computer Networking Full Course — OSI, TCP/IP, Routing",
-        "freeCodeCamp"
+        "https://www.youtube.com/results?search_query=network+fundamentals+full+course+Professor+Messer",
+        "Computer Networking Full Course (OSI, TCP/IP, Routing)",
+        "Professor Messer — https://www.youtube.com/@professormesser"
     ),
     "linux-fundamentals": (
-        "https://www.youtube.com/watch?v=sWbEIq1SgwE",
-        "Linux for Hackers & Cyber Security Professionals",
-        "NetworkChuck"
+        "https://www.youtube.com/results?search_query=linux+for+ethical+hackers+full+course+freeCodeCamp.org",
+        "Linux for Cybersecurity — Full Course",
+        "freeCodeCamp.org — https://www.youtube.com/@freecodecamp"
     ),
     "windows-fundamentals": (
-        "https://www.youtube.com/watch?v=aG3pTjVb3Wc",
-        "Windows Operating System Fundamentals & Architecture",
-        "John Hammond"
+        "https://www.youtube.com/results?search_query=windows+internals+fundamentals+for+security+John+Hammond",
+        "Windows Fundamentals & Architecture",
+        "John Hammond — https://www.youtube.com/@_JohnHammond"
     ),
     "security-mindset-ethics": (
-        "https://www.youtube.com/watch?v=inWWhr5tnEA",
-        "Cybersecurity Ethics, Scope of Work & Legal Boundaries",
-        "The Cyber Mentor"
+        "https://www.youtube.com/results?search_query=security+mindset+threat+modeling+Professor+Messer",
+        "Security Mindset, Threat Modeling & Ethics",
+        "Professor Messer — https://www.youtube.com/@professormesser"
     ),
     "cia-triad-threat-models": (
-        "https://www.youtube.com/watch?v=U_P23dqep10",
-        "CIA Triad & Threat Modeling (STRIDE, DREAD)",
-        "Inside Out Security"
+        "https://www.youtube.com/results?search_query=CIA+triad+threat+modeling+explained+Professor+Messer",
+        "CIA Triad & Threat Modeling Explained",
+        "Professor Messer — https://www.youtube.com/@professormesser"
     ),
     "mitre-att-ck-overview": (
-        "https://www.youtube.com/watch?v=gA_s8sH9F9I",
-        "MITRE ATT&CK Framework Complete Deep Dive",
-        "SANS Institute"
+        "https://www.youtube.com/results?search_query=MITRE+ATT%26CK+framework+explained+Black+Hills+Information+Security",
+        "MITRE ATT&CK Framework Overview",
+        "Black Hills Information Security — https://www.youtube.com/@BHInfoSecurity"
     ),
     "tcp-ip-subnetting": (
-        "https://www.youtube.com/watch?v=5WfiTHiU4x8",
-        "Subnetting Mastery — The Easy Way to Master Subnets",
-        "Practical Networking"
+        "https://www.youtube.com/results?search_query=subnetting+mastery+tutorial+Professor+Messer",
+        "TCP/IP & Subnetting Mastery",
+        "Professor Messer — https://www.youtube.com/@professormesser"
     ),
     "dns-http": (
-        "https://www.youtube.com/watch?v=72snZctFFtA",
-        "How DNS and HTTP Actually Work Under the Hood",
-        "PowerCert Animated Videos"
+        "https://www.youtube.com/results?search_query=DNS+HTTP+protocol+explained+NetworkChuck",
+        "DNS & HTTP Protocol Deep Dive",
+        "NetworkChuck — https://www.youtube.com/@NetworkChuck"
     ),
     "packet-analysis-wireshark": (
-        "https://www.youtube.com/watch?v=lb1Dw0elw0Q",
-        "Wireshark Tutorial for Beginners — Packet Analysis",
-        "NetworkChuck"
+        "https://www.youtube.com/results?search_query=wireshark+tutorial+packet+analysis+Chris+Greer",
+        "Wireshark Packet Analysis Tutorial",
+        "Chris Greer — https://www.youtube.com/@ChrisGreer"
     ),
     "firewalls-network-hardening": (
-        "https://www.youtube.com/watch?v=kd0OD10I7m4",
-        "Network Firewalls, State Tracking & Defense in Depth",
-        "David Bombal"
+        "https://www.youtube.com/results?search_query=firewall+configuration+network+hardening+NetworkChuck",
+        "Firewalls & Network Hardening",
+        "NetworkChuck — https://www.youtube.com/@NetworkChuck"
     ),
     "linux-filesystem-permissions": (
-        "https://www.youtube.com/watch?v=bpuC7UA9e-Q",
-        "Linux File Permissions, SUID, SGID & Sticky Bit",
-        "HackerSploit"
+        "https://www.youtube.com/results?search_query=linux+file+permissions+SUID+SGID+HackerSploit",
+        "Linux File Permissions, SUID, SGID",
+        "HackerSploit — https://www.youtube.com/@HackerSploit"
     ),
     "bash-scripting-fundamentals": (
-        "https://www.youtube.com/watch?v=tK9Oc6AEnR4",
-        "Bash Scripting Tutorial for Beginners & Security",
-        "freeCodeCamp"
+        "https://www.youtube.com/results?search_query=bash+scripting+tutorial+for+hackers+freeCodeCamp.org",
+        "Bash Scripting for Security",
+        "freeCodeCamp.org — https://www.youtube.com/@freecodecamp"
     ),
     "processes-services": (
-        "https://www.youtube.com/watch?v=2t_rWvU7E7k",
-        "Linux & Windows Process Management & Daemons",
-        "LiveOverflow"
+        "https://www.youtube.com/results?search_query=linux+windows+process+service+management+HackerSploit",
+        "Process & Service Management (Linux/Windows)",
+        "HackerSploit — https://www.youtube.com/@HackerSploit"
     ),
     "log-analysis-journald": (
-        "https://www.youtube.com/watch?v=Kz6E11Q2d0Q",
-        "Linux Log Analysis with journalctl and Syslog",
-        "SANS Cyber Defense"
+        "https://www.youtube.com/results?search_query=journalctl+syslog+log+analysis+tutorial+Black+Hills+Information+Security",
+        "Linux Log Analysis (journalctl, syslog)",
+        "Black Hills Information Security — https://www.youtube.com/@BHInfoSecurity"
     ),
 
     # Web App Security
     "web-app-basics-http": (
-        "https://www.youtube.com/watch?v=iYM2zFP3Zn0",
-        "Web Application Architecture & HTTP Protocol Deep Dive",
-        "Hussein Nasser"
+        "https://www.youtube.com/results?search_query=web+application+architecture+HTTP+explained+PortSwigger+Web+Security+Academy",
+        "Web Application Architecture & HTTP",
+        "PortSwigger Web Security Academy — https://www.youtube.com/@PortSwiggerWebSecurity"
     ),
     "owasp-top-10-overview": (
-        "https://www.youtube.com/watch?v=vHM862gP_d8",
-        "OWASP Top 10 Explained with Real Vulnerability Demos",
-        "PwnFunction"
+        "https://www.youtube.com/results?search_query=OWASP+top+10+explained+PwnFunction",
+        "OWASP Top 10 Explained",
+        "PwnFunction — https://www.youtube.com/@PwnFunction"
     ),
     "sql-injection": (
-        "https://www.youtube.com/watch?v=1X74U9-EB1g",
-        "SQL Injection Explained — Detection & Exploitation",
-        "PwnFunction"
+        "https://www.youtube.com/results?search_query=SQL+injection+tutorial+PortSwigger+Web+Security+Academy",
+        "SQL Injection — Detection & Exploitation",
+        "PortSwigger Web Security Academy — https://www.youtube.com/@PortSwiggerWebSecurity"
     ),
     "cross-site-scripting-xss": (
-        "https://www.youtube.com/watch?v=EoaDgUgS6QA",
-        "Cross-Site Scripting (XSS) Explained — Reflected, Stored, DOM",
-        "PwnFunction"
+        "https://www.youtube.com/results?search_query=cross+site+scripting+XSS+explained+PwnFunction",
+        "Cross-Site Scripting (XSS) Explained",
+        "PwnFunction — https://www.youtube.com/@PwnFunction"
     ),
     "burp-suite-essentials": (
-        "https://www.youtube.com/watch?v=G3hpA_s_u24",
-        "Burp Suite Tutorial for Beginners (2024)",
-        "The Cyber Mentor"
+        "https://www.youtube.com/results?search_query=burp+suite+tutorial+beginners+TCM+Security+Academy",
+        "Burp Suite Tutorial for Beginners",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
     "authentication-session-attacks": (
-        "https://www.youtube.com/watch?v=4Zp0F46a_e4",
-        "Session Hijacking, Fixation & Broken Authentication",
-        "PortSwigger Web Security Academy"
+        "https://www.youtube.com/results?search_query=session+hijacking+broken+authentication+PortSwigger+Web+Security+Academy",
+        "Session Hijacking & Broken Authentication",
+        "PortSwigger Web Security Academy — https://www.youtube.com/@PortSwiggerWebSecurity"
     ),
 
     # Cryptography
     "cryptographic-foundations": (
-        "https://www.youtube.com/watch?v=jhXCTbFnK8o",
-        "Cryptography Course 30 — Symmetric vs Asymmetric Ciphers",
-        "Computerphile"
+        "https://www.youtube.com/results?search_query=symmetric+asymmetric+cryptography+explained+Computerphile",
+        "Symmetric vs Asymmetric Cryptography",
+        "Computerphile — https://www.youtube.com/@Computerphile"
     ),
     "hashing-salting": (
-        "https://www.youtube.com/watch?v=b4b8ktEV4Bg",
-        "How Secure Hashing & Salt Actually Protect Passwords",
-        "Computerphile"
+        "https://www.youtube.com/results?search_query=password+hashing+salting+explained+Computerphile",
+        "Password Hashing & Salting Explained",
+        "Computerphile — https://www.youtube.com/@Computerphile"
     ),
     "pki-tls": (
-        "https://www.youtube.com/watch?v=86cQCEScY7E",
-        "Public Key Infrastructure (PKI) & TLS Handshake Deep Dive",
-        "ByteByteGo"
+        "https://www.youtube.com/results?search_query=PKI+TLS+handshake+explained+Computerphile",
+        "PKI & TLS Handshake Deep Dive",
+        "Computerphile — https://www.youtube.com/@Computerphile"
     ),
 
     # Recon & OSINT
     "osint-foundations": (
-        "https://www.youtube.com/watch?v=qwA6MmbeGNo",
-        "OSINT at Scale — Open Source Intelligence Fundamentals",
-        "John Hammond"
+        "https://www.youtube.com/results?search_query=OSINT+fundamentals+open+source+intelligence+John+Hammond",
+        "OSINT Fundamentals",
+        "John Hammond — https://www.youtube.com/@_JohnHammond"
     ),
     "search-recon-techniques": (
-        "https://www.youtube.com/watch?v=Bq3PjF92T00",
-        "Advanced Google Dorking & Passive Reconnaissance",
-        "David Bombal"
+        "https://www.youtube.com/results?search_query=google+dorking+passive+reconnaissance+NetworkChuck",
+        "Google Dorking & Passive Recon",
+        "NetworkChuck — https://www.youtube.com/@NetworkChuck"
     ),
     "passive-osint-google-shodan": (
-        "https://www.youtube.com/watch?v=l_Q1eY7Hn8g",
+        "https://www.youtube.com/results?search_query=shodan+censys+attack+surface+mapping+HackerSploit",
         "Shodan & Censys for Attack Surface Mapping",
-        "HackerSploit"
+        "HackerSploit — https://www.youtube.com/@HackerSploit"
     ),
     "active-recon-nmap": (
-        "https://www.youtube.com/watch?v=4t4kBkMsDbQ",
-        "Nmap Complete Course — Network Scanning and Enumeration",
-        "NetworkChuck"
+        "https://www.youtube.com/results?search_query=nmap+complete+course+scanning+NetworkChuck",
+        "Nmap Complete Course",
+        "NetworkChuck — https://www.youtube.com/@NetworkChuck"
     ),
 
     # Python & Automation
     "python-for-security": (
-        "https://www.youtube.com/watch?v=7utwZYKglho",
-        "Python for Cybersecurity — Building Security Tools",
-        "freeCodeCamp"
+        "https://www.youtube.com/results?search_query=python+for+cybersecurity+building+tools+freeCodeCamp.org",
+        "Python for Cybersecurity",
+        "freeCodeCamp.org — https://www.youtube.com/@freecodecamp"
     ),
     "parsing-logs-automation": (
-        "https://www.youtube.com/watch?v=0kH8s3tJ-f8",
-        "Automating SIEM & Log Analysis with Python",
-        "SANS Institute"
+        "https://www.youtube.com/results?search_query=python+log+parsing+automation+security+NeuralNine",
+        "Automating Log Analysis with Python",
+        "NeuralNine — https://www.youtube.com/@NeuralNine"
     ),
     "building-a-basic-port-scanner": (
-        "https://www.youtube.com/watch?v=3Kq1MIfTWCE",
-        "Writing a Multi-Threaded Port Scanner in Python",
-        "NeuralNine"
+        "https://www.youtube.com/results?search_query=python+port+scanner+tutorial+NeuralNine",
+        "Writing a Port Scanner in Python",
+        "NeuralNine — https://www.youtube.com/@NeuralNine"
     ),
 
     # Windows & Active Directory
     "windows-internals": (
-        "https://www.youtube.com/watch?v=eJgZ4kS8p5k",
-        "Windows Internals — Processes, Tokens, Registry, LSASS",
-        "Pavel Yosifovich"
+        "https://www.youtube.com/results?search_query=windows+internals+processes+tokens+LSASS+John+Hammond",
+        "Windows Internals — Processes, Tokens, LSASS",
+        "John Hammond — https://www.youtube.com/@_JohnHammond"
     ),
     "active-directory-fundamentals": (
-        "https://www.youtube.com/watch?v=qXgRrh6Gj7Y",
-        "Active Directory Fundamentals & Architecture for Hackers",
-        "The Cyber Mentor"
+        "https://ippsec.rocks/",
+        "Active Directory Fundamentals for Hackers",
+        "IppSec (searchable by technique at ippsec.rocks) — https://ippsec.rocks/"
     ),
     "kerberos-bloodhound": (
-        "https://www.youtube.com/watch?v=kD3oRT3XHrM",
-        "Kerberos Authentication & BloodHound Attack Path Mapping",
-        "HackerSploit"
+        "https://ippsec.rocks/",
+        "Kerberos Authentication & BloodHound",
+        "IppSec (searchable by technique at ippsec.rocks) — https://ippsec.rocks/"
     ),
     "ad-enumeration-bloodhound": (
-        "https://www.youtube.com/watch?v=CqK5gK_qYnE",
-        "Active Directory Enumeration with BloodHound & SharpHound",
-        "John Hammond"
+        "https://ippsec.rocks/",
+        "AD Enumeration with BloodHound/SharpHound",
+        "IppSec (searchable by technique at ippsec.rocks) — https://ippsec.rocks/"
     ),
     "kerberoasting-asrep-roasting": (
-        "https://www.youtube.com/watch?v=PyePwb9z74s",
-        "Kerberoasting & AS-REP Roasting Hands-On Attack and Defense",
-        "IppSec"
+        "https://ippsec.rocks/",
+        "Kerberoasting & AS-REP Roasting",
+        "IppSec (searchable by technique at ippsec.rocks) — https://ippsec.rocks/"
     ),
 
     # Linux Hardening & Forensics
     "linux-hardening-audit": (
-        "https://www.youtube.com/watch?v=pYgN-5N3hK8",
-        "Linux Hardening Guide — Lynis, PAM, SSH & CIS Benchmarks",
-        "HackerSploit"
+        "https://www.youtube.com/results?search_query=linux+hardening+lynis+CIS+benchmark+HackerSploit",
+        "Linux Hardening (Lynis, CIS Benchmarks)",
+        "HackerSploit — https://www.youtube.com/@HackerSploit"
     ),
     "linux-disk-memory-forensics": (
-        "https://www.youtube.com/watch?v=N6Yq7oK9c3Q",
-        "Linux Memory Forensics using Volatility 3",
-        "13Cubed"
+        "https://www.youtube.com/results?search_query=linux+memory+forensics+volatility+3+13Cubed",
+        "Linux Memory Forensics with Volatility",
+        "13Cubed — https://www.youtube.com/@13Cubed"
     ),
     "packet-forensics-at-scale": (
-        "https://www.youtube.com/watch?v=XW9x4g2f-9U",
-        "Network Forensics & Packet Investigation with Zeek",
-        "Black Hills Information Security"
+        "https://www.youtube.com/results?search_query=network+forensics+packet+investigation+zeek+13Cubed",
+        "Network Forensics & Packet Investigation",
+        "13Cubed — https://www.youtube.com/@13Cubed"
     ),
 
     # Advanced Web
     "sqli-xss-deep-dives": (
-        "https://www.youtube.com/watch?v=kY6fD7fB9M0",
-        "Advanced Blind SQLi & CSP Bypass XSS Attacks",
-        "LiveOverflow"
+        "https://www.youtube.com/results?search_query=blind+SQL+injection+CSP+bypass+advanced+PortSwigger+Web+Security+Academy",
+        "Advanced Blind SQLi & CSP Bypass",
+        "PortSwigger Web Security Academy — https://www.youtube.com/@PortSwiggerWebSecurity"
     ),
     "burp-suite-pro-techniques": (
-        "https://www.youtube.com/watch?v=M7s_wG8P8V4",
-        "Burp Suite Pro Tips, Turbo Intruder & Custom Extensions",
-        "NahamSec"
+        "https://www.youtube.com/results?search_query=burp+suite+advanced+turbo+intruder+TCM+Security+Academy",
+        "Burp Suite Advanced Techniques",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
     "web-cache-poisoning": (
-        "https://www.youtube.com/watch?v=qX3H7y8Z4-s",
-        "Web Cache Poisoning & Unkeyed Inputs Explained",
-        "PortSwigger Web Security Academy"
+        "https://www.youtube.com/results?search_query=web+cache+poisoning+explained+PortSwigger+Web+Security+Academy",
+        "Web Cache Poisoning Explained",
+        "PortSwigger Web Security Academy — https://www.youtube.com/@PortSwiggerWebSecurity"
     ),
     "http-request-smuggling": (
-        "https://www.youtube.com/watch?v=_A0VMEYZfU8",
-        "HTTP Request Smuggling (CL.TE & TE.CL Vulnerabilities)",
-        "PwnFunction"
+        "https://www.youtube.com/results?search_query=HTTP+request+smuggling+CL.TE+TE.CL+PortSwigger+Web+Security+Academy",
+        "HTTP Request Smuggling Explained",
+        "PortSwigger Web Security Academy — https://www.youtube.com/@PortSwiggerWebSecurity"
     ),
 
     # Binary Exploitation
     "exploit-dev-stack-overflow": (
-        "https://www.youtube.com/watch?v=1S0aBV-Waeo",
-        "Buffer Overflow & Stack Exploitation from Scratch",
-        "LiveOverflow"
+        "https://www.youtube.com/results?search_query=buffer+overflow+stack+exploitation+from+scratch+LiveOverflow",
+        "Buffer Overflow & Stack Exploitation",
+        "LiveOverflow — https://www.youtube.com/@LiveOverflow"
     ),
     "exploit-dev-rop-chains": (
-        "https://www.youtube.com/watch?v=zaQCBD3bM6w",
-        "Return-Oriented Programming (ROP) Tutorial",
-        "LiveOverflow"
+        "https://www.youtube.com/results?search_query=return+oriented+programming+ROP+tutorial+LiveOverflow",
+        "Return-Oriented Programming (ROP)",
+        "LiveOverflow — https://www.youtube.com/@LiveOverflow"
     ),
     "exploit-dev-heap-mitigations": (
-        "https://www.youtube.com/watch?v=Tf86r3E_v3I",
-        "Heap Exploitation & Modern Exploit Mitigations (ASLR, DEP)",
-        "LiveOverflow"
+        "https://www.youtube.com/results?search_query=heap+exploitation+ASLR+DEP+mitigations+LiveOverflow",
+        "Heap Exploitation & Modern Mitigations",
+        "LiveOverflow — https://www.youtube.com/@LiveOverflow"
     ),
     "shellcoding-basics": (
-        "https://www.youtube.com/watch?v=rW_Vf3Zf19o",
-        "Writing Custom x86/x64 Shellcode from Scratch",
-        "Sektor7"
+        "https://www.youtube.com/results?search_query=writing+shellcode+x86+x64+tutorial+LiveOverflow",
+        "Writing Custom Shellcode",
+        "LiveOverflow — https://www.youtube.com/@LiveOverflow"
     ),
 
     # Red Team & Post-Exploitation
     "red-team-c2-infrastructure": (
-        "https://www.youtube.com/watch?v=mC12uY3j47I",
-        "Modern Red Team C2 Infrastructure Setup (Sliver/Mythic)",
-        "White Knight Labs"
+        "https://www.youtube.com/results?search_query=red+team+C2+infrastructure+sliver+mythic+Black+Hills+Information+Security",
+        "Red Team C2 Infrastructure Setup",
+        "Black Hills Information Security — https://www.youtube.com/@BHInfoSecurity"
     ),
     "lateral-movement-opsec": (
-        "https://www.youtube.com/watch?v=xW5C6y-b81U",
-        "Lateral Movement Techniques (WMI, WinRM, PsExec, DCOM)",
-        "SpecterOps"
+        "https://ippsec.rocks/",
+        "Lateral Movement Techniques (WMI, WinRM, PsExec)",
+        "IppSec (searchable by technique at ippsec.rocks) — https://ippsec.rocks/"
     ),
     "evasion-defense-bypass": (
-        "https://www.youtube.com/watch?v=qJ5n0-7tN9U",
-        "EDR Evasion, AMSI Bypass & Process Injection Deep Dive",
-        "Black Hills Information Security"
+        "https://www.youtube.com/results?search_query=EDR+evasion+AMSI+bypass+process+injection+Black+Hills+Information+Security",
+        "EDR Evasion & AMSI Bypass",
+        "Black Hills Information Security — https://www.youtube.com/@BHInfoSecurity"
     ),
     "bug-bounty-methodology": (
-        "https://www.youtube.com/watch?v=yY3e7B5nN3Q",
-        "Bug Bounty Hunting Methodology & Workflow",
-        "NahamSec"
+        "https://www.youtube.com/results?search_query=bug+bounty+hunting+methodology+workflow+TCM+Security+Academy",
+        "Bug Bounty Hunting Methodology",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
 
     # Malware Analysis & Reverse Engineering
     "malware-static-analysis": (
-        "https://www.youtube.com/watch?v=7uV8Q8s3A2U",
-        "Malware Analysis for Beginners — PE Headers, Strings & Ghidra",
-        "HuskyHacks"
+        "https://www.youtube.com/results?search_query=malware+static+analysis+PE+headers+ghidra+OALabs",
+        "Malware Static Analysis (PE, Strings, Ghidra)",
+        "OALabs — https://www.youtube.com/@OALabs"
     ),
     "malware-dynamic-analysis-sandboxing": (
-        "https://www.youtube.com/watch?v=KzM3N9yB1eE",
-        "Dynamic Malware Analysis in Isolated Sandboxes (Procmon, Wireshark)",
-        "OALabs"
+        "https://www.youtube.com/results?search_query=dynamic+malware+analysis+sandbox+procmon+OALabs",
+        "Dynamic Malware Analysis in a Sandbox",
+        "OALabs — https://www.youtube.com/@OALabs"
     ),
     "yara-av-evasion-detect": (
-        "https://www.youtube.com/watch?v=XwT9eN8yA0Q",
-        "Writing Effective YARA Rules for Threat Detection",
-        "SANS Institute"
+        "https://www.youtube.com/results?search_query=writing+YARA+rules+tutorial+OALabs",
+        "Writing Effective YARA Rules",
+        "OALabs — https://www.youtube.com/@OALabs"
     ),
     "unpacking-practice": (
-        "https://www.youtube.com/watch?v=8dG-qV3bU0Q",
-        "Unpacking Packed Malware with x64dbg & Scylla",
-        "OALabs"
+        "https://www.youtube.com/results?search_query=unpacking+packed+malware+x64dbg+OALabs",
+        "Unpacking Packed Malware",
+        "OALabs — https://www.youtube.com/@OALabs"
     ),
 
     # Cloud & Container Security
     "cloud-iam-abuse": (
-        "https://www.youtube.com/watch?v=6rU4jN9xT1g",
-        "AWS Cloud Penetration Testing & IAM Privilege Escalation",
-        "TCM Security"
+        "https://www.youtube.com/results?search_query=AWS+IAM+privilege+escalation+pentesting+TCM+Security+Academy",
+        "AWS IAM Privilege Escalation",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
     "kubernetes-attack-paths": (
-        "https://www.youtube.com/watch?v=FjC5yP0tU-U",
-        "Kubernetes Penetration Testing & Cluster Compromise Paths",
-        "Hacking Kubernetes"
+        "https://www.youtube.com/results?search_query=kubernetes+penetration+testing+cluster+compromise+TCM+Security+Academy",
+        "Kubernetes Penetration Testing",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
     "terraform-misconfig-hunting": (
-        "https://www.youtube.com/watch?v=7kY8nB3xS6M",
-        "Infrastructure as Code (IaC) Security Auditing with Checkov & Trivy",
-        "Anton Putnam"
+        "https://www.youtube.com/results?search_query=terraform+IaC+security+scanning+checkov+trivy+TCM+Security+Academy",
+        "IaC Security Auditing (Checkov, Trivy)",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
     "cloud-iam-s3-security": (
-        "https://www.youtube.com/watch?v=9gM4s5e6k-Y",
-        "Securing AWS S3 Buckets & IAM Policies Against Exploitation",
-        "Cloud Security Alliance"
+        "https://www.youtube.com/results?search_query=AWS+S3+bucket+security+IAM+policy+TCM+Security+Academy",
+        "Securing AWS S3 Buckets & IAM",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
     "kubernetes-security-basics": (
-        "https://www.youtube.com/watch?v=3nK_5yT0k7M",
-        "Kubernetes Hardening, RBAC & Network Policies",
-        "Aqua Security"
+        "https://www.youtube.com/results?search_query=kubernetes+hardening+RBAC+network+policy+TCM+Security+Academy",
+        "Kubernetes Hardening & RBAC",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
 
     # Blue Team, SIEM & Threat Hunting
     "siem-queries-sigma-rules": (
-        "https://www.youtube.com/watch?v=8aF3j9n6T0c",
-        "Sigma Rules: The Generic Signature Format for SIEM Detection",
-        "Florian Roth"
+        "https://www.youtube.com/results?search_query=sigma+rules+SIEM+detection+explained+Black+Hills+Information+Security",
+        "Sigma Rules Explained",
+        "Black Hills Information Security — https://www.youtube.com/@BHInfoSecurity"
     ),
     "threat-hunting-at-scale": (
-        "https://www.youtube.com/watch?v=KjM4yB7v6E8",
-        "Threat Hunting Hypothesis Formulation & Data Analysis",
-        "SANS Cyber Defense"
+        "https://www.youtube.com/results?search_query=threat+hunting+hypothesis+methodology+SANS+Institute",
+        "Threat Hunting Hypothesis & Data Analysis",
+        "SANS Institute — https://www.youtube.com/@SANSInstitute"
     ),
     "soc-playbooks": (
-        "https://www.youtube.com/watch?v=3mF7k8w9A1Y",
-        "Building Practical SOC Incident Response Playbooks",
-        "John Strand"
+        "https://www.youtube.com/results?search_query=SOC+incident+response+playbook+Black+Hills+Information+Security",
+        "Building SOC Incident Response Playbooks",
+        "Black Hills Information Security — https://www.youtube.com/@BHInfoSecurity"
     ),
     "siem-wazuh-windows-events": (
-        "https://www.youtube.com/watch?v=7yK3nM8t5_g",
-        "Wazuh SIEM Setup & Windows Event ID Hunting (4624, 4625, 4688)",
-        "Wazuh Documentation & Security"
+        "https://www.youtube.com/results?search_query=wazuh+SIEM+setup+windows+event+ID+HackerSploit",
+        "Wazuh SIEM & Windows Event IDs",
+        "HackerSploit — https://www.youtube.com/@HackerSploit"
     ),
     "sigma-rule-authoring": (
-        "https://www.youtube.com/watch?v=M9nB7v4e2Yc",
-        "Authoring Production Sigma Detection Rules for Sysmon Telemetry",
-        "Detection Engineering Group"
+        "https://www.youtube.com/results?search_query=sigma+rule+authoring+sysmon+telemetry+Black+Hills+Information+Security",
+        "Authoring Sigma Detection Rules",
+        "Black Hills Information Security — https://www.youtube.com/@BHInfoSecurity"
     ),
     "threat-hunting-frameworks": (
-        "https://www.youtube.com/watch?v=B7m5vY8n4T1",
-        "Threat Hunting Methodologies: TaHiTI & PEAK Frameworks",
-        "Splunk Threat Research Team"
+        "https://www.youtube.com/results?search_query=threat+hunting+frameworks+TaHiTI+PEAK+SANS+Institute",
+        "Threat Hunting Frameworks (TaHiTI, PEAK)",
+        "SANS Institute — https://www.youtube.com/@SANSInstitute"
     ),
 
     # Governance & Professional Skills
     "risk-management-frameworks": (
-        "https://www.youtube.com/watch?v=5nF8k6v9A0c",
-        "NIST Risk Management Framework (RMF) Overview",
-        "Simplilearn"
+        "https://www.youtube.com/results?search_query=NIST+risk+management+framework+RMF+explained+Professor+Messer",
+        "NIST Risk Management Framework Overview",
+        "Professor Messer — https://www.youtube.com/@professormesser"
     ),
     "nist-csf-iso-27001": (
-        "https://www.youtube.com/watch?v=K8n6m4v3B1Y",
-        "NIST Cybersecurity Framework (CSF 2.0) vs ISO 27001",
-        "IT Governance"
+        "https://www.youtube.com/results?search_query=NIST+cybersecurity+framework+vs+ISO+27001+Professor+Messer",
+        "NIST CSF vs ISO 27001",
+        "Professor Messer — https://www.youtube.com/@professormesser"
     ),
     "technical-writing-for-security": (
-        "https://www.youtube.com/watch?v=7nB8v4m3K1c",
-        "How to Write Penetration Testing & Vulnerability Assessment Reports",
-        "TCM Security"
+        "https://www.youtube.com/results?search_query=penetration+test+report+writing+TCM+Security+Academy",
+        "Writing Pentest & Vuln Assessment Reports",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
     "stakeholder-incident-communication": (
-        "https://www.youtube.com/watch?v=3kF8v5m2N7Y",
-        "C-Suite Incident Communication & Executive Briefings",
-        "SANS Leadership"
+        "https://www.youtube.com/results?search_query=incident+communication+executive+briefing+SANS+Institute",
+        "Executive Incident Communication",
+        "SANS Institute — https://www.youtube.com/@SANSInstitute"
     ),
     "interview-star-stories-nice-roles": (
-        "https://www.youtube.com/watch?v=8mB7v4n3K2c",
-        "How to Ace Cybersecurity Interviews Using the STAR Method",
-        "Cyber Work Podcast"
+        "https://www.youtube.com/results?search_query=cybersecurity+interview+STAR+method+Cyber+Work+%28ISC2%29",
+        "Acing Cybersecurity Interviews (STAR Method)",
+        "Cyber Work (ISC2) — https://www.youtube.com/@cyberworkpodcast"
     ),
     "building-a-purple-team-portfolio": (
-        "https://www.youtube.com/watch?v=2nB7v5m4K3c",
-        "Creating a Cybersecurity Portfolio That Gets You Hired",
-        "Gerald Auger / Simply Cyber"
+        "https://www.youtube.com/results?search_query=cybersecurity+portfolio+that+gets+you+hired+Cyber+Work+%28ISC2%29",
+        "Building a Cybersecurity Portfolio",
+        "Cyber Work (ISC2) — https://www.youtube.com/@cyberworkpodcast"
     ),
 
     # Detailed Purple Team Deep Dives
     "osi-tcpip-model": (
-        "https://www.youtube.com/watch?v=vv4y_uOneC0",
-        "OSI Model Explained | Real World Network Analysis",
-        "NetworkChuck"
+        "https://www.youtube.com/results?search_query=OSI+model+explained+real+world+NetworkChuck",
+        "OSI Model Explained — Real World Analysis",
+        "NetworkChuck — https://www.youtube.com/@NetworkChuck"
     ),
     "dns-attacks-defense": (
-        "https://www.youtube.com/watch?v=9gM4s5e6k-Y",
-        "DNS Attacks (Zone Transfer, Cache Poisoning, Tunneling) & Defense",
-        "HackerSploit"
+        "https://www.youtube.com/results?search_query=DNS+attacks+zone+transfer+cache+poisoning+HackerSploit",
+        "DNS Attacks & Defense (Zone Transfer, Poisoning)",
+        "HackerSploit — https://www.youtube.com/@HackerSploit"
     ),
     "http-tls-analysis": (
-        "https://www.youtube.com/watch?v=iYM2zFP3Zn0",
-        "Decrypting & Analyzing TLS Traffic in Wireshark",
-        "Chris Greer"
+        "https://www.youtube.com/results?search_query=decrypting+TLS+traffic+wireshark+Chris+Greer",
+        "Decrypting & Analyzing TLS Traffic",
+        "Chris Greer — https://www.youtube.com/@ChrisGreer"
     ),
     "bash-scripting-security": (
-        "https://www.youtube.com/watch?v=tK9Oc6AEnR4",
-        "Bash for Hackers — Automating Attack and Defense Tasks",
-        "The Cyber Mentor"
+        "https://www.youtube.com/results?search_query=bash+for+hackers+automation+TCM+Security+Academy",
+        "Bash for Hackers — Automating Tasks",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
     "security-report-writing": (
-        "https://www.youtube.com/watch?v=7nB8v4m3K1c",
-        "Executive & Technical Security Report Writing",
-        "TCM Security"
+        "https://www.youtube.com/results?search_query=security+report+writing+executive+technical+TCM+Security+Academy",
+        "Executive & Technical Security Reports",
+        "TCM Security Academy — https://www.youtube.com/@TCMSecurityAcademy"
     ),
     "cybersecurity-career-certifications": (
-        "https://www.youtube.com/watch?v=9yB7n5m4K1c",
-        "The Definitive Cybersecurity Certification Roadmap (2024-2026)",
-        "Paul Jerimy / Cyber Work"
+        "https://www.youtube.com/results?search_query=cybersecurity+certification+roadmap+2026+Cyber+Work+%28ISC2%29",
+        "Cybersecurity Certification Roadmap",
+        "Cyber Work (ISC2) — https://www.youtube.com/@cyberworkpodcast"
     ),
-}
-
-# The original table contained hand-entered video IDs that were not verified.
-# Use YouTube search pages instead, so the seed never claims an exact video is
-# a particular lecture while still giving learners a relevant starting point.
-CURATED_VIDEOS = {
-    slug: (
-        f"https://www.youtube.com/results?search_query="
-        f"{quote_plus(source + ' ' + title)}",
-        title,
-        source,
-    )
-    for slug, (_unused_url, title, source) in CURATED_VIDEOS.items()
 }
 
 QUESTIONS_FOR_SOFT_SKILLS = {
@@ -494,6 +488,41 @@ QUESTIONS_FOR_SOFT_SKILLS = {
          1, "MITRE ATT&CK provides the standard industry taxonomy for communicating adversary behavior across red and blue teams.", 1),
     ],
 }
+
+# Additional high-value topic quizzes (new — didn't exist in the original file).
+# These target topics with heavy real-world weight that weren't covered by
+# seed.py's skill-area CAT bank or seed_missing_assessment_questions.py's
+# skill-area-level questions (those test the SkillArea broadly; these test
+# the specific Topic in depth).
+QUESTIONS_TOPIC_DEPTH = {
+    "kerberoasting-asrep-roasting": [
+        ("Kerberoasting specifically targets accounts that have which AD attribute set?", "1", "2",
+         ["Just 'Password never expires'", "A Service Principal Name (SPN)", "Domain Admin group membership", "A blank password"]),
+        ("Why is Kerberoasting effective as an offline attack once the ticket is captured?", "0", "3",
+         ["The service ticket is encrypted with the service account's password hash, which can be cracked offline without touching the DC again", "It requires no valid domain credentials at all", "It always returns the plaintext password directly", "It only works over an unencrypted network"]),
+        ("What distinguishes AS-REP Roasting from Kerberoasting?", "2", "3",
+         ["AS-REP Roasting requires domain admin rights", "AS-REP Roasting targets service accounts only", "AS-REP Roasting targets user accounts with Kerberos pre-authentication disabled, requiring no valid credentials to request the roastable material", "They are the same attack with different names"]),
+        ("Which encryption type, if used for a requested service ticket, makes Kerberoasting cracking significantly faster?", "1", "3",
+         ["AES-256", "RC4-HMAC (0x17)", "AES-128 with salting", "3DES"]),
+    ],
+    "python-for-security": [
+        ("Which Python library is most commonly used to make simple HTTP requests to a target for recon automation?", "1", "1",
+         ["socket", "requests", "os", "shutil"]),
+        ("Why is using subprocess to call external tools (like nmap) from Python useful in automation scripts?", "2", "2",
+         ["It's the only way Python can run at all", "It replaces the need for the external tool entirely", "It lets you programmatically run a real tool and capture/parse its output for further automated logic", "It encrypts the tool's output automatically"]),
+        ("What Python module is standard for working with JSON output from security tools?", "0", "1",
+         ["json", "csv", "pickle", "struct"]),
+    ],
+    "siem-queries-sigma-rules": [
+        ("What is a key advantage of writing a Sigma rule instead of a native Splunk/Elastic query directly?", "1", "2",
+         ["Sigma rules run faster than native queries", "Sigma rules are vendor-neutral and can be converted (via sigma-cli/pySigma) to multiple SIEM backends", "Sigma rules require no logsource definition", "Sigma is a replacement for the SIEM itself"]),
+        ("In a Sigma rule YAML file, what does the 'logsource' field specify?", "0", "1",
+         ["The category/product/service the rule applies to (e.g., windows security eventlog)", "The rule's author", "The severity level only", "The MITRE ATT&CK ID"]),
+    ],
+}
+
+# Merge into the main quiz dict so main() picks these up automatically.
+QUESTIONS_FOR_SOFT_SKILLS.update(QUESTIONS_TOPIC_DEPTH)
 
 
 def main():

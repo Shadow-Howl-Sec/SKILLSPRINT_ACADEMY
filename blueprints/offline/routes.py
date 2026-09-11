@@ -34,7 +34,7 @@ _KIND_TEMPLATE = {
 _VM_PREREQ_FILE = Path("instance/vm_prereqs.json")
 _VM_LIST = [
     ("kali", "Kali Linux (Attacker)", "Primary attack platform with tools: nmap, impacket, bloodhound.py, hashcat, sqlmap, metasploit"),
-    ("metasploitable2", "Metasploitable2 (Target)", "Intentionally vulnerable Linux for exploitation practice"),
+    ("metasploitable", "Metasploitable2 (Target)", "Intentionally vulnerable Linux for exploitation practice"),
     ("dvwa", "DVWA / Juice Shop (Web Target)", "Damn Vulnerable Web App for OWASP Top 10 practice"),
     ("goad_dc", "GOAD-DC01 (AD Target)", "Game of Active Directory Domain Controller"),
     ("goad_win10", "GOAD-WIN10 (Windows Target)", "Windows 10 joined to GOAD domain for lateral movement"),
@@ -46,7 +46,10 @@ def _load_vm_prereqs() -> dict:
     """Load VM prerequisite checkboxes from JSON file."""
     if _VM_PREREQ_FILE.exists():
         try:
-            return json.loads(_VM_PREREQ_FILE.read_text(encoding="utf-8"))
+            data = json.loads(_VM_PREREQ_FILE.read_text(encoding="utf-8"))
+            if "metasploitable" not in data and "metasploitable2" in data:
+                data["metasploitable"] = data["metasploitable2"]
+            return data
         except Exception:
             return {}
     return {}
@@ -120,7 +123,7 @@ def lab_setup():
             # Map target VM names to our checklist keys
             target_lower = lab.target_vm.lower()
             if "metasploitable" in target_lower:
-                reqs.append("metasploitable2")
+                reqs.append("metasploitable")
             elif "dvwa" in target_lower or "juice shop" in target_lower:
                 reqs.append("dvwa")
             elif "goad" in target_lower and "dc" in target_lower:

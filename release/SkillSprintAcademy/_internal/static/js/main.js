@@ -36,20 +36,10 @@ function createToastContainer() {
 // ------------------------------------------------------------------
 
 /**
- * Apply the pending update. In offline mode, shows an informational toast
- * instead of attempting the network request (which would return HTTP 400).
+ * Apply the pending update. Content is offline-first, but signed application
+ * updates are allowed to use the network.
  */
 function applyUpdate() {
-  // Guard: updates are not supported in offline mode
-  if (window.OFFLINE_MODE === true) {
-    showToast(
-      '<i class="bi bi-wifi-off me-2"></i>Updates are disabled in offline mode. ' +
-      'Download the latest release manually from the project repository.',
-      'warning'
-    );
-    return;
-  }
-
   const banner = document.getElementById('update-banner');
   const downloadUrl = banner?.dataset?.downloadUrl;
 
@@ -75,7 +65,10 @@ function applyUpdate() {
       'Content-Type': 'application/json',
       'X-CSRFToken': csrfToken,
     },
-    body: JSON.stringify({ download_url: downloadUrl }),
+    body: JSON.stringify({
+      download_url: downloadUrl,
+      signature_url: banner?.dataset?.signatureUrl || '',
+    }),
   })
     .then(r => {
       if (r.ok) {
