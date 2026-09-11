@@ -180,11 +180,17 @@ $readme | Out-File -FilePath (Join-Path $releasePath "README.txt") -Encoding utf
 Write-Ok "README created"
 
 # Build a per-user installer when Inno Setup is installed.
-$iscc = Get-Command ISCC.exe -ErrorAction SilentlyContinue
-if ($null -ne $iscc) {
+$isccPath = (Get-Command ISCC.exe -ErrorAction SilentlyContinue).Source
+if ([string]::IsNullOrWhiteSpace($isccPath)) {
+    $userIscc = Join-Path ${env:LOCALAPPDATA} "Programs\Inno Setup 6\ISCC.exe"
+    if (Test-Path $userIscc) {
+        $isccPath = $userIscc
+    }
+}
+if (-not [string]::IsNullOrWhiteSpace($isccPath)) {
     Write-Step "Building Windows installer..."
     $appVersion = (Get-Content (Join-Path $projectRoot "VERSION") -Raw).Trim()
-    & $iscc.Source "/DMyAppVersion=$appVersion" (Join-Path $projectRoot "installer.iss")
+    & $isccPath "/DMyAppVersion=$appVersion" (Join-Path $projectRoot "installer.iss")
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Inno Setup build failed with exit code $LASTEXITCODE"
         exit 1
@@ -207,7 +213,7 @@ Write-Host " Bundles:      release\bundles\"
 Write-Host " Scripts:      release\scripts\"
 Write-Host " Launcher:     release\Start-SkillSprintAcademy.bat"
 Write-Host " README:       release\README.txt"
-if ($null -ne $iscc) { Write-Host " Installer:    release\SkillSprintAcademy-Setup.exe" }
+if (-not [string]::IsNullOrWhiteSpace($isccPath)) { Write-Host " Installer:    release\SkillSprintAcademy-Setup.exe" }
 Write-Host ""
 Write-Host " To run: Double-click Start-SkillSprintAcademy.bat"
 Write-Host "         Or run: release\SkillSprintAcademy\SkillSprintAcademy.exe"

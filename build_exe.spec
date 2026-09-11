@@ -52,6 +52,11 @@ project_datas = [
 # folder doesn't break the build.
 project_datas = [(src, dst) for src, dst in project_datas if os.path.exists(os.path.join(SPEC_DIR, src))]
 
+# pywebview selects a native Windows backend at runtime, so collect its
+# backend modules and package data instead of letting the app fall back to a
+# system browser when the frozen import is incomplete.
+webview_binaries, webview_datas, webview_hidden_imports = collect_all('webview')
+
 # Flask registers blueprints dynamically (imported inside create_app()),
 # so PyInstaller's static import scanner can miss them entirely — the build
 # would succeed but every route would 404 at runtime. List every blueprint
@@ -98,9 +103,9 @@ all_hidden_imports = blueprint_hidden_imports + misc_hidden_imports
 a = Analysis(
     ['app.py'],
     pathex=[SPEC_DIR],
-    binaries=[],
-    datas=project_datas,
-    hiddenimports=all_hidden_imports,
+    binaries=webview_binaries,
+    datas=project_datas + webview_datas,
+    hiddenimports=all_hidden_imports + webview_hidden_imports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

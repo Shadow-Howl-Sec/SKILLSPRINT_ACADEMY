@@ -181,6 +181,12 @@ Write-Ok "README created"
 
 # Build a per-user installer when Inno Setup is installed.
 $iscc = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+if ($null -eq $iscc) {
+    $userIscc = Join-Path ${env:LOCALAPPDATA} "Programs\Inno Setup 6\ISCC.exe"
+    if (Test-Path $userIscc) {
+        $iscc = Get-Item $userIscc
+    }
+}
 if ($null -ne $iscc) {
     Write-Step "Building Windows installer..."
     $appVersion = (Get-Content (Join-Path $projectRoot "VERSION") -Raw).Trim()
