@@ -1,4 +1,5 @@
 import os
+import secrets
 import sys
 from dotenv import load_dotenv
 from paths import get_data_root
@@ -13,9 +14,41 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return val.strip().lower() in ("1", "true", "yes", "on")
 
 
+def _persisted_secret(name: str, filename: str, *, min_length: int = 32) -> str:
+    """Return a stable secret from environment or a per-user file, never a weak fallback."""
+    env_value = os.environ.get(name)
+    if env_value and env_value.strip() and len(env_value.strip()) >= min_length:
+        return env_value.strip()
+
+    data_root = get_data_root()
+    secret_path = os.path.join(data_root, filename)
+    existing = None
+    try:
+        if os.path.exists(secret_path):
+            with open(secret_path, 'r', encoding='utf-8') as fh:
+                existing = fh.read().strip()
+    except OSError:
+        existing = None
+
+    if existing and len(existing) >= min_length:
+        os.environ[name] = existing
+        return existing
+
+    generated = secrets.token_hex(32)
+    try:
+        os.makedirs(data_root, exist_ok=True)
+        with open(secret_path, 'w', encoding='utf-8') as fh:
+            fh.write(generated)
+        os.chmod(secret_path, 0o600)
+    except OSError:
+        pass
+    os.environ[name] = generated
+    return generated
+
+
 class Config:
     """SkillSprint Academy configuration — fully offline Purple Team mastery platform."""
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'skillsprint-dev-secret-change-in-prod')
+    SECRET_KEY = _persisted_secret('SECRET_KEY', 'secret.key')
     APP_NAME = 'SkillSprint Academy'
     APP_TAGLINE = 'Zero to Purple Team Mastery — Fully Offline'
 
@@ -47,9 +80,9 @@ class Config:
 
     ROADMAP_BUFFER_PERCENT = 0.15
 
-    UPDATE_HMAC_SECRET = os.environ.get('UPDATE_HMAC_SECRET', '')
+    UPDATE_HMAC_SECRET = _persisted_secret('UPDATE_HMAC_SECRET', 'update_hmac_secret.key')
 
-    VM_CONFIG_KEY = os.environ.get('VM_CONFIG_KEY', '')
+    VM_CONFIG_KEY = _persisted_secret('VM_CONFIG_KEY', 'vm_config_key.key')
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     BUNDLES_DIR = os.path.join(BASE_DIR, 'bundles')

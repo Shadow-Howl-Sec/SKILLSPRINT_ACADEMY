@@ -1083,6 +1083,11 @@ def main():
         topics = seed_topics(areas)
         print(f"[+] Loaded {len(areas)} SkillAreas and {len(topics)} Topics.")
 
+        # Seed the offline-first VM labs before the baseline online labs so the
+        # database starts with the expected setup flow for local lab prerequisites.
+        new_labs = seed_all_vm_labs(topics)
+        print(f"[+] Seeded {new_labs} new vm_exercise Labs (total: {Lab.query.count()}).")
+
         # Include the baseline CAT bank, curated external labs, and open-source
         # resources so this entry point is complete on its own.
         seed_questions(areas)
@@ -1106,6 +1111,8 @@ def main():
         print(f"[+] Seeded {new_content} new ContentItems (total: {ContentItem.query.count()}).")
 
         # 5. Offline vm_exercise Labs (Labs for ALL Topics)
+        # Already seeded at the start of the process so the first lab in the DB is
+        # the offline-first VM flow expected by the setup wizard and redirect tests.
         new_labs = seed_all_vm_labs(topics)
         print(f"[+] Seeded {new_labs} new vm_exercise Labs (total: {Lab.query.count()}).")
 
@@ -1116,6 +1123,8 @@ def main():
         # 7. Free 5-track learning paths (theory / video / labs / automation / soft skills)
         from seed_resources import seed_learning_paths, seed_professional_skills_area
         seed_professional_skills_area(areas, topics)
+        new_qs_after_bonus = seed_all_questions(topics, areas)
+        print(f"[+] Seeded {new_qs_after_bonus} new AssessmentQuestions for bonus topics.")
         n_path, n_path_labs = seed_learning_paths(topics)
         print(f"[+] Seeded {n_path} learning-path ContentItems and {n_path_labs} extra labs.")
 

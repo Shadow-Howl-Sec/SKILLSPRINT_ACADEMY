@@ -13,11 +13,17 @@ class TestSecurityAudit(unittest.TestCase):
         self.app = app
         self.app.config['TESTING'] = True
         self.app.config['WTF_CSRF_ENABLED'] = True
+        self.app.config['OFFLINE_MODE'] = True
+        self._original_update_secret = self.app.config.get('UPDATE_HMAC_SECRET')
+        self._original_secret_key = self.app.config.get('SECRET_KEY')
         self.client = self.app.test_client()
         self.ctx = self.app.app_context()
         self.ctx.push()
 
     def tearDown(self):
+        self.app.config['UPDATE_HMAC_SECRET'] = self._original_update_secret
+        self.app.config['SECRET_KEY'] = self._original_secret_key
+        self.app.config['OFFLINE_MODE'] = True
         self.ctx.pop()
 
     def test_csp_header_present(self):
@@ -27,6 +33,13 @@ class TestSecurityAudit(unittest.TestCase):
         self.assertIn('Content-Security-Policy', res.headers)
         csp = res.headers['Content-Security-Policy']
         self.assertIn("script-src", csp)
+
+    def test_secret_keys_are_not_weak_default_values(self):
+        """The app must not ship with a hardcoded insecure secret fallback."""
+        self.assertNotEqual(self.app.config['SECRET_KEY'], 'skillsprint-dev-secret-change-in-prod')
+        self.assertNotEqual(self.app.config['UPDATE_HMAC_SECRET'], 'skillsprint-dev-secret-change-in-prod')
+        self.assertGreaterEqual(len(self.app.config['SECRET_KEY']), 32)
+        self.assertGreaterEqual(len(self.app.config['UPDATE_HMAC_SECRET']), 32)
 
     def test_apply_update_hmac_verification_in_online_mode(self):
         """Verify HMAC-SHA256 signature verification for apply-update in online mode."""
@@ -66,6 +79,7 @@ class TestSecurityAudit(unittest.TestCase):
 
         # Restore default test mode
         self.app.config['OFFLINE_MODE'] = True
+        self.app.config['UPDATE_HMAC_SECRET'] = self._original_update_secret
 
     def test_csrf_protection_on_post_routes(self):
         """Verify CSRF token is required on state-mutating POST endpoints when WTF_CSRF_ENABLED is True."""

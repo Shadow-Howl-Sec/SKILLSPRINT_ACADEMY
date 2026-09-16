@@ -430,6 +430,7 @@ class Lab(db.Model):
     attacker_vm = db.Column(db.String(100), nullable=True)       # e.g. "Kali"
     target_vm = db.Column(db.String(100), nullable=True)         # e.g. "GOAD-DC01", "Metasploitable2"
     detection_vm = db.Column(db.String(100), nullable=True)      # e.g. "Wazuh Manager"
+    pre_lab_theory_md = db.Column(db.Text, nullable=True)        # what the attack is and why it works
     instructions_md = db.Column(db.Text, nullable=True)          # step-by-step attack instructions
     detection_task_md = db.Column(db.Text, nullable=True)        # what to look for/build in Wazuh
     mitre_technique = db.Column(db.String(20), nullable=True)    # single MITRE technique for this lab

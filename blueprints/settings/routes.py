@@ -1,4 +1,6 @@
 # blueprints/settings/routes.py
+import hashlib
+import hmac
 import os
 from flask import Blueprint, request, jsonify, current_app
 from services.update_service import apply_update
@@ -64,15 +66,31 @@ def apply_update_route():
 
     The package signature is verified by the application before installation.
     """
-    from flask import current_app
     data = request.get_json(silent=True) or {}
     download_url = data.get("download_url")
+
+    if current_app.config.get("OFFLINE_MODE", False):
+        return jsonify({"error": "offline mode: updates are disabled while the app is offline."}), 400
 
     if not download_url:
         return jsonify({"error": "download_url required"}), 400
 
-    if not apply_update(download_url, data.get("signature_url")):
-        return jsonify({"error": "update could not be staged"}), 500
+    secret = current_app.config.get("UPDATE_HMAC_SECRET")
+    signature = data.get("signature")
+    if secret:
+        if not signature:
+            return jsonify({"error": "signature required"}), 400
+        expected = hmac.new(secret.encode("utf-8"), download_url.encode("utf-8"), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(expected, signature):
+            return jsonify({"error": "invalid update signature"}), 403
+
+    signature_url = data.get("signature_url")
+    if signature_url is None:
+        if not apply_update(download_url):
+            return jsonify({"error": "update could not be staged"}), 500
+    else:
+        if not apply_update(download_url, signature_url):
+            return jsonify({"error": "update could not be staged"}), 500
     return jsonify({"status": "updating"})
 
 

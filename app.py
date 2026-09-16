@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from flask import (Flask, render_template, request, jsonify, redirect,
                    url_for, flash, abort, g)
 from dotenv import load_dotenv
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 from extensions import db, migrate, limiter, csrf
 load_dotenv()
 
@@ -108,10 +108,10 @@ def load_default_user():
         user = User.query.first()
         if user is None:
             user = User(
-                username='Shubham',
-                email='shubham@skillsprint.local',
-                first_name='Shubham',
-                last_name='',
+                username='operator',
+                email='operator@skillsprint.local',
+                first_name='Operator',
+                last_name='User',
                 email_verified=True,
                 is_active=True,
                 is_admin=True,
@@ -119,7 +119,29 @@ def load_default_user():
             user.set_password('skillsprint')
             db.session.add(user)
             db.session.commit()
+        else:
+            changed = False
+            if user.username != 'operator':
+                user.username = 'operator'; changed = True
+            if user.email != 'operator@skillsprint.local':
+                user.email = 'operator@skillsprint.local'; changed = True
+            if user.first_name != 'Operator':
+                user.first_name = 'Operator'; changed = True
+            if user.last_name != 'User':
+                user.last_name = 'User'; changed = True
+            if changed:
+                db.session.commit()
         g.user = user
+
+        from models import Roadmap, JobRole
+        from services.roadmap_engine import generate_roadmap
+        if not Roadmap.query.filter_by(user_id=user.id, status='active').first():
+            role = JobRole.query.filter_by(is_default=True, is_active=True).first()
+            if role is None:
+                role = JobRole.query.filter_by(is_active=True).first()
+            if role is not None:
+                generate_roadmap(user_id=user.id, job_role_id=role.id)
+                db.session.commit()
 
 
 # Start update checker after first request context is available
@@ -295,25 +317,43 @@ def shutdown_background_services():
 atexit.register(shutdown_background_services)
 
 
+def ensure_schema_compatibility():
+    """Compatibility shim for older SQLite databases created before newer columns existed."""
+    try:
+        inspector = inspect(db.engine)
+        if inspector.has_table('lab'):
+            columns = {col['name'] for col in inspector.get_columns('lab')}
+            if 'pre_lab_theory_md' not in columns:
+                db.session.execute(text('ALTER TABLE lab ADD COLUMN pre_lab_theory_md TEXT'))
+                db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print(f"[WARN] Schema compatibility check failed: {exc}")
+
+
 def create_tables():
-    with app.app_context():
-        try:
-            db.create_all()
-            print("[OK] Database tables created successfully!")
-        except Exception as e:
-            print(f"[ERR] Error creating database tables: {e}")
-            return
-        print("Database initialized successfully!")
-        # Seed reference data if empty
-        try:
-            from models import JobRole
-            if JobRole.query.count() == 0:
-                print("Seeding reference data...")
-                import seed_comprehensive
-                seed_comprehensive.main()
-                print("Reference data seeded successfully!")
-        except Exception as e:
-            print(f"[WARN] Seeding failed: {e}")
+    try:
+        db.create_all()
+        ensure_schema_compatibility()
+        print("[OK] Database tables created successfully!")
+    except Exception as e:
+        print(f"[ERR] Error creating database tables: {e}")
+        return
+    print("Database initialized successfully!")
+    # Seed reference data if empty
+    try:
+        from models import JobRole
+        if JobRole.query.count() == 0:
+            print("Seeding reference data...")
+            import seed_comprehensive
+            seed_comprehensive.main()
+            print("Reference data seeded successfully!")
+    except Exception as e:
+        print(f"[WARN] Seeding failed: {e}")
+
+
+with app.app_context():
+    create_tables()
 
 
 if __name__ == '__main__':
