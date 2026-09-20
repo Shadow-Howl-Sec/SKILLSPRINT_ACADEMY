@@ -37,6 +37,7 @@ project_datas = [
     ('VERSION', '.'),
     ('seed.py', '.'),
     ('seed_comprehensive.py', '.'),
+    ('seed_roadmap_sh.py', '.'),
     ('seed_resources.py', '.'),
     ('seed_all_videos_and_quizzes.py', '.'),
     ('config.py', '.'),
@@ -45,7 +46,6 @@ project_datas = [
     ('paths.py', '.'),
     ('version_info.txt', '.'),
     ('requirements.txt', '.'),
-    ('.env', '.'),
 ]
 
 # Only include files/folders that actually exist, so a missing optional

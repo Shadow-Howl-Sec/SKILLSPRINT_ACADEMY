@@ -96,7 +96,9 @@ def progress():
 
 @dashboard_bp.route("/roadmap-item/<int:item_id>/complete", methods=["POST"])
 def complete_item(item_id: int):
-    item = RoadmapItem.query.get_or_404(item_id)
+    item = db.session.get(RoadmapItem, item_id)
+    if item is None:
+        abort(404)
     if item.roadmap.user_id != g.user.id:
         abort(403)
     if item.status == "done":

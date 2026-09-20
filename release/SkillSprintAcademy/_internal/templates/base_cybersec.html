@@ -157,7 +157,7 @@
                 </button>
               </li>
               <li>
-                <a class="dropdown-item" href="{{ UPDATE_RELEASES_URL }}" target="_blank" rel="noopener">
+                <a class="dropdown-item" href="{{ UPDATE_RELEASES_URL }}" data-external="true" target="_blank" rel="noopener">
                   <i class="bi bi-box-arrow-up-right me-2 text-info"></i>Download latest release
                 </a>
               </li>
@@ -229,11 +229,16 @@
 <script nonce="{{ csp_nonce }}">
   // Server-injected runtime config — required before main.js loads
   window.OFFLINE_MODE = {{ 'true' if OFFLINE_MODE else 'false' }};
-  // Keep external learning resources in the native application window.
+
+  // Keep external learning resources inside the desktop app, not the OS browser.
   document.addEventListener('click', function (event) {
-    const link = event.target.closest('a[href]');
+    const link = event.target.closest('a[data-external="true"]');
     if (!link || !/^https?:/i.test(link.href)) return;
     event.preventDefault();
+    if (window.pywebview && window.pywebview.api && typeof window.pywebview.api.open_external === 'function') {
+      window.pywebview.api.open_external(link.href);
+      return;
+    }
     window.location.href = '/open-external?url=' + encodeURIComponent(link.href);
   });
 </script>

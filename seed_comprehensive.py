@@ -1128,6 +1128,11 @@ def main():
         n_path, n_path_labs = seed_learning_paths(topics)
         print(f"[+] Seeded {n_path} learning-path ContentItems and {n_path_labs} extra labs.")
 
+        # 7b. roadmap.sh references for structured external learning paths
+        from seed_roadmap_sh import seed_roadmap_sh_resources
+        n_roadmap, n_roadmap_skipped = seed_roadmap_sh_resources()
+        print(f"[+] Seeded {n_roadmap} roadmap.sh resources ({n_roadmap_skipped} skipped).")
+
         # 8. TopicLearningModule — 5-component learning modules
         new_modules = seed_all_topic_learning_modules(topics)
         print(f"[+] Seeded {new_modules} new TopicLearningModules (total: {TopicLearningModule.query.count()}).")

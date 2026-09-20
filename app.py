@@ -331,6 +331,24 @@ def ensure_schema_compatibility():
         print(f"[WARN] Schema compatibility check failed: {exc}")
 
 
+def ensure_curriculum_integrity():
+    """Repair curriculum completeness gaps for existing databases."""
+    try:
+        from models import SkillArea, Topic
+        from seed_resources import seed_professional_skills_area
+        from seed_roadmap_sh import seed_roadmap_sh_resources
+
+        areas_by_name = {area.name: area for area in SkillArea.query.all()}
+        topics_by_title = {topic.title: topic for topic in Topic.query.all()}
+        if topics_by_title:
+            seed_professional_skills_area(areas_by_name, topics_by_title)
+            seed_roadmap_sh_resources()
+            db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print(f"[WARN] Curriculum integrity repair failed: {exc}")
+
+
 def create_tables():
     try:
         db.create_all()
@@ -348,6 +366,8 @@ def create_tables():
             import seed_comprehensive
             seed_comprehensive.main()
             print("Reference data seeded successfully!")
+        else:
+            ensure_curriculum_integrity()
     except Exception as e:
         print(f"[WARN] Seeding failed: {e}")
 

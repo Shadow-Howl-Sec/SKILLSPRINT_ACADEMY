@@ -3,7 +3,7 @@ import os
 import unittest
 from app import app
 from extensions import db
-from models import SkillArea, Topic, TopicLearningModule, AssessmentQuestion, Lab, JobRole
+from models import SkillArea, Topic, TopicLearningModule, AssessmentQuestion, Lab, JobRole, ContentItem
 
 class TestPurpleTeamCurriculum(unittest.TestCase):
     """Test suite for Purple Team curriculum models and seed integrity."""
@@ -66,3 +66,41 @@ class TestPurpleTeamCurriculum(unittest.TestCase):
             source = seed_file.read()
         self.assertNotIn('JobRoleTopic.query.delete()', source)
         self.assertNotIn('JobRole.query.delete()', source)
+
+    def test_every_topic_has_learning_module_lab_and_questions(self):
+        """Every topic should satisfy the QA plan's completeness requirements."""
+        missing = []
+        for topic in Topic.query.order_by(Topic.id).all():
+            if topic.learning_module is None:
+                missing.append(f"{topic.title}: missing learning module")
+                continue
+            if not Lab.query.filter_by(topic_id=topic.id).first():
+                missing.append(f"{topic.title}: missing lab")
+            if not AssessmentQuestion.query.filter_by(topic_id=topic.id).first():
+                missing.append(f"{topic.title}: missing checkpoint question")
+        self.assertFalse(missing, "\n".join(missing))
+
+    def test_roadmap_sh_resources_are_seeded_as_external_links(self):
+        """roadmap.sh references must be external links tied to local topics."""
+        resources = ContentItem.query.filter_by(source="external_admin").all()
+        roadmap_resources = [
+            item for item in resources
+            if item.url and item.url.startswith("https://roadmap.sh/")
+        ]
+        self.assertGreater(len(roadmap_resources), 0)
+        for item in roadmap_resources:
+            self.assertEqual(item.type, "external_link")
+            self.assertIsNotNone(item.topic)
+
+    def test_roadmap_sh_seed_is_idempotent(self):
+        """Re-running the roadmap.sh seed must not duplicate content rows."""
+        from seed_roadmap_sh import seed_roadmap_sh_resources
+
+        before = ContentItem.query.filter(
+            ContentItem.url.like("https://roadmap.sh/%")
+        ).count()
+        seed_roadmap_sh_resources()
+        after = ContentItem.query.filter(
+            ContentItem.url.like("https://roadmap.sh/%")
+        ).count()
+        self.assertEqual(after, before)

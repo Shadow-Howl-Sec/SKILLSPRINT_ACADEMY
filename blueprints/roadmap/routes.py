@@ -174,7 +174,9 @@ def start():
 
 @roadmap_bp.route("/roadmap/item/<int:item_id>/move", methods=["POST"])
 def move_item(item_id: int):
-    item = RoadmapItem.query.get_or_404(item_id)
+    item = db.session.get(RoadmapItem, item_id)
+    if item is None:
+        abort(404)
     if item.roadmap.user_id != g.user.id:
         abort(403)
         

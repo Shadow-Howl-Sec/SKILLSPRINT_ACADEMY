@@ -64,7 +64,9 @@ def _save_vm_prereqs(data: dict) -> None:
 @offline_bp.route("/exercise/<int:exercise_id>")
 def view_exercise(exercise_id: int):
     """Render an `interactive_exercise` ContentItem (plan §4 / §11 Phase C)."""
-    item = ContentItem.query.get_or_404(exercise_id)
+    item = db.session.get(ContentItem, exercise_id)
+    if item is None:
+        abort(404)
     if item.type != "interactive_exercise" or not item.is_active:
         abort(404)
     spec_json = item.exercise_spec or "{}"

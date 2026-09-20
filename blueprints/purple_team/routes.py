@@ -130,7 +130,9 @@ def log_new():
 @purple_team_bp.route("/log/<int:log_id>/edit", methods=["GET", "POST"])
 def log_edit(log_id: int):
     """Edit an existing log entry."""
-    log = PurpleTeamExerciseLog.query.get_or_404(log_id)
+    log = db.session.get(PurpleTeamExerciseLog, log_id)
+    if log is None:
+        abort(404)
     if log.user_id != g.user.id:
         abort(403)
     
@@ -163,7 +165,9 @@ def log_edit(log_id: int):
 @purple_team_bp.route("/log/<int:log_id>/delete", methods=["POST"])
 def log_delete(log_id: int):
     """Delete a log entry."""
-    log = PurpleTeamExerciseLog.query.get_or_404(log_id)
+    log = db.session.get(PurpleTeamExerciseLog, log_id)
+    if log is None:
+        abort(404)
     if log.user_id != g.user.id:
         abort(403)
     

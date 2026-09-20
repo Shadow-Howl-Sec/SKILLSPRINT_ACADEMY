@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 
 from extensions import db
-from models import ContentItem, Lab, SkillArea, Topic
+from models import AssessmentQuestion, ContentItem, Lab, SkillArea, Topic, TopicLearningModule
 from seed import get_or_create, slugify
 
 
@@ -757,6 +757,74 @@ def seed_learning_paths(topics_by_title: dict[str, Topic]) -> tuple[int, int]:
     return n_items, n_labs
 
 
+def _ensure_professional_skill_topic_content(topic: Topic, title: str) -> None:
+    """Guarantee each professional-skills topic has a learning module, lab, and quiz."""
+    if not TopicLearningModule.query.filter_by(topic_id=topic.id).first():
+        module = TopicLearningModule(
+            topic_id=topic.id,
+            theory_md=f"# {title}\n\n## Core objective\nThis topic develops the communication and documentation behaviors that make technical security work credible in real organizations.",
+            video_url="",
+            video_title=f"{title} — professional skill overview",
+            video_source="Internal Guidance",
+            lab_guide_md=f"## Lab: {title}\n\n1. Draft a concise artifact grounded in a real security scenario.\n2. Explain the technical facts, impact, evidence, and recommended response.\n3. Deliver the result in a format suitable for stakeholder review or interview discussion.",
+            lab_prerequisites="Workbook, note-taking template, and a sample incident or project artifact.",
+            assessment_md=f"## Knowledge Check for {title}\n\n1. What is the strongest reason to document findings with clear evidence?\n2. How should security outcomes be communicated to non-technical stakeholders?",
+            real_world_md=f"## Real-world application\n{title} is essential for Security Engineers, SOC analysts, and consultants who need to translate technical findings into clear decisions and action.",
+        )
+        db.session.add(module)
+
+    if not Lab.query.filter_by(topic_id=topic.id).first():
+        db.session.add(Lab(
+            topic_id=topic.id,
+            title=f"Professional Skills Lab: {title}",
+            description=f"Writing and communication exercise for {title}.",
+            provider="self_hosted_offline",
+            url_or_container_ref="internal_professional_skill",
+            difficulty=1,
+            estimated_minutes=45,
+            proof_type="self_report_checklist",
+            xp_reward=25,
+            is_active=True,
+        ))
+
+    if not AssessmentQuestion.query.filter_by(topic_id=topic.id).first():
+        q1 = AssessmentQuestion(
+            skill_area_id=topic.skill_area_id,
+            topic_id=topic.id,
+            question_text=f"Which communication practice best improves the clarity of a {title.lower()} deliverable?",
+            question_type="mcq",
+            options=json.dumps([
+                "Using concise, evidence-based wording tied to risk and business impact",
+                "Omitting technical details to avoid complexity",
+                "Only sharing the final recommendation without context",
+                "Using jargon without explaining why it matters",
+            ]),
+            correct_answer="0",
+            explanation="Clear communication connects technical evidence to stakeholder impact and action.",
+            difficulty=1,
+            applicable_roles=json.dumps(["purple-team", "soc-analyst"]),
+            is_active=True,
+        )
+        q2 = AssessmentQuestion(
+            skill_area_id=topic.skill_area_id,
+            topic_id=topic.id,
+            question_text=f"What is the most important outcome of a strong {title.lower()} artifact?",
+            question_type="mcq",
+            options=json.dumps([
+                "It gives decision-makers enough context to act confidently",
+                "It avoids all technical detail to keep it short",
+                "It removes the need for follow-up questions",
+                "It guarantees a security fix without investigation",
+            ]),
+            correct_answer="0",
+            explanation="The goal is clear operational understanding and informed decisions, not vague abstraction.",
+            difficulty=1,
+            applicable_roles=json.dumps(["purple-team", "soc-analyst"]),
+            is_active=True,
+        )
+        db.session.add_all([q1, q2])
+
+
 def seed_professional_skills_area(areas_by_name: dict[str, SkillArea],
                                   topics_by_title: dict[str, Topic]) -> None:
     """Add a Professional Skills area used by interview/soft-skill topics."""
@@ -788,4 +856,5 @@ def seed_professional_skills_area(areas_by_name: dict[str, SkillArea],
             topics_by_title[title] = topic
         else:
             topics_by_title.setdefault(title, topic)
+        _ensure_professional_skill_topic_content(topic, title)
     db.session.flush()

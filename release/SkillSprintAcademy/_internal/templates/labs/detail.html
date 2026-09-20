@@ -69,8 +69,8 @@
         </div>
       {% else %}
         {# Online mode — original behaviour #}
-        <a href="{{ lab.url_or_container_ref or '#' }}" target="_blank" rel="noopener" class="btn btn-primary mb-4">
-          <i class="bi bi-box-arrow-up-right me-1"></i> Launch lab (opens in new tab)
+        <a href="{{ lab.url_or_container_ref or '#' }}" data-external="true" target="_blank" rel="noopener" class="btn btn-primary mb-4">
+          <i class="bi bi-box-arrow-up-right me-1"></i> Launch lab (opens in app window)
         </a>
       {% endif %}
 

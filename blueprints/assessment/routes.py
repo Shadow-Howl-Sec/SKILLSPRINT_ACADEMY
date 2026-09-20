@@ -21,7 +21,9 @@ assessment_bp = Blueprint("assessment", __name__)
 @assessment_bp.route("/topic/<int:topic_id>/quiz", methods=["GET", "POST"])
 def topic_quiz(topic_id: int):
     """Render and evaluate checkpoint quiz for a specific topic."""
-    topic = Topic.query.get_or_404(topic_id)
+    topic = db.session.get(Topic, topic_id)
+    if topic is None:
+        abort(404)
     questions = AssessmentQuestion.query.filter_by(topic_id=topic.id, is_active=True).all()
     
     # Fallback to skill area questions if no topic questions exist

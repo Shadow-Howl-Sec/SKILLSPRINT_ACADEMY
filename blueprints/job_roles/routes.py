@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 
-from flask import Blueprint, render_template, redirect, url_for, jsonify, flash, g
+from flask import Blueprint, render_template, redirect, url_for, jsonify, flash, g, abort
 from models import JobRole, Topic
 from extensions import db
 from services.roadmap_engine import generate_roadmap
@@ -26,7 +26,9 @@ def browse():
 
 @job_roles_bp.route("/job-roles/<int:role_id>")
 def detail(role_id: int):
-    role = JobRole.query.get_or_404(role_id)
+    role = db.session.get(JobRole, role_id)
+    if role is None:
+        abort(404)
     role_topics = [rt.topic for rt in role.role_topics if rt.topic and rt.topic.is_active]
     certs = []
     if role.recommended_certs:
@@ -40,7 +42,9 @@ def detail(role_id: int):
 
 @job_roles_bp.route("/job-roles/<int:role_id>/start")
 def start(role_id: int):
-    role = JobRole.query.get_or_404(role_id)
+    role = db.session.get(JobRole, role_id)
+    if role is None:
+        abort(404)
     generate_roadmap(user_id=g.user.id, job_role_id=role.id)
     db.session.commit()
     flash(f"Roadmap generated for track: {role.name}!", "success")

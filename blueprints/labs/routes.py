@@ -218,7 +218,9 @@ def _get_bundle_artifacts(bundles_root: str, ref: str) -> list[dict]:
 
 @labs_bp.route("/lab/<int:lab_id>")
 def detail(lab_id: int):
-    lab = Lab.query.get_or_404(lab_id)
+    lab = db.session.get(Lab, lab_id)
+    if lab is None:
+        abort(404)
     if _offline_mode() and lab.provider in _ONLINE_PROVIDERS:
         # Link-out labs are disabled in offline mode (plan §5.4 / §9).
         flash("This lab requires internet and is disabled in offline mode.", "info")
@@ -253,7 +255,9 @@ def serve_bundle_file(lab_id: int, filename: str):
 
     `filename` is safely resolved relative to BUNDLES_LABS_DIR and the lab's bundle path.
     """
-    lab = Lab.query.get_or_404(lab_id)
+    lab = db.session.get(Lab, lab_id)
+    if lab is None:
+        abort(404)
     if not lab.is_offline_available:
         abort(404)
     bundles_root = current_app.config.get("BUNDLES_LABS_DIR")
@@ -309,7 +313,9 @@ def _log_purple_team_exercise(lab, form_data):
 
 @labs_bp.route("/lab/<int:lab_id>/submit", methods=["POST"])
 def submit(lab_id: int):
-    lab = Lab.query.get_or_404(lab_id)
+    lab = db.session.get(Lab, lab_id)
+    if lab is None:
+        abort(404)
     proof = request.form.get("proof", "").strip()
 
     # Handle vm_exercise checklist proof

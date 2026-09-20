@@ -55,7 +55,9 @@ def add():
 
 @library_bp.route("/library/<int:resource_id>/schedule", methods=["POST"])
 def schedule(resource_id: int):
-    resource = UserResource.query.get_or_404(resource_id)
+    resource = db.session.get(UserResource, resource_id)
+    if resource is None:
+        abort(404)
     if resource.user_id != g.user.id:
         abort(403)
 
@@ -88,7 +90,9 @@ def schedule(resource_id: int):
 
 @library_bp.route("/library/<int:resource_id>/delete", methods=["POST"])
 def delete(resource_id: int):
-    resource = UserResource.query.get_or_404(resource_id)
+    resource = db.session.get(UserResource, resource_id)
+    if resource is None:
+        abort(404)
     if resource.user_id != g.user.id:
         abort(403)
 
@@ -96,4 +100,4 @@ def delete(resource_id: int):
     db.session.delete(resource)
     db.session.commit()
     flash("Resource removed from your library.", "info")
-    return redirect(url_for("library.list"))
+    return redirect(url_for("library.list"))

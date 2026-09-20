@@ -66,8 +66,9 @@ class TestUIFixes(unittest.TestCase):
 
     def test_bootstrap_icons_font_is_served(self):
         """The vendored Bootstrap Icons stylesheet must resolve its relative fonts."""
-        res = self.client.get('/static/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2')
-        self.assertEqual(res.status_code, 200)
+        with self.client.get('/static/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2') as res:
+            self.assertEqual(res.status_code, 200)
+            res.get_data()
 
     def test_roadmap_without_plan_starts_onboarding(self):
         """A missing roadmap must not bounce the user back to the home page."""
