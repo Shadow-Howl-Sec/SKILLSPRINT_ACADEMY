@@ -48,6 +48,7 @@
     // Store download URL for the apply button (consumed by main.js applyUpdate)
     banner.dataset.downloadUrl = updateInfo.download_url || '';
     banner.dataset.signatureUrl = updateInfo.signature_url || '';
+    banner.dataset.signature = updateInfo.signature || '';
     banner.dataset.latestVersion = latest;
 
     banner.style.display = 'block';

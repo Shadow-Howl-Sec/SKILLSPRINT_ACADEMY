@@ -21,9 +21,21 @@ def _render_markdown(text: str) -> str:
     if not text:
         return ""
     try:
-        return markdown.markdown(text, extensions=['fenced_code', 'tables', 'codehilite'])
+        rendered = markdown.markdown(text, extensions=['fenced_code', 'tables', 'codehilite'])
+        import bleach
+        return bleach.clean(
+            rendered,
+            tags={'a', 'abbr', 'b', 'blockquote', 'br', 'code', 'del', 'em',
+                  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol',
+                  'p', 'pre', 'strong', 'table', 'tbody', 'td', 'th', 'thead',
+                  'tr', 'ul'},
+            attributes={'a': ['href', 'title', 'rel']},
+            protocols=['http', 'https', 'mailto'],
+            strip=True,
+        )
     except Exception:
-        return text
+        from markupsafe import escape
+        return str(escape(text)).replace('\n', '<br>\n')
 
 
 def _session_id() -> str:
@@ -54,6 +66,14 @@ def chat_api():
     # Limit message size to prevent memory exhaustion
     if len(message) > 4000:
         return jsonify({"error": "message too long (max 4000 chars)"}), 400
+
+    if topic_id not in (None, ""):
+        try:
+            topic_id = int(topic_id)
+        except (TypeError, ValueError):
+            return jsonify({"error": "invalid topic"}), 400
+        if db.session.get(Topic, topic_id) is None:
+            return jsonify({"error": "topic not found"}), 404
 
     sid = _session_id()
     user_msg = ChatMessage(

@@ -9,6 +9,19 @@ from services.scheduler_service import check_for_updates, get_cached_update_info
 settings_bp = Blueprint("settings", __name__)
 
 
+def _add_update_signature(update_info):
+    if not update_info or not update_info.get("download_url"):
+        return update_info
+    secret = current_app.config.get("UPDATE_HMAC_SECRET")
+    if secret:
+        update_info["signature"] = hmac.new(
+            secret.encode("utf-8"),
+            update_info["download_url"].encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+    return update_info
+
+
 @settings_bp.route("/api/update/check", methods=["GET", "POST"])
 def check_update():
     """Check for application updates."""
@@ -34,7 +47,7 @@ def check_update():
             except Exception:
                 update_info["current_version"] = "1.0.0"
         
-        return jsonify(update_info)
+        return jsonify(_add_update_signature(update_info))
     except Exception as e:
         current_app.logger.error(f"Update check error: {e}")
         return jsonify({
@@ -50,7 +63,7 @@ def update_status():
     try:
         cached = get_cached_update_info()
         if cached:
-            return jsonify(cached)
+            return jsonify(_add_update_signature(cached))
     except Exception:
         pass
     
@@ -92,8 +105,11 @@ def apply_update_route():
         if not apply_update(download_url, signature_url):
             return jsonify({"error": "update could not be staged"}), 500
     return jsonify({"status": "updating"})
+# End of settings routes.
+__all__ = ["settings_bp"]
 
 
-# Exempt API endpoints from CSRF protection
-from extensions import csrf
-csrf.exempt(settings_bp)
+
+
+
+

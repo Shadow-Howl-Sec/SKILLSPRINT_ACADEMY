@@ -2,6 +2,7 @@
 import unittest
 import hmac
 import hashlib
+import re
 from app import app
 from extensions import db
 from models import User, Roadmap, JobRole
@@ -19,6 +20,12 @@ class TestSecurityAudit(unittest.TestCase):
         self.client = self.app.test_client()
         self.ctx = self.app.app_context()
         self.ctx.push()
+
+    def _csrf_headers(self):
+        response = self.client.get('/roadmap', follow_redirects=True)
+        token = re.search(r'<meta name="csrf-token" content="([^"]+)"',
+                          response.get_data(as_text=True)).group(1)
+        return {'X-CSRFToken': token}
 
     def tearDown(self):
         self.app.config['UPDATE_HMAC_SECRET'] = self._original_update_secret
@@ -49,14 +56,14 @@ class TestSecurityAudit(unittest.TestCase):
         # Test 1: Missing signature -> 400
         res = self.client.post('/settings/apply-update', json={
             'download_url': 'https://example.com/update.zip'
-        })
+        }, headers=self._csrf_headers())
         self.assertEqual(res.status_code, 400)
 
         # Test 2: Invalid signature -> 403
         res = self.client.post('/settings/apply-update', json={
             'download_url': 'https://example.com/update.zip',
             'signature': 'invalid_signature_hex'
-        })
+        }, headers=self._csrf_headers())
         self.assertEqual(res.status_code, 403)
 
         # Test 3: Valid signature -> computes matching HMAC
@@ -73,7 +80,7 @@ class TestSecurityAudit(unittest.TestCase):
             res = self.client.post('/settings/apply-update', json={
                 'download_url': url,
                 'signature': valid_sig
-            })
+            }, headers=self._csrf_headers())
             self.assertEqual(res.status_code, 200)
             mock_apply.assert_called_once_with(url)
 

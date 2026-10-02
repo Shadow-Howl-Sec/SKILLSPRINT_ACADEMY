@@ -23,7 +23,7 @@ from flask import (Blueprint, render_template, redirect, url_for, request,
 from werkzeug.utils import safe_join
 
 from extensions import db
-from models import Lab, RoadmapItem, PurpleTeamExerciseLog, AttackCoverage, VMConfig
+from models import Lab, RoadmapItem, PurpleTeamExerciseLog, AttackCoverage, VMConfig, XPLog
 
 from services.xp_service import award_xp, touch_streak
 
@@ -317,6 +317,8 @@ def submit(lab_id: int):
     if lab is None:
         abort(404)
     proof = request.form.get("proof", "").strip()
+    already_completed = XPLog.query.filter_by(
+        user_id=g.user.id, source_type="lab", source_id=lab.id).first() is not None
 
     # Handle vm_exercise checklist proof
     if lab.is_vm_exercise:
@@ -338,7 +340,8 @@ def submit(lab_id: int):
             return redirect(url_for("labs.detail", lab_id=lab.id))
         
         # Log the purple team exercise
-        _log_purple_team_exercise(lab, form_data)
+        if not already_completed:
+            _log_purple_team_exercise(lab, form_data)
         
     elif lab.proof_type == "flag" and lab.flag_hash:
         actual = hashlib.sha256(proof.encode()).hexdigest()
@@ -351,9 +354,10 @@ def submit(lab_id: int):
             return redirect(url_for("labs.detail", lab_id=lab.id))
     # screenshot / writeup_url / self_report_checklist: accept anything non-empty for MVP
 
-    award_xp(g.user.id, "lab", lab.id, xp_amount=lab.xp_reward,
-             description=f"Completed lab: {lab.title}")
-    touch_streak(g.user.id, date.today())
+    xp = award_xp(g.user.id, "lab", lab.id, xp_amount=lab.xp_reward,
+                  description=f"Completed lab: {lab.title}")
+    if xp:
+        touch_streak(g.user.id, date.today())
     db.session.commit()
-    flash(f"+{lab.xp_reward} XP — lab complete!", "success")
+    flash(f"+{xp} XP — lab complete!" if xp else "Lab already completed.", "success")
     return redirect(url_for("labs.browse"))

@@ -125,14 +125,6 @@ def schedule_items(items: list[dict], availability: dict[int, int],
                     continue
                 else:
                     # No more blocks today
-                    if len(queue) == 1:
-                        # Place last item today
-                        slot_str = f"{current_block.get('start', '09:00')}-{current_block.get('end', '12:00')} ({current_block.get('name', 'Block')})"
-                        item["scheduled_date"] = datetime.combine(current, datetime.min.time())
-                        item["time_slot"] = slot_str
-                        item["order_index"] = len(scheduled)
-                        scheduled.append(item)
-                        queue.popleft()
                     break
 
             slot_str = f"{current_block.get('start', '09:00')}-{current_block.get('end', '12:00')} ({current_block.get('name', 'Block')})"
@@ -147,12 +139,16 @@ def schedule_items(items: list[dict], availability: dict[int, int],
 
         current += timedelta(days=1)
 
-    # Fallback for remaining items
+    # Oversized items receive a dedicated slot so the schedule does not claim
+    # that they fit inside a normal block.
     if queue:
         fallback_day = start
         for item in queue:
+            est = max(1, int(item.get("estimated_minutes", 30) or 30))
+            start_at = datetime.strptime("09:00", "%H:%M")
+            end_at = start_at + timedelta(minutes=est)
             item["scheduled_date"] = datetime.combine(fallback_day, datetime.min.time())
-            item["time_slot"] = "09:00-11:30 (Morning Block)"
+            item["time_slot"] = f"09:00-{end_at.strftime('%H:%M')} (Dedicated session)"
             item["order_index"] = len(scheduled)
             scheduled.append(item)
             fallback_day += timedelta(days=1)

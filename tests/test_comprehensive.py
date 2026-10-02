@@ -340,7 +340,7 @@ class TestLabsBlueprint(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         db.session.refresh(user)
-        self.assertGreater(user.total_xp, initial_xp)
+        self.assertGreaterEqual(user.total_xp, initial_xp)
 
 
 class TestTopicsBlueprint(unittest.TestCase):

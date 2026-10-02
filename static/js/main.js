@@ -11,11 +11,18 @@ function showToast(message, type = 'info') {
   toast.setAttribute('role', 'alert');
   toast.setAttribute('aria-live', 'assertive');
   toast.setAttribute('aria-atomic', 'true');
-  toast.innerHTML = `
-    <div class="d-flex">
-      <div class="toast-body">${message}</div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>`;
+  const row = document.createElement('div');
+  row.className = 'd-flex';
+  const body = document.createElement('div');
+  body.className = 'toast-body';
+  body.textContent = String(message);
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'btn-close btn-close-white me-2 m-auto';
+  close.dataset.bsDismiss = 'toast';
+  close.setAttribute('aria-label', 'Close');
+  row.append(body, close);
+  toast.appendChild(row);
   container.appendChild(toast);
   const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
   bsToast.show();
@@ -68,6 +75,7 @@ function applyUpdate() {
     body: JSON.stringify({
       download_url: downloadUrl,
       signature_url: banner?.dataset?.signatureUrl || '',
+      signature: banner?.dataset?.signature || '',
     }),
   })
     .then(r => {

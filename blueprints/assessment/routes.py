@@ -47,17 +47,30 @@ def topic_quiz(topic_id: int):
             if q.question_type == "mcq":
                 is_correct = (user_ans == str(q.correct_answer).strip())
             else:
-                is_correct = (user_ans.lower() in str(q.correct_answer).lower())
+                is_correct = bool(user_ans) and (user_ans.lower() in str(q.correct_answer).lower())
 
             if is_correct:
                 score += 1
 
-            opts = json.loads(q.options) if q.options else []
-            correct_opt = opts[int(q.correct_answer)] if q.question_type == "mcq" and opts and q.correct_answer.isdigit() and int(q.correct_answer) < len(opts) else q.correct_answer
+            try:
+                opts = json.loads(q.options) if q.options else []
+            except (TypeError, ValueError, json.JSONDecodeError):
+                opts = []
+            if not isinstance(opts, list):
+                opts = []
+
+            correct_answer = str(q.correct_answer or "").strip()
+            correct_index = int(correct_answer) if correct_answer.isdigit() else -1
+            correct_opt = (opts[correct_index]
+                           if q.question_type == "mcq" and 0 <= correct_index < len(opts)
+                           else correct_answer)
+            user_index = int(user_ans) if user_ans.isdigit() else -1
 
             results.append({
                 "question": q.question_text,
-                "user_answer": opts[int(user_ans)] if q.question_type == "mcq" and opts and user_ans.isdigit() and int(user_ans) < len(opts) else user_ans,
+                "user_answer": (opts[user_index]
+                                if q.question_type == "mcq" and 0 <= user_index < len(opts)
+                                else user_ans),
                 "correct_answer": correct_opt,
                 "is_correct": is_correct,
                 "explanation": q.explanation
@@ -66,19 +79,18 @@ def topic_quiz(topic_id: int):
         percent = int((score / total) * 100) if total > 0 else 0
         passed = percent >= 60
 
-        # Mark RoadmapItem checkpoint_quiz for this topic as done
-        active_roadmap = Roadmap.query.filter_by(user_id=g.user.id, status="active").first()
-        if active_roadmap:
-            quiz_items = RoadmapItem.query.filter_by(
-                roadmap_id=active_roadmap.id,
-                topic_id=topic.id,
-                item_type="checkpoint_quiz"
-            ).all()
-            for item in quiz_items:
-                item.status = "done"
-                item.completed_at = datetime.now(timezone.utc)
-                
         if passed:
+            active_roadmap = Roadmap.query.filter_by(user_id=g.user.id, status="active").first()
+            if active_roadmap:
+                quiz_items = RoadmapItem.query.filter_by(
+                    roadmap_id=active_roadmap.id,
+                    topic_id=topic.id,
+                    item_type="checkpoint_quiz"
+                ).all()
+                for item in quiz_items:
+                    item.status = "done"
+                    item.completed_at = datetime.now(timezone.utc)
+
             xp = award_xp(g.user.id, "checkpoint_quiz", topic.id, xp_amount=25,
                           description=f"Passed Checkpoint Quiz: {topic.title}")
             touch_streak(g.user.id, date.today())

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from datetime import datetime, date, timezone
+from urllib.parse import urlparse
 
 from flask import (Blueprint, render_template, redirect, url_for, request,
                    flash, abort, g)
@@ -31,8 +32,16 @@ def add():
     areas = SkillArea.query.filter_by(is_active=True).order_by(SkillArea.order_index).all()
     if request.method == "POST":
         url = request.form.get("url", "").strip()
-        if not url or not url.startswith(("http://", "https://")):
+        parsed_url = urlparse(url)
+        if parsed_url.scheme not in ("http", "https") or not parsed_url.hostname:
             flash("Enter a valid URL (http/https).", "error")
+            return redirect(url_for("library.add"))
+        try:
+            estimated_minutes = int(request.form.get("estimated_minutes") or 30)
+        except (TypeError, ValueError):
+            estimated_minutes = 0
+        if not 1 <= estimated_minutes <= 1440:
+            flash("Estimated time must be between 1 and 1440 minutes.", "error")
             return redirect(url_for("library.add"))
         meta = fetch_metadata(url)
         title = request.form.get("title") or meta["title"]
@@ -42,7 +51,7 @@ def add():
             url=url[:500],
             resource_type=request.form.get("resource_type") or meta["resource_type"],
             thumbnail_url=meta["thumbnail_url"],
-            estimated_minutes=int(request.form.get("estimated_minutes") or 30),
+            estimated_minutes=estimated_minutes,
             skill_area_id=request.form.get("skill_area_id", type=int),
             notes=request.form.get("notes"),
         )

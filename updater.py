@@ -101,6 +101,11 @@ def main():
     if os.path.exists(extract_dir):
         shutil.rmtree(extract_dir)
     with zipfile.ZipFile(tmp_zip) as z:
+        extract_root = os.path.abspath(extract_dir)
+        for member in z.infolist():
+            target = os.path.abspath(os.path.join(extract_root, member.filename))
+            if os.path.commonpath((extract_root, target)) != extract_root:
+                raise ValueError(f"Unsafe archive path: {member.filename}")
         z.extractall(extract_dir)
 
     # Atomic replace

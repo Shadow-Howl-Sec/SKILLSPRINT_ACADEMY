@@ -4,6 +4,7 @@ import json
 import secrets
 import threading
 import atexit
+import ipaddress
 from urllib.parse import urlparse
 from datetime import datetime, timezone
 from flask import (Flask, render_template, request, jsonify, redirect,
@@ -182,9 +183,27 @@ def markdown_filter(value):
         return ""
     try:
         import markdown as md
-        return md.markdown(value, extensions=['fenced_code', 'tables', 'codehilite'])
+        rendered = md.markdown(value, extensions=['fenced_code', 'tables', 'codehilite'])
+        try:
+            import bleach
+            return bleach.clean(
+                rendered,
+                tags={
+                    'a', 'abbr', 'b', 'blockquote', 'br', 'code', 'del',
+                    'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i',
+                    'li', 'ol', 'p', 'pre', 'strong', 'table', 'tbody',
+                    'td', 'th', 'thead', 'tr', 'ul',
+                },
+                attributes={'a': ['href', 'title', 'rel']},
+                protocols=['http', 'https', 'mailto'],
+                strip=True,
+            )
+        except ImportError:
+            from markupsafe import escape
+            return str(escape(value)).replace('\n', '<br>\n')
     except ImportError:
-        return value.replace('\n', '<br>\n')
+        from markupsafe import escape
+        return str(escape(value)).replace('\n', '<br>\n')
 
 
 @app.context_processor
@@ -199,7 +218,7 @@ def inject_globals():
     
     return {
         "now": date.today().isoformat(),
-        "OFFLINE_MODE": True,
+        "OFFLINE_MODE": app.config.get("OFFLINE_MODE", True),
         "current_user": g.get('user'),
         "APP_NAME": app.config.get('APP_NAME', 'SkillSprint Academy'),
         "APP_TAGLINE": app.config.get('APP_TAGLINE', 'Zero to Purple Team Mastery'),
@@ -326,6 +345,11 @@ def ensure_schema_compatibility():
             if 'pre_lab_theory_md' not in columns:
                 db.session.execute(text('ALTER TABLE lab ADD COLUMN pre_lab_theory_md TEXT'))
                 db.session.commit()
+        if inspector.has_table('assessment_question'):
+            columns = {col['name'] for col in inspector.get_columns('assessment_question')}
+            if 'topic_id' not in columns:
+                db.session.execute(text('ALTER TABLE assessment_question ADD COLUMN topic_id INTEGER'))
+                db.session.commit()
     except Exception as exc:
         db.session.rollback()
         print(f"[WARN] Schema compatibility check failed: {exc}")
@@ -383,6 +407,12 @@ if __name__ == '__main__':
         create_tables()
         bind_host = app.config.get('OFFLINE_BIND_HOST', '127.0.0.1')
         bind_port = int(app.config.get('OFFLINE_BIND_PORT', 52837))
+        try:
+            is_loopback = ipaddress.ip_address(bind_host).is_loopback
+        except ValueError:
+            is_loopback = bind_host.lower() == 'localhost'
+        if not is_loopback:
+            raise RuntimeError('SkillSprint Academy only supports loopback binding without authentication')
         url = f"http://{bind_host}:{bind_port}"
         print(f" {app.config.get('APP_NAME', 'skillsprint')} starting...")
         print(f" [OFFLINE MODE] binding to {url}")

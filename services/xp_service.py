@@ -36,6 +36,10 @@ def award_xp(user_id: int, source_type: str, source_id: int | None,
     if xp_amount == 0 and source_type != "badge":
         return 0
 
+    if source_id is not None and XPLog.query.filter_by(
+            user_id=user_id, source_type=source_type, source_id=source_id).first():
+        return 0
+
     log = XPLog(
         user_id=user_id,
         source_type=source_type,

@@ -120,7 +120,7 @@ def fetch_metadata(url: str, timeout: float = 8.0) -> dict:
     try:
         resp = requests.get(url, timeout=timeout,
                             headers={"User-Agent": _USER_AGENT},
-                            allow_redirects=True)
+                    allow_redirects=False)
         resp.raise_for_status()
     except requests.RequestException:
         return base_stub
