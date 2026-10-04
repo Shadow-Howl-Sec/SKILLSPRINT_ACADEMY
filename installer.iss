@@ -1,6 +1,6 @@
 #define MyAppName "SkillSprint Academy"
 #ifndef MyAppVersion
-	#define MyAppVersion "1.1.0"
+	#define MyAppVersion "1.1.4"
 #endif
 #define MyAppPublisher "SkillSprint Academy"
 #define MyAppExeName "SkillSprintAcademy.exe"
