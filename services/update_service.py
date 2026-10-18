@@ -54,8 +54,11 @@ def _is_trusted_release_url(value):
     parsed = urlparse(value or "")
     if parsed.scheme != "https" or not parsed.hostname:
         return False
+    repository = os.environ.get(
+        "UPDATE_GITHUB_REPO", "Shadow-Howl-Sec/SKILLSPRINT_ACADEMY"
+    ).strip("/")
     if parsed.hostname == "github.com":
-        return "/Shadow-Howl-Sec/SKILLSPRINT_ACADEMY/releases/" in parsed.path
+        return parsed.path.startswith(f"/{repository}/releases/")
     return parsed.hostname == "objects.githubusercontent.com"
 
 

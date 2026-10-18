@@ -104,8 +104,25 @@ Settings come from environment variables and optional `.env` values.
 | `OLLAMA_MODEL` | `llama3.1:8b-instruct` | Ollama model name. |
 | `SECRET_KEY` | Development value | Set a private value for non-development use. |
 | `UPDATE_HMAC_SECRET` | Empty | Secret used when signed update verification is configured. |
+| `UPDATE_GITHUB_REPO` | `Shadow-Howl-Sec/SKILLSPRINT_ACADEMY` | GitHub repository that publishes update releases. |
 
 The core application does not require internet access. Ollama, external lab links, cloud AI, VirtualBox/Kali labs, and other integrations are optional.
+
+### Publishing updates
+
+The updater reads the newest GitHub Release, not ordinary commits or tags. Create
+a version tag such as `v1.1.5` and push it to GitHub:
+
+```powershell
+git tag v1.1.5
+git push origin v1.1.5
+```
+
+The **Build and Release SkillSprint Academy** workflow creates the Windows ZIP
+asset. Until the first release is published, update checks report
+`update_available: false` and link to the repository's Releases page instead of
+logging a 404 error. The standalone **Build Windows EXE** workflow is manual
+and uploads an artifact only; it does not create a competing GitHub Release.
 
 ## Useful Routes
 
@@ -114,7 +131,7 @@ The core application does not require internet access. Ollama, external lab link
 ## Tests and Checks
 
 ```powershell
-py -m unittest discover -s tests
+py -m unittest discover -s tests -t .
 py -W error::SyntaxWarning -c "import pathlib; files=list(pathlib.Path('.').rglob('*.py')); [compile(p.read_text(encoding='utf-8'), str(p), 'exec') for p in files]; print(f'Checked {len(files)} Python files')"
 ```
 

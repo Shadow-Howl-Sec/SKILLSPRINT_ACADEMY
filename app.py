@@ -151,6 +151,8 @@ _update_checker_started = False
 @app.before_request
 def start_background_services():
     global _update_checker_started
+    if app.config.get("OFFLINE_MODE", True):
+        return
     if not _update_checker_started:
         try:
             from services.scheduler_service import start_update_checker

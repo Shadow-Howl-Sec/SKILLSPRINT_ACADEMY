@@ -3,8 +3,9 @@ import json
 import requests
 import logging
 
-# Update these for your actual repository
-GITHUB_REPO = os.environ.get("UPDATE_GITHUB_REPO", "Shadow-Howl-Sec/SKILLSPRINT_ACADEMY")
+GITHUB_REPO = os.environ.get(
+    "UPDATE_GITHUB_REPO", "Shadow-Howl-Sec/SKILLSPRINT_ACADEMY"
+).strip("/")
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 GITHUB_RELEASES_URL = f"https://github.com/{GITHUB_REPO}/releases"
 
@@ -57,10 +58,14 @@ def check_for_update(base_path, timeout=5):
             return {"update_available": False, "current_version": local_version}
 
         download_url = None
+        signature_url = None
         for asset in data.get("assets", []):
-            if asset["name"].endswith(".zip"):
-                download_url = asset["browser_download_url"]
-                break
+            asset_name = asset.get("name", "")
+            asset_url = asset.get("browser_download_url")
+            if asset_name.endswith(".zip") and asset_url:
+                download_url = asset_url
+            elif asset_name.endswith(".sig") and asset_url:
+                signature_url = asset_url
 
         if _version_tuple(latest_tag) > _version_tuple(local_version):
             if not download_url:
@@ -68,13 +73,18 @@ def check_for_update(base_path, timeout=5):
                 return {"update_available": False, "current_version": local_version,
                         "latest_version": latest_tag,
                         "release_url": data.get("html_url", GITHUB_RELEASES_URL)}
+            if not signature_url:
+                logger.warning("Latest release has no update signature")
+                return {"update_available": False, "current_version": local_version,
+                        "latest_version": latest_tag, "error": "missing_signature",
+                        "release_url": data.get("html_url", GITHUB_RELEASES_URL)}
             logger.info(f"Update available: {local_version} -> {latest_tag}")
             return {
                 "update_available": True,
                 "current_version": local_version,
                 "latest_version": latest_tag,
                 "download_url": download_url,
-                "signature_url": download_url + ".sig",
+                "signature_url": signature_url,
                 "release_notes": data.get("body", ""),
                 "release_url": data.get("html_url", GITHUB_RELEASES_URL),
                 "published_at": data.get("published_at"),
@@ -89,9 +99,22 @@ def check_for_update(base_path, timeout=5):
     except requests.ConnectionError:
         logger.warning("Update check failed - connection error (offline?)")
         return {"update_available": None, "current_version": local_version, "error": "connection"}
+    except requests.HTTPError as e:
+        if e.response is not None and e.response.status_code == 404:
+            logger.info("No GitHub release is published for %s", GITHUB_REPO)
+            return {
+                "update_available": False,
+                "current_version": local_version,
+                "error": "no_release",
+                "release_url": GITHUB_RELEASES_URL,
+            }
+        logger.warning(f"Update check request failed: {e}")
+        return {"update_available": None, "current_version": local_version,
+                "error": "request_failed"}
     except requests.RequestException as e:
         logger.warning(f"Update check request failed: {e}")
-        return {"update_available": None, "current_version": local_version, "error": str(e)}
+        return {"update_available": None, "current_version": local_version,
+                "error": "request_failed"}
     except (KeyError, ValueError) as e:
         logger.error(f"Update check parsing error: {e}")
         return {"update_available": None, "current_version": local_version, "error": "parse_error"}

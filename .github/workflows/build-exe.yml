@@ -1,8 +1,6 @@
 name: Build Windows EXE
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest
@@ -13,6 +11,7 @@ jobs:
           python-version: '3.11'
       - run: pip install -r requirements.txt pyinstaller
       - run: pyinstaller build_exe.spec
-      - uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v4
         with:
-          files: dist/SkillSprintAcademy.exe
+          name: SkillSprintAcademy-exe
+          path: dist/SkillSprintAcademy.exe

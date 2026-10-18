@@ -68,7 +68,7 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
     PERMANENT_SESSION_LIFETIME = 86400  # 24 hours
 
-    AI_TUTOR_PROVIDER = 'auto'
+    AI_TUTOR_PROVIDER = os.environ.get('AI_TUTOR_PROVIDER', 'auto').strip().lower()
     OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://127.0.0.1:11434')
     OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'llama3.1:8b-instruct')
 
