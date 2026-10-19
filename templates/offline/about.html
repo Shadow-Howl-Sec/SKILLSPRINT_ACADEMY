@@ -14,6 +14,33 @@
             </div>
 
             <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-toggle2-on me-2"></i>Working Mode</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        Choose whether optional internet features, external resources, and update checks may run.
+                        Your choice is saved for the next launch.
+                    </p>
+                    <form method="POST" action="{{ url_for('offline.working_mode') }}" class="d-flex gap-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" name="mode" value="offline"
+                                class="btn {{ 'btn-primary' if offline else 'btn-outline-primary' }}">
+                            <i class="bi bi-wifi-off me-1"></i>Offline
+                        </button>
+                        <button type="submit" name="mode" value="online"
+                                class="btn {{ 'btn-success' if not offline else 'btn-outline-success' }}">
+                            <i class="bi bi-wifi me-1"></i>Online
+                        </button>
+                    </form>
+                    <p class="small mt-3 mb-0">
+                        Current mode:
+                        <strong>{{ 'Offline' if offline else 'Online' }}</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>What Works Fully Offline</h5>
                 </div>

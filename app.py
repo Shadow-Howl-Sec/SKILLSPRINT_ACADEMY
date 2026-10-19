@@ -23,9 +23,6 @@ else:
     app = Flask(__name__)
 app.config.from_object('config.Config')
 
-OFFLINE_MODE = True
-
-
 # ---------------------------------------------------------------------------
 # CSP — Hardened for offline operation with nonce-based script execution
 # ---------------------------------------------------------------------------
@@ -250,7 +247,11 @@ def index():
 def health_check():
     try:
         db.session.execute(text('SELECT 1'))
-        return jsonify({'status': 'healthy', 'database': 'connected', 'offline': True}), 200
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'offline': bool(app.config.get('OFFLINE_MODE', True)),
+        }), 200
     except Exception as e:
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
 

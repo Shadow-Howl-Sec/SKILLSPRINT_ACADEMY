@@ -14,6 +14,19 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return val.strip().lower() in ("1", "true", "yes", "on")
 
 
+def _load_working_mode() -> bool:
+    """Return offline mode from an explicit environment override or user setting."""
+    if os.environ.get('OFFLINE_MODE') is not None:
+        return _env_bool('OFFLINE_MODE', True)
+
+    mode_path = os.path.join(get_data_root(), 'working_mode.txt')
+    try:
+        value = open(mode_path, 'r', encoding='utf-8').read().strip().lower()
+    except OSError:
+        return True
+    return value != 'online'
+
+
 def _persisted_secret(name: str, filename: str, *, min_length: int = 32) -> str:
     """Return a stable secret from environment or a per-user file, never a weak fallback."""
     env_value = os.environ.get(name)
@@ -52,7 +65,7 @@ class Config:
     APP_NAME = 'SkillSprint Academy'
     APP_TAGLINE = 'Zero to Purple Team Mastery — Fully Offline'
 
-    OFFLINE_MODE = _env_bool('OFFLINE_MODE', True)
+    OFFLINE_MODE = _load_working_mode()
     OFFLINE_BIND_HOST = os.environ.get('OFFLINE_BIND_HOST', '127.0.0.1')
     OFFLINE_BIND_PORT = int(os.environ.get('OFFLINE_BIND_PORT', 52837))
 

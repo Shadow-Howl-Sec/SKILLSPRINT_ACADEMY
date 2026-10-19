@@ -98,6 +98,7 @@ Settings come from environment variables and optional `.env` values.
 | --- | --- | --- |
 | `OFFLINE_BIND_HOST` | `127.0.0.1` | Local server bind address. |
 | `OFFLINE_BIND_PORT` | `52837` | Local server port. |
+| `OFFLINE_MODE` | `true` | Optional environment override. Remove it to use the in-app Working Mode switch. |
 | `DATABASE_URL` | Local SQLite | SQLAlchemy database URL. |
 | `AI_TUTOR_PROVIDER` | `auto` | `auto`, `ollama`, `anthropic`, or `rules`. |
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Ollama server URL. |
@@ -106,7 +107,7 @@ Settings come from environment variables and optional `.env` values.
 | `UPDATE_HMAC_SECRET` | Empty | Secret used when signed update verification is configured. |
 | `UPDATE_GITHUB_REPO` | `Shadow-Howl-Sec/SKILLSPRINT_ACADEMY` | GitHub repository that publishes update releases. |
 
-The core application does not require internet access. Ollama, external lab links, cloud AI, VirtualBox/Kali labs, and other integrations are optional.
+The core application does not require internet access. Use **Offline Info → Working Mode** to switch between offline and online behavior; the selection is saved under the per-user application data directory. Ollama, external lab links, cloud AI, VirtualBox/Kali labs, and other integrations are optional.
 
 ### Publishing updates
 

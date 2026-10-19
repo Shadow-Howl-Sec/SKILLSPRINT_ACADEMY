@@ -72,6 +72,7 @@ blueprint_hidden_imports = [
     'blueprints.assistant.routes',
     'blueprints.assessment.routes',
     'blueprints.settings.routes',
+    'blueprints.topics.routes',
 ]
 
 # SQLAlchemy/Flask-Migrate/APScheduler/Markdown also sometimes need a nudge —

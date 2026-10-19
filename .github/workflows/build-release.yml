@@ -47,8 +47,14 @@ jobs:
       - name: Zip the build output
         shell: powershell
         run: |
-          Compress-Archive -Path dist\SkillSprintAcademy\* `
+          Compress-Archive -Path release\SkillSprintAcademy\* `
             -DestinationPath SkillSprintAcademy-${{ steps.get_version.outputs.VERSION }}-windows.zip
+
+      - name: Zip the complete portable release
+        shell: powershell
+        run: |
+          Compress-Archive -Path release\* `
+            -DestinationPath SkillSprintAcademy-${{ steps.get_version.outputs.VERSION }}-portable.zip
 
       - name: Create GitHub Release with the zip attached
         uses: softprops/action-gh-release@v2
@@ -60,6 +66,7 @@ jobs:
             Download the zip below, extract it, and run SkillSprintAcademy.exe.
           files: |
             SkillSprintAcademy-${{ steps.get_version.outputs.VERSION }}-windows.zip
+            SkillSprintAcademy-${{ steps.get_version.outputs.VERSION }}-portable.zip
             release\SkillSprintAcademy-Setup.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

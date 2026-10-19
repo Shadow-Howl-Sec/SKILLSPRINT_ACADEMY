@@ -13,6 +13,7 @@ from flask import (Blueprint, render_template, redirect, url_for, request,
                    flash, current_app, jsonify, abort, g)
 from extensions import db
 from models import ContentItem, Lab
+from paths import get_data_root
 
 from services.ai_tutor_service import ollama_alive, list_ollama_models
 
@@ -89,6 +90,32 @@ def about():
     """Explains what offline mode does / doesn't do (plan §14)."""
     return render_template("offline/about.html",
                            offline=current_app.config.get("OFFLINE_MODE", False))
+
+
+@offline_bp.route("/working-mode", methods=["POST"])
+def working_mode():
+    """Persist and apply the user's online/offline working mode."""
+    mode = request.form.get("mode", "").strip().lower()
+    if mode not in {"offline", "online"}:
+        flash("Invalid working mode.", "error")
+        return redirect(url_for("offline.about"))
+
+    offline = mode == "offline"
+    mode_path = Path(get_data_root()) / "working_mode.txt"
+    try:
+        mode_path.parent.mkdir(parents=True, exist_ok=True)
+        mode_path.write_text(mode, encoding="utf-8")
+        current_app.config["OFFLINE_MODE"] = offline
+        flash(
+            "Offline mode enabled." if offline else
+            "Online mode enabled. Internet features will be available when reachable.",
+            "success",
+        )
+    except OSError as exc:
+        current_app.logger.error("Could not persist working mode: %s", exc)
+        flash("Could not save the working mode. Check application permissions.", "error")
+
+    return redirect(url_for("offline.about"))
 
 
 @offline_bp.route("/lab-setup", methods=["GET", "POST"])

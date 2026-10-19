@@ -31,6 +31,14 @@ $distPath    = Join-Path $projectRoot "dist"
 $buildPath   = Join-Path $projectRoot "build"
 $releasePath = Join-Path $projectRoot "release"
 $specFile    = Join-Path $projectRoot "build_exe.spec"
+$pythonPath  = Join-Path $projectRoot ".venv\Scripts\python.exe"
+if (-not (Test-Path $pythonPath)) {
+    $pythonPath = (Get-Command py -ErrorAction SilentlyContinue).Source
+}
+if ([string]::IsNullOrWhiteSpace($pythonPath)) {
+    Write-Error "No Python interpreter found. Create .venv or install the Windows Python launcher."
+    exit 1
+}
 
 function Write-Step($msg)  { Write-Host "== $msg" -ForegroundColor Cyan }
 function Write-Ok($msg)    { Write-Host "   ok: $msg" -ForegroundColor Green }
@@ -50,11 +58,11 @@ Write-Ok "Cleaned"
 # ---------------------------------------------------------------------------
 Write-Step "Checking PyInstaller..."
 try {
-    py -3 -m PyInstaller --version 2>$null | Out-Null
+    & $pythonPath -m PyInstaller --version 2>$null | Out-Null
     Write-Ok "PyInstaller available"
 } catch {
     Write-Warn "PyInstaller not found, installing..."
-    py -3 -m pip install pyinstaller
+    & $pythonPath -m pip install pyinstaller
     Write-Ok "PyInstaller installed"
 }
 
@@ -64,7 +72,7 @@ try {
 Write-Step "Building executable using .spec file (this may take 2-5 minutes)..."
 Write-Host "Spec file: $specFile" -ForegroundColor Gray
 
-& py -3 -m PyInstaller --clean --noconfirm --distpath="$distPath" --workpath="$buildPath" "$specFile"
+& $pythonPath -m PyInstaller --clean --noconfirm --distpath="$distPath" --workpath="$buildPath" "$specFile"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "PyInstaller build failed with exit code $LASTEXITCODE"
@@ -91,6 +99,20 @@ if (Test-Path $onedirSrc) {
     Write-Error "Onedir build not found at $onedirSrc"
     exit 1
 }
+
+$requiredRuntimeFiles = @(
+    (Join-Path $onedirDst "SkillSprintAcademy.exe"),
+    (Join-Path $onedirDst "_internal\templates\base_cybersec.html"),
+    (Join-Path $onedirDst "_internal\static\css\style.css"),
+    (Join-Path $onedirDst "_internal\bundles\labs")
+)
+foreach ($requiredFile in $requiredRuntimeFiles) {
+    if (-not (Test-Path $requiredFile)) {
+        Write-Error "Required runtime file is missing: $requiredFile"
+        exit 1
+    }
+}
+Write-Ok "Runtime assets verified"
 
 # Copy bundles for lab challenges
 $bundlesSrc = Join-Path $projectRoot "bundles"
